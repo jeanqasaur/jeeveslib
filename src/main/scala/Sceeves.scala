@@ -23,12 +23,6 @@ trait Sceeves {
       case None => throw Inconsistency
     }
   
-  def pick(spec: IntVar => Formula = _ => true): IntVar = {
-    val x = Var.makeInt; 
-    assume(spec(x)); 
-    x
-  }
-
   def pickBool(spec: BoolVar => Formula = _ => true): BoolVar = {
     val x = Var.makeBool; 
     assume(spec(x)); 
@@ -37,12 +31,6 @@ trait Sceeves {
 
   def pickObject[T >: Null <: Atom : Manifest](): ObjectVar[T] = 
     Var.makeObject[T]; 
-
-  def pick(spec: IntVar => Formula, default: IntExpr): IntVar = {
-    val x = pick(spec); 
-    usually(x === default); 
-    x
-  }
 
   def pickBool(spec: BoolVar => Formula, default: Formula): BoolVar = {
     val x = pickBool(spec); 
@@ -62,10 +50,6 @@ trait Sceeves {
 
   def usually(f: Formula) {
     DEFAULTS = f :: DEFAULTS
-  }
-
-  def register(a: Atom) {
-    SCOPE = SCOPE + a;
   }
 
   def concretize[T](e: Expr[T]): T = {

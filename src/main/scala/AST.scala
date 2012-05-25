@@ -36,19 +36,6 @@ object Var {
   def makeObject[T >: Null <: Atom: Manifest] = ObjectVar[T](inc())
   def makeObjectSet = ObjectSetVar(inc())
 } 
-
-object FacetVal {
-  /*
-  def makeIntFacet(lvar: LevelVar, low: IntExpr, high: IntExpr) =
-    IntFacet(lvar, low, high)
-  */
-}
-sealed trait FacetVal[T <: Expr[_]] {
-  def lvar: LevelVar
-  def low: T
-  def high: T
-  def vars: Set[Var[_]] = lvar.vars ++ low.vars ++ high.vars
-}
 sealed trait BinaryExpr[T <: Expr[_]] {
   assert (left != null)
   assert (right != null)
@@ -86,7 +73,8 @@ sealed abstract class Formula extends Expr[Boolean] {
   def <==> (that: Formula) = ===(that)
   def unary_! = Not(this)
   def ?(thn: Formula) = new {def !(els: Formula) = BoolConditional(Formula.this, thn, els)}
-  def ?(thn: IntExpr) = new {def !(els: IntExpr) = IntConditional(Formula.this, thn, els)}
+  def ?(thn: IntExpr) = new {def !(els: IntExpr) =
+    IntConditional(Formula.this, thn, els)}
   def ?(thn: ObjectExpr[Atom]) = new {def !(els: ObjectExpr[Atom]) = ObjectConditional(Formula.this, thn, els)}
 
   def clauses: List[Formula] = this match {
@@ -170,24 +158,14 @@ case class Minus(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
 case class Times(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
   def eval(implicit env: Environment) = left.eval * right.eval
 }
-case class IntConditional(cond: Formula, thn: IntExpr, els: IntExpr) extends IntExpr with Ite[BigInt]
+case class IntConditional(cond: Formula, thn: IntExpr, els: IntExpr)
+extends IntExpr with Ite[BigInt]
 case class IntVal(v: BigInt) extends IntExpr with Constant[BigInt]
 case class IntVar(id: String) extends IntExpr with Var[BigInt] {
   override def toString = "i" + id
 }
-//sealed abstract class IntFacetExpr extends IntExpr with FacetVal[IntExpr]
-case class IntFacet(lvar: LevelVar, low: IntExpr, high: IntExpr)
-  extends IntExpr with FacetVal[IntExpr] {
-  def eval(implicit env: Environment) = {
-    if (lvar.eval) {
-      high.eval
-    } else {
-      low.eval
-    }
-  }
-//  override def toString = "i" + id
-}
-case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt]) extends IntExpr {
+case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
+  extends IntExpr {
   def vars = root.vars + IntVar("global" + f)
   def eval(implicit env: Environment) = f(root.eval).eval
 }

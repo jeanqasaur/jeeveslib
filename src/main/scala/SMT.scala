@@ -152,7 +152,6 @@ object SMT {
     case Times(a,b) => "(* " + integer(a) + " " + integer(b) + ")"
     case IntConditional(c,a,b) => "(if " + formula(c) + " " + integer(a) + " " + integer(b) + ")"
     case IntVal(i) => if (i >= 0) i.toString else "(- " + i.abs.toString + ")"
-    case IntFacet(lvar, low, high) => integer(IntConditional(lvar, low, high))
     case ObjectIntField(root, f) => "(" + f + " " + atom(root) + ")"
     case v: IntVar => variable(v) 
   }
