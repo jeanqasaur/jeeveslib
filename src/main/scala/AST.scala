@@ -31,7 +31,6 @@ sealed trait Var[T] extends Expr[T] {
 object Var {
   private var COUNTER = 0
   private def inc() = {COUNTER = COUNTER + 1; COUNTER.toString}
-  def makeInt = IntVar(inc())
   def makeBool = BoolVar(inc())
   def makeObject[T >: Null <: Atom: Manifest] = ObjectVar[T](inc())
   def makeObjectSet = ObjectSetVar(inc())
@@ -161,12 +160,10 @@ case class Times(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
 case class IntConditional(cond: Formula, thn: IntExpr, els: IntExpr)
 extends IntExpr with Ite[BigInt]
 case class IntVal(v: BigInt) extends IntExpr with Constant[BigInt]
-case class IntVar(id: String) extends IntExpr with Var[BigInt] {
-  override def toString = "i" + id
-}
 case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
   extends IntExpr {
-  def vars = root.vars + IntVar("global" + f)
+  // TODO: We don't need a var here...
+  def vars = root.vars // + IntVar("global" + f)
   def eval(implicit env: Environment) = f(root.eval).eval
 }
 

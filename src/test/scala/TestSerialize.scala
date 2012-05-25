@@ -7,6 +7,7 @@ import org.scalatest.Assertions.{expect}
 import Persistence.{serialize, deserialize, writeToFile, readFromFile}
 
 class ExampleSerialize extends FunSuite with Sceeves {
+  /*
   test ("pick") {
     val x = pick (_ === 1);
     val x0 = deserialize[IntVar](serialize(x));
@@ -27,4 +28,5 @@ class ExampleSerialize extends FunSuite with Sceeves {
     val x0 = readFromFile[IntVar](".tmp");
     expect(1) {concretize(x0)};
   }
+  */
 }

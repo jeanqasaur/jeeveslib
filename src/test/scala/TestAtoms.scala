@@ -91,19 +91,6 @@ class ExampleAtoms extends FunSuite {
 
   case class Record(F: IntExpr, I: BigInt) extends Atom
 
-  test ("SMT int field constraints") {
-    val i = Var.makeInt;
-    val a = Var.makeObject[Record];
-    val r = Record(i, 1337);
-    val env = SMT.solve( (a === r && (a.F: IntExpr) === (a.I: IntExpr))) match {
-      case Some(e) => e
-      case None => fail()
-    }
-
-    expect(1337) {env(i)}; 
-    expect(r) {env(a)};
-  }
-
   test ("SMT object field constraints") {
     import Expr._
     var x = Dummy(1);

@@ -153,7 +153,6 @@ object SMT {
     case IntConditional(c,a,b) => "(if " + formula(c) + " " + integer(a) + " " + integer(b) + ")"
     case IntVal(i) => if (i >= 0) i.toString else "(- " + i.abs.toString + ")"
     case ObjectIntField(root, f) => "(" + f + " " + atom(root) + ")"
-    case v: IntVar => variable(v) 
   }
 
   private def atom(e: Expr[Atom])(implicit env: Environment, sc: Scope): String = e match {
@@ -300,7 +299,6 @@ object SMT {
     // declare all variables
     {for (v <- vars; if ! env.has(v))
       yield "(declare-fun " + v + {v match {
-        case _: IntVar =>  " () Int) "
         case _: LevelVar => " () Bool)"
         case _: BoolVar => " () Bool)"
         case _: ObjectVar[_] => " () Object)"
@@ -379,9 +377,11 @@ object SMT {
         // pattern ((v _))
         val value = out.substring(out.indexOf(" ") + 1, out.length() - 2)
         v match {
+          /*
           case v: IntVar =>
             val clean = value.replace(" ", "").replace("(", "").replace(")", "");
             result = result + (v -> BigInt(clean));
+          */
           case v: LevelVar =>
             result = result + (v -> value.toBoolean);
           case v: BoolVar => 

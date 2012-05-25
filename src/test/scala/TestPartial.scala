@@ -12,7 +12,6 @@ class ExamplePartial extends FunSuite {
   val F: Formula = false
 
   val b = Var.makeBool
-  val i = Var.makeInt
   val a = Var.makeObject[Atom]
 
   test ("boolean simplifications") {
@@ -33,17 +32,13 @@ class ExamplePartial extends FunSuite {
   }
 
   test ("constant propagation") {
-    expect(i + 7) {eval(i + (3 + 4))}
     expect(b) {eval(T ? b ! F)}
     expect(F) {eval(F ? b ! F)}
     expect(a) {eval(T ? a ! NULL)}
     expect(NULL) {eval(F ? a ! NULL)}
-    expect(i) {eval(T ? i ! 0)}
-    expect(i + 1) {eval(F ? i ! i + 1)}
   }
 
   test ("equality propagation") {
-    expect(1: IntExpr) {eval((i === 2) ? (i - 1) ! 1)}
     expect(NULL) {eval((! (a === NULL)) ? NULL ! a)}
   }
 
