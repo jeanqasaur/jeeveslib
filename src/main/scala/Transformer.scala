@@ -10,16 +10,15 @@ package cap.scalasmt
  * constant and equality propagation.
  */
 object Partial {
-  // TODO: What is this function used for?
+  /**
+   * TODO: What is the purpose of this function?
+   */
   def eqs(f: Formula)(implicit env: Environment) = {
     var out = env;
     for (c <- f.clauses) c match {    
+      // This is used only for contexts, right?
       case ObjectEq(v: ObjectVar[_], Object(o)) => out = out + (v -> o)
       case ObjectEq(Object(o), v: ObjectVar[_]) => out = out + (v -> o)
-      /*
-      case IntEq(v: IntVar, IntVal(i)) => out = out + (v -> i)
-      case IntEq(IntVal(i), v: IntVar) => out = out + (v -> i)
-      */
       case _ =>
     }
     out
@@ -31,7 +30,8 @@ object Partial {
         val sa = eval(a); 
         BoolConditional(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
       case BoolEq(a, b) => BoolEq(eval(a), eval(b))
-      case And(a, b) => And(eval(a), eval(b))
+      case And(a, b) =>
+        And(eval(a), eval(b))
       case Or(a, b) => Or(eval(a), eval(b))
       case Not(f) => Not(eval(f))
       case GT(a, b) => GT(eval(a), eval(b))
@@ -72,8 +72,11 @@ object Partial {
   def eval(e: IntExpr)(implicit env: Environment): IntExpr = 
     {e match {
       case IntConditional(a, b, c) => 
-        val sa = eval(a) 
-        IntConditional(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
+        val sa = eval(a)
+        sa match {
+          
+          IntConditional(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
+        }
       case Plus(a, b) => Plus(eval(a), eval(b))
       case Minus(a, b) => Minus(eval(a), eval(b))
       case Times(a, b) => Times(eval(a), eval(b))

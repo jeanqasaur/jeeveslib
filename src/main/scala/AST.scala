@@ -117,9 +117,6 @@ case class BoolVal(v: Boolean) extends Formula with Constant[Boolean]
 case class BoolVar(id: String) extends Formula with Var[Boolean] {
   override def toString = "b" + id
 }
-case class LevelVar(id: String) extends Formula with Var[Boolean] {
-  override def toString = "b" + id
-}
 
 /** 
  * Equality atomic predicates.
