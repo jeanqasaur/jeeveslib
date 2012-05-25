@@ -143,6 +143,7 @@ object SMT {
     case RelSub(a,b) => "(forall ((x Object)) (=> " + 
       set(a)("x", env, sc) + " " + set(b)("x", env, sc) + "))"
     case v: BoolVar => variable(v)
+    case v: LevelVar => variable(v)
   }
 
   private def integer(e: Expr[BigInt])(implicit env: Environment, sc: Scope): String = e match {
@@ -151,7 +152,7 @@ object SMT {
     case Times(a,b) => "(* " + integer(a) + " " + integer(b) + ")"
     case IntConditional(c,a,b) => "(if " + formula(c) + " " + integer(a) + " " + integer(b) + ")"
     case IntVal(i) => if (i >= 0) i.toString else "(- " + i.abs.toString + ")"
-    // TODO: IntFacet
+    case IntFacet(lvar, low, high) => integer(IntConditional(lvar, low, high))
     case ObjectIntField(root, f) => "(" + f + " " + atom(root) + ")"
     case v: IntVar => variable(v) 
   }
@@ -301,6 +302,7 @@ object SMT {
     {for (v <- vars; if ! env.has(v))
       yield "(declare-fun " + v + {v match {
         case _: IntVar =>  " () Int) "
+        case _: LevelVar => " () Bool)"
         case _: BoolVar => " () Bool)"
         case _: ObjectVar[_] => " () Object)"
         case _: ObjectSetVar => " (Object) Bool)"
@@ -381,6 +383,8 @@ object SMT {
           case v: IntVar =>
             val clean = value.replace(" ", "").replace("(", "").replace(")", "");
             result = result + (v -> BigInt(clean));
+          case v: LevelVar =>
+            result = result + (v -> value.toBoolean);
           case v: BoolVar => 
             result = result + (v -> value.toBoolean);
           case v: ObjectVar[_] =>

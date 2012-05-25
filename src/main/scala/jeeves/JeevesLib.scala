@@ -13,8 +13,8 @@ import scala.collection.mutable.WeakHashMap;
 import Debug.debug
 
 trait JeevesLib extends Sceeves {
-  trait JeevesRecord extends Atom with Serializable {
-  }
+  trait JeevesRecord extends Atom with Serializable
+
   type LevelVar = BoolVar;
   type Symbolic = ObjectExpr[Atom];
   

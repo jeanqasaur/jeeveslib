@@ -39,6 +39,7 @@ object Partial {
       case f: RelFormula => f
       case ObjectEq(a, b) => ObjectEq(eval(a), eval(b))
       case b: BoolVar => b
+      case v: LevelVar => v
       case BoolVal(true) => BoolVal(true)
       case BoolVal(false) => BoolVal(false)
     }} match {
@@ -70,6 +71,16 @@ object Partial {
       case IntConditional(a, b, c) => 
         val sa = eval(a) 
         IntConditional(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
+      case IntFacet(lvar, low, high) =>
+        val slvar = eval(lvar)
+        slvar match {
+          case BoolVal(true) => eval(high)
+          case BoolVal(false) => eval(low)
+          case v: LevelVar =>
+            IntFacet(v, eval(low)(eqs(slvar)), eval(high)(eqs(eval(slvar))))
+          case f =>
+            IntFacet(lvar, eval(low)(eqs(slvar)), eval(high)(eqs(eval(slvar))))
+        }
       case Plus(a, b) => Plus(eval(a), eval(b))
       case Minus(a, b) => Minus(eval(a), eval(b))
       case Times(a, b) => Times(eval(a), eval(b))
@@ -80,7 +91,7 @@ object Partial {
       case IntConditional(BoolVal(false), _, els) => els
       case IntConditional(_, a, b) if a == b => a
       case e => e
-    }
+    } 
 
   def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: Environment): ObjectExpr[Atom] =
     {e match {

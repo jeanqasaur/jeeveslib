@@ -4,7 +4,7 @@ import Zeros._
 
 /*
  * A DSL for logical constraints.
- * @author kuat
+ * @author jeanyang, kuat
  */
 
 /**
@@ -28,13 +28,6 @@ sealed trait Var[T] extends Expr[T] {
   def vars: Set[Var[_]] = Set(this)
   def eval(implicit env: Environment) = env(this)
 }
-sealed trait FacetVal[T] extends Expr[T] {
-  def vars: Set[Var[_]] = Set()
-  def default: T
-  // TODO: Figure out when eval is used.
-  def eval(implicit env: Environment = EmptyEnv) = this.default
-}
-
 object Var {
   private var COUNTER = 0
   private def inc() = {COUNTER = COUNTER + 1; COUNTER.toString}
@@ -45,8 +38,16 @@ object Var {
 } 
 
 object FacetVal {
+  /*
   def makeIntFacet(lvar: LevelVar, low: IntExpr, high: IntExpr) =
     IntFacet(lvar, low, high)
+  */
+}
+sealed trait FacetVal[T <: Expr[_]] {
+  def lvar: LevelVar
+  def low: T
+  def high: T
+  def vars: Set[Var[_]] = lvar.vars ++ low.vars ++ high.vars
 }
 sealed trait BinaryExpr[T <: Expr[_]] {
   assert (left != null)
@@ -174,8 +175,16 @@ case class IntVal(v: BigInt) extends IntExpr with Constant[BigInt]
 case class IntVar(id: String) extends IntExpr with Var[BigInt] {
   override def toString = "i" + id
 }
+//sealed abstract class IntFacetExpr extends IntExpr with FacetVal[IntExpr]
 case class IntFacet(lvar: LevelVar, low: IntExpr, high: IntExpr)
-  extends IntExpr with FacetVal[BigInt] {
+  extends IntExpr with FacetVal[IntExpr] {
+  def eval(implicit env: Environment) = {
+    if (lvar.eval) {
+      high.eval
+    } else {
+      low.eval
+    }
+  }
 //  override def toString = "i" + id
 }
 case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt]) extends IntExpr {
