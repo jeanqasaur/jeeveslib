@@ -4,7 +4,7 @@ import Zeros._
 
 /*
  * A DSL for logical constraints.
- * @author jeanyang, kuat
+ * @author kuat
  */
 
 /**
@@ -73,7 +73,7 @@ sealed abstract class Formula extends Expr[Boolean] {
   def unary_! = Not(this)
   def ?(thn: Formula) = new {def !(els: Formula) = BoolConditional(Formula.this, thn, els)}
   def ?(thn: IntExpr) = new {def !(els: IntExpr) =
-    IntConditional(Formula.this, thn, els)}
+    IntFacet(Formula.this, thn, els)}
   def ?(thn: ObjectExpr[Atom]) = new {def !(els: ObjectExpr[Atom]) = ObjectConditional(Formula.this, thn, els)}
 
   def clauses: List[Formula] = this match {
@@ -117,7 +117,6 @@ case class BoolVal(v: Boolean) extends Formula with Constant[Boolean]
 case class BoolVar(id: String) extends Formula with Var[Boolean] {
   override def toString = "b" + id
 }
-
 /** 
  * Equality atomic predicates.
  */
@@ -154,7 +153,7 @@ case class Minus(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
 case class Times(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
   def eval(implicit env: Environment) = left.eval * right.eval
 }
-case class IntConditional(cond: Formula, thn: IntExpr, els: IntExpr)
+case class IntFacet(cond: Formula, thn: IntExpr, els: IntExpr)
 extends IntExpr with Ite[BigInt]
 case class IntVal(v: BigInt) extends IntExpr with Constant[BigInt]
 case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
