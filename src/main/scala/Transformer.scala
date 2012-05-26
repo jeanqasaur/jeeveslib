@@ -64,6 +64,46 @@ object Partial {
     case (_, _) => throw Impossible
   } 
 
+  @inline
+  def evalIntIntExpr (a: IntExpr, b: IntExpr
+    , op: (BigInt, BigInt) => BigInt, exprCons: (IntExpr, IntExpr) => IntExpr)
+    (implicit env: Environment) =
+    (eval(a), eval(b)) match {
+    case (IntVal(sa), IntVal(sb)) => IntVal(op(sa, sb))
+    case (IntFacet(c1, t1, f1), IntFacet(c2, t2, f2)) =>
+      eval(
+        IntFacet(c1 && c2, exprCons(t1, t2)
+          , IntFacet (
+            c1, exprCons(t1, f2)
+            , IntFacet (c2, exprCons(f1, t2), exprCons(f1, f2))) ) )
+    case (IntFacet(c, t, f), v2) =>
+      eval(IntFacet(c, exprCons(t, v2), exprCons(f, v2)))
+    case (v1, IntFacet(c, t, f)) =>
+      eval(IntFacet(c, exprCons(v1, t), exprCons(v1, f)))
+    case (_, _) => throw Impossible
+  }
+
+  @inline
+  def evalObjectExpr[T >: Null <: Atom] (a: ObjectExpr[T], b: ObjectExpr[T]
+    , op: (Atom, Atom) => Boolean
+    , exprCons: (ObjectExpr[Atom], ObjectExpr[Atom]) => Formula)
+    (implicit env: Environment) =
+    (eval(a), eval(b)) match {
+    case (Object (sa), Object (sb)) => BoolVal (op (sa, sb))
+    case (ObjectConditional (c1, t1, f1), ObjectConditional (c2, t2, f2)) =>
+      eval(
+        BoolConditional (c1 && c2, exprCons(t1, t2)
+          , BoolConditional (
+            c1, exprCons(t1, f2)
+            , BoolConditional (c2, exprCons(f1, t2), exprCons(f1, f2))) ) )
+    case (ObjectConditional (c, t, f), v2) =>
+      eval(BoolConditional (c, exprCons(t, v2), exprCons(f, v2)))
+    case (v1, ObjectConditional (c, t, f)) =>
+      eval(BoolConditional (c, exprCons(v1, t), exprCons(v1, f)))
+    // This case can arise if one of the objects is symbolic.
+    case (sa, sb) => exprCons(sa, sb)
+  }
+
   def eval(f: Formula)(implicit env: Environment): Formula = 
     {f match {
       case BoolConditional(a, b, c) => 
@@ -86,11 +126,16 @@ object Partial {
         evalIntBoolExpr(a, b, (sa: BigInt, sb: BigInt) => sa > sb, GT)
       case LT(a, b) =>
         evalIntBoolExpr(a, b, (sa: BigInt, sb: BigInt) => sa < sb, LT)
-      case Geq(a, b) => Geq(eval(a), eval(b))
+      case Geq(a, b) =>
+        evalIntBoolExpr(a, b, (sa: BigInt, sb: BigInt) => sa >= sb, Geq)
       case Leq(a, b) => Leq(eval(a), eval(b))
-      case IntEq(a, b) => IntEq(eval(a), eval(b))
+        evalIntBoolExpr(a, b, (sa: BigInt, sb: BigInt) => sa <= sb, Leq)
+      case IntEq(a, b) =>
+        evalIntBoolExpr(a, b, (sa: BigInt, sb: BigInt) => sa == sb, IntEq)
+      // TODO: Should we do anything special for this case?
       case f: RelFormula => f
-      case ObjectEq(a, b) => ObjectEq(eval(a), eval(b))
+      case ObjectEq(a, b) =>
+        evalObjectExpr(a, b, (sa: Atom, sb: Atom) => sa == sb, ObjectEq)
       case b: BoolVar => b
       case BoolVal(true) => BoolVal(true)
       case BoolVal(false) => BoolVal(false)
@@ -117,24 +162,6 @@ object Partial {
       case f => f
     }
 
-  @inline
-  def evalIntIntExpr (a: IntExpr, b: IntExpr
-    , op: (BigInt, BigInt) => BigInt, exprCons: (IntExpr, IntExpr) => IntExpr)
-    (implicit env: Environment) =
-    (eval(a), eval(b)) match {
-    case (IntVal(sa), IntVal(sb)) => IntVal(op(sa, sb))
-    case (IntFacet(c1, t1, f1), IntFacet(c2, t2, f2)) =>
-      eval(
-        IntFacet(c1 && c2, exprCons(t1, t2)
-          , IntFacet (
-            c1, exprCons(t1, f2)
-            , IntFacet (c2, exprCons(f1, t2), exprCons(f1, f2))) ) )
-    case (IntFacet(c, t, f), v2) =>
-      eval(IntFacet(c, exprCons(t, v2), exprCons(f, v2)))
-    case (v1, IntFacet(c, t, f)) =>
-      eval(IntFacet(c, exprCons(v1, t), exprCons(v1, f)))
-    case (_, _) => throw Impossible
-  }
   def eval(e: IntExpr)(implicit env: Environment): IntExpr = 
     {e match {
       case IntFacet(a, b, c) => 
