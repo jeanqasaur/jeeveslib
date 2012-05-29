@@ -59,6 +59,8 @@ class ExamplePartial extends FunSuite {
     expect(NULL) {eval(F ? a ! NULL)}
   }
 
+
+
   test ("equality propagation") {
     expect(NULL) {eval((! (a === NULL)) ? NULL ! a)}
   }
