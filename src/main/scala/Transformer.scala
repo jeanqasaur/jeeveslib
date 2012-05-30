@@ -197,19 +197,35 @@ object Partial {
       case f => f
     }
 
-  def eval(e: IntExpr)(implicit env: Environment): IntExpr = 
+  def evalDeref[T, R] (root: ObjectExpr[Atom], f: FieldDesc[T]
+    , facetCons: (Formula, R, R) => R)
+    (implicit env: Environment, te: TransformEval[R]): R = {
+    val sroot: ObjectExpr[Atom] = eval (root);
+    sroot match {
+      case Object (v) => te.teval ((f (v)).asInstanceOf[R])
+      case ObjectConditional (c, tb, fb) => {
+          facetCons (c
+            , evalDeref[T, R] (tb, f, facetCons)
+            , evalDeref[T, R] (fb, f, facetCons))
+      }
+      case _ => throw Impossible
+    }
+  }
+
+  def eval(e: IntExpr)(implicit env: Environment): IntExpr = {
+    def evalIntIntFacet = eval[BigInt, IntExpr, BigInt, IntExpr]_;
     {e match {
-      case IntFacet(a, b, c) => 
-        val sa = eval(a) 
-        IntFacet(sa, eval(b), eval(c))
-      case Plus(a, b) =>
-        eval[BigInt, IntExpr, BigInt, IntExpr](
-          a, b, (sa: BigInt, sb: BigInt) => sa + sb, Plus)
-      case Minus(a, b) =>
-        eval[BigInt, IntExpr, BigInt, IntExpr](a, b, (sa: BigInt, sb: BigInt) => sa - sb, Minus)
-      case Times(a, b) =>
-        eval[BigInt, IntExpr, BigInt, IntExpr](a, b, (sa: BigInt, sb: BigInt) => sa * sb, Times)
-      case e => e
+      case IntFacet (a, b, c) => IntFacet(eval(a), eval(b), eval(c))
+      case Plus (a, b) =>
+        evalIntIntFacet(a, b, (sa: BigInt, sb: BigInt) => sa + sb, Plus)
+      case Minus (a, b) =>
+        evalIntIntFacet(a, b, (sa: BigInt, sb: BigInt) => sa - sb, Minus)
+      case Times (a, b) =>
+        evalIntIntFacet(a, b, (sa: BigInt, sb: BigInt) => sa * sb, Times)
+      // TODO: Test this.
+      case ObjectIntField (root, f) => evalDeref[BigInt, IntExpr] (root, f, IntFacet)
+      // Values do not need further simplification.
+      case IntVal (_) => e
     }} match {
       case e if env.hasAll(e.vars) => e.eval
       case IntFacet(BoolVal(true), thn, _) => thn
@@ -217,6 +233,7 @@ object Partial {
       case IntFacet(_, a, b) if a == b => a
       case e => e
     } 
+  }
 
   def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: Environment)
     : ObjectExpr[Atom] =
@@ -224,7 +241,9 @@ object Partial {
       case ObjectConditional(a, b, c) => 
         val sa = eval(a)
         ObjectConditional(sa, eval(b), eval(c))
-      case e => e
+      case ObjectField (root, f) =>
+        evalDeref[Atom, ObjectExpr[Atom]] (root, f, ObjectConditional[Atom])
+      case Object(_) => e
     }} match {
       case e if env.hasAll(e.vars) => Object(e.eval)
       case ObjectConditional(BoolVal(true), thn, _) => thn

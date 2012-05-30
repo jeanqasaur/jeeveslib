@@ -180,9 +180,12 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom] extends Expr[Atom] with Dyn
     ObjectField(this, ObjectFieldDesc(name))
   }
 }
-case class ObjectConditional[+T >: Null <: Atom](cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T]) extends ObjectExpr[T] with Ite[Atom] 
+case class ObjectConditional[+T >: Null <: Atom](
+  cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T])
+  extends ObjectExpr[T] with Ite[Atom] 
 case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[Atom] 
-case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom]) extends ObjectExpr[Atom] {
+case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
+  extends ObjectExpr[Atom] {
   def vars = root.vars // + ObjectVar[Atom]("global" + f)
   def eval(implicit env: Environment) = f(root.eval).eval
 }
@@ -209,6 +212,7 @@ case class ObjectFieldDesc(id: String) extends FieldDesc[Atom] {
   def apply(o: Atom) = read(o) match {
     case Some(t: Atom) => Object(t)
     case Some(o: ObjectExpr[_]) => o
+    // Default value for objects is the null.
     case _ => Object(zero[Atom])
   }
   override def toString = "O" + id
@@ -217,6 +221,7 @@ case class IntFieldDesc(id: String) extends FieldDesc[BigInt] {
   def apply(o: Atom) = read(o) match {
     case Some(t: BigInt) => IntVal(t)
     case Some(e: IntExpr) => e
+    // Default value for integers is 0.
     case _ => IntVal(zero[BigInt])
   }
   override def toString = "I" + id
@@ -239,7 +244,8 @@ sealed abstract class RelExpr extends Expr[Set[Atom]] with Dynamic {
     RelJoin(this, ObjectFieldDesc(name))
   } 
 }
-case class Singleton(sub: ObjectExpr[Atom]) extends RelExpr with UnaryExpr[ObjectExpr[Atom]] {
+case class Singleton(sub: ObjectExpr[Atom])
+  extends RelExpr with UnaryExpr[ObjectExpr[Atom]] {
   def eval(implicit env: Environment) = Set(sub.eval)
 }
 case class ObjectSet(v: Set[Atom]) extends RelExpr with Constant[Set[Atom]] 
