@@ -7,9 +7,8 @@ package cap.jeeves
  */
 
 import cap.scalasmt._
-import scala.collection.immutable.Map;
-import scala.collection.mutable.{Map => MMap};
 import scala.collection.mutable.WeakHashMap;
+import scala.collection.mutable.Stack;
 import Debug.debug
 
 trait JeevesLib extends Sceeves {
@@ -26,10 +25,13 @@ trait JeevesLib extends Sceeves {
     case LOW => false
   }
 
-//  val CONTEXT: Symbolic = pickObject[Atom];
-  
-  private var POLICIES: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
+  private var _policies: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
     new WeakHashMap()
+
+  /* */
+  private val _pc: Stack[LevelVar] = new Stack ()
+  private def pushPC (v: LevelVar): Unit = _pc.push (v)
+  private def popPC (): LevelVar = _pc.pop ()
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
 
@@ -48,15 +50,15 @@ trait JeevesLib extends Sceeves {
    * level variable, then the value/formula pair can be garbage-collected as well.
    */
   def policy(lvar: LevelVar, f: Symbolic => Formula) = {
-    POLICIES += (lvar -> (LOW, f))
+    _policies += (lvar -> (LOW, f))
   }
   
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
 
   def concretize[T](ctx: Symbolic, e: Expr[T]) = {
-    debug(" *** # POLICIES: " + POLICIES.size)
+    debug(" *** # _policies: " + _policies.size)
     val context =
-      AND(POLICIES.map{
+      AND(_policies.map{
         case (lvar, (level, f)) => f (ctx) ==> (lvar === level)
       })
     super.concretize(context, e);
@@ -69,10 +71,18 @@ trait JeevesLib extends Sceeves {
   def concretize[T](ctx: Symbolic, e: (Expr[T], Expr[T])): (T, T) = 
     (concretize(ctx, e._1), concretize(ctx, e._2))
 
-  def concretize[T >: Null <: Atom](ctx: Symbolic, lst: Traversable[Symbolic]): List[T] = 
+  def concretize[T >: Null <: Atom](ctx: Symbolic, lst: Traversable[Symbolic])
+  : List[T] = {
     for (o <- lst.toList;
       t = concretize(ctx, o).asInstanceOf[T];
       if (t != null))
       yield t;
+  }
+
+
+  def jif[T] (c: Formula, t: => T, f: => T) = {
+    Partial.eval(c)(EmptyEnv)
+    popPC();
+  }
 }
 

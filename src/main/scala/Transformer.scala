@@ -11,9 +11,6 @@ package cap.scalasmt
  */
 object Impossible extends RuntimeException
 object Partial {
-  /**
-   * TODO: What is the purpose of this function?
-   */
   def eqs(f: Formula)(implicit env: Environment) = {
     var out = env;
     for (c <- f.clauses) c match {    

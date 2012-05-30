@@ -269,7 +269,6 @@ object SMT {
 
     // Adds the values mapped to variables in the scope.
     val variables = {for (v <- cur.vars; if env.has(v)) yield v match {
-//      case v: ObjectVar[_] => Set(env(v))
       case v: ObjectSetVar => env(v)
       case _ => Set[Atom]()
     }}.flatten
@@ -390,5 +389,4 @@ object SMT {
       solver.close()
     }
   }   
-}  
-
+}

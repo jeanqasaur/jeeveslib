@@ -349,4 +349,3 @@ case class IF(cond: Formula) {
 }
 /** String expression constructors. */
 case class S(s: String) extends Atom
-
