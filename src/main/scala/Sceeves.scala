@@ -29,20 +29,23 @@ trait Sceeves {
     x
   }
 
+  /*
   def pickObject[T >: Null <: Atom : Manifest](): ObjectVar[T] = 
     Var.makeObject[T]; 
-
+  */
   def pickBool(spec: BoolVar => Formula, default: Formula): BoolVar = {
     val x = pickBool(spec); 
     usually(x === default); 
     x
   }
 
+  /*
   def pickObject[T >: Null <: Atom : Manifest](default: ObjectExpr[T]): ObjectVar[T] = {
     val x = pickObject[T]();
     usually(x === default); 
     x
   }
+  */
   
   def assume(f: Formula) {
     CONSTRAINTS = f :: CONSTRAINTS

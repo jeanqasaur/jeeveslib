@@ -10,14 +10,17 @@ class ExampleAtomList extends FunSuite with Sceeves {
 
   def eval[T](expr: Expr[T]) = expr.eval
 
+  /*
   def mkElt(x: Dummy): ObjectVar[Dummy] = {
     val v: ObjectVar[Dummy] = pickObject(x);
     assume (v === x);
     v
   }
+  */
   val c = (1 to 3).toList.map(Dummy(_))
-  val s = c.map(mkElt)
+//  val s = c.map(mkElt)
 
+/*
   test ("object list has element") {
     expect(true) { concretize(s.has(Dummy(1))) }
   }
@@ -37,4 +40,5 @@ class ExampleAtomList extends FunSuite with Sceeves {
   test("object field does not have elt greater than 3") {
     expect(false) { concretize(s.hasFormula(_.ID > 3)) }
   }
+  */
 }

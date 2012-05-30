@@ -32,7 +32,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
 
     val name: Symbolic = {
       val a = mkLevel ();
-      policy(a, !(CONTEXT === alice))
+      policy(a, (CONTEXT: Symbolic) => !(CONTEXT === alice))
       mkSensitive(a // Level variable
         , aliceName     // High-confidentiality value
         , anonymousName // Low-confidentiality value
@@ -60,7 +60,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
   val bobUser = ConfUser(getNextUid (), ReviewerRole)
   val claireUser = ConfUser(getNextUid (), PCRole)
 
-  private val _isInternalF: Formula = {
+  private def _isInternalF (implicit CONTEXT: Symbolic): Formula = {
     ((CONTEXT.viewer.role === ReviewerRole)
     || (CONTEXT.viewer.role === PCRole))
   }
@@ -75,8 +75,9 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     private val _acceptedL = mkLevel()
 
     policy(_titleL
-      , !((CONTEXT.viewer === author) || _isInternalF
-          || ((CONTEXT.stage === Public) && (getIsAccepted ()))) )
+      , (CONTEXT: Symbolic) =>
+        !((CONTEXT.viewer === author) || (_isInternalF (CONTEXT))
+            || ((CONTEXT.stage === Public) && (getIsAccepted ()))) )
     def getTitle() = {
       mkSensitive(_titleL, StringVal(title), StringVal(""))
     }
@@ -104,14 +105,15 @@ class JeevesTutorial extends FunSuite with JeevesLib {
  
     private val _reviewerL = mkLevel()
     policy( _reviewerL
-      , !((CONTEXT.viewer === reviewer)
-        || (CONTEXT.viewer.role === PCRole)) )
+      , (CONTEXT: Symbolic) =>
+        !((CONTEXT.viewer === reviewer)
+          || (CONTEXT.viewer.role === PCRole)) )
     def getReviewer() = {
       mkSensitive(_reviewerL, reviewer, defaultUser)
     }
 
     private val _scoreL = mkLevel()
-    policy ( _reviewerL, !_isInternalF )
+    policy ( _reviewerL, (CONTEXT: Symbolic) => !(_isInternalF (CONTEXT)))
     def getScore() = {
       mkSensitiveInt(_scoreL, score, -1)
     }

@@ -29,19 +29,24 @@ case class Title (name : String) extends JeevesRecord
 class PaperRecord( val id : Int
                  , _name : Title, _authors : List[ConfUser]
                  , _papertags : List[PaperTag] ) extends JeevesRecord {
-  private def isPublic (curtags : List[Symbolic]) : Formula =
+  private def isPublic (curtags : List[Symbolic]) (implicit CONTEXT: Symbolic)
+  : Formula =
     (CONTEXT.stage === Public) && curtags.has(Accepted)
 
   // Some predicates...
-  private val isAuthor: Formula = _authors.has(CONTEXT.viewer);
-  private val isInternal: Formula =
+  private def isAuthor (implicit CONTEXT: Symbolic): Formula =
+    _authors.has(CONTEXT.viewer);
+  private def isInternal (implicit CONTEXT: Symbolic): Formula =
     (CONTEXT.viewer.role === ReviewerStatus) ||
     (CONTEXT.viewer.role === PCStatus)
 
   // The name of the paper is always visible to the authors.
   def updateName(_name: Title): Symbolic = {
     val level = mkLevel ();
-    policy (level, !(isAuthor || isInternal || isPublic(getTags ())));
+    policy (level
+      , (CONTEXT: Symbolic) =>
+        !(isAuthor (CONTEXT) || isInternal (CONTEXT)
+          || isPublic (getTags ()) (CONTEXT)));
     mkSensitive(level, _name, Title(""))
   }
   var name = updateName(_name);
@@ -49,8 +54,10 @@ class PaperRecord( val id : Int
   val authors: List[Symbolic] = {
     val level = mkLevel ();
     policy ( level
-           , !(isAuthor || (isInternal && (CONTEXT.stage === Decision)) ||
-              isPublic(getTags ())) );
+           , (CONTEXT: Symbolic) =>
+              !(isAuthor (CONTEXT)
+                || (isInternal (CONTEXT) && (CONTEXT.stage === Decision)) ||
+                isPublic (getTags ()) (CONTEXT)) );
     _authors.map(a => mkSensitive(level, a, NULL))
   }
 
@@ -59,18 +66,18 @@ class PaperRecord( val id : Int
     val level = mkLevel ();
     tag match {
       case NeedsReview =>
-        val canSee : Formula = isInternal && CONTEXT.stage === Review;
-        policy (level, !canSee);
+        policy (level,
+          (CONTEXT: Symbolic) =>
+            !(isInternal (CONTEXT) && (CONTEXT.stage === Review)));
       case ReviewedBy (reviewer) =>
-        policy (level, !isInternal)
+        policy (level, (CONTEXT: Symbolic) => !(isInternal (CONTEXT)))
       // Can see the "Accepted" tag if is an internal user at the decision
       // stage or if all information is visible.
       case Accepted =>
-        val stage = CONTEXT.stage;
-        val canSee : Formula =
-          (isInternal && (stage == Decision)) || (stage === Public);
-        policy (level, canSee);
-        policy (level, !canSee);
+        policy (level
+          , (CONTEXT: Symbolic) =>
+            !((isInternal (CONTEXT) && (CONTEXT.stage === Decision))
+              || (CONTEXT.stage === Public)));
     }
     mkSensitive(level, tag, NULL)
   }

@@ -26,9 +26,10 @@ trait JeevesLib extends Sceeves {
     case LOW => false
   }
 
-  val CONTEXT: Symbolic = pickObject[Atom];
+//  val CONTEXT: Symbolic = pickObject[Atom];
   
-  private var POLICIES: WeakHashMap[LevelVar, (Level, () => Formula)] = new WeakHashMap()
+  private var POLICIES: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
+    new WeakHashMap()
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
 
@@ -46,17 +47,17 @@ trait JeevesLib extends Sceeves {
    * the value (LOW/HIGH) and the policy.  If the system has no more pointers to the
    * level variable, then the value/formula pair can be garbage-collected as well.
    */
-  def policy(lvar: LevelVar, f: => Formula) = {
-    POLICIES += (lvar -> (LOW, f _))
+  def policy(lvar: LevelVar, f: Symbolic => Formula) = {
+    POLICIES += (lvar -> (LOW, f))
   }
   
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
 
   def concretize[T](ctx: Symbolic, e: Expr[T]) = {
     debug(" *** # POLICIES: " + POLICIES.size)
-    val context = (CONTEXT === ctx) && 
+    val context =
       AND(POLICIES.map{
-        case (lvar, (level, f)) => f() ==> (lvar === level)
+        case (lvar, (level, f)) => f (ctx) ==> (lvar === level)
       })
     super.concretize(context, e);
   }

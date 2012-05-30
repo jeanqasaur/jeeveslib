@@ -27,6 +27,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
 
   case class Test(id: Int) extends JeevesRecord
   
+  /*
   test ("concretizeList non-null") {
     val x = pickObject[Test];
     assume(x === Test(0));
@@ -34,11 +35,14 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val cList : List[Test] = concretize(NULL, symList);
     expect(List(Test(0))) {cList};
   }
+  */
 
+  /*
   test ("concretizeList null") {
     val x = pickObject[Test](NULL);
     val symList = List(x);
     val cList : List[Test] = concretize(NULL, symList);
     expect(Nil) {cList};
   }
+  */
 }

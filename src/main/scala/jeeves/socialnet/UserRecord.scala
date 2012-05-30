@@ -38,16 +38,16 @@ extends JeevesRecord {
   def remove(u: UserRecord) {friends = friends - u}
   def setLocation(x: BigInt, y: BigInt) {
     val l = mkLevel();
-    policy(l, DISTANCE(CONTEXT, this) >= 10);
+    policy(l, (CONTEXT: Symbolic) => DISTANCE(CONTEXT, this) >= 10);
     this.X = mkSensitiveInt(l, x, 1000);
     this.Y = mkSensitiveInt(l, y, 1000);
   }
 
   /** Observers */
-  val name = mkSensitive(level(nameL), nameV)
-  val email = mkSensitive(level(emailL), emailV)
-  val network = mkSensitive(level(networkL), networkV);
-  def getFriends() = {
+  val name = mkSensitive(level (nameL), nameV)
+  val email = mkSensitive(level (emailL), emailV)
+  val network = mkSensitive(level (networkL), networkV);
+  def getFriends () = {
     val l = level(friendsL);
     friends.map(mkSensitive(l, _))
   }
@@ -55,13 +55,14 @@ extends JeevesRecord {
   def location() = (X, Y);
 
   /** Helpers */
-  private def level(ul: UserLevel) = {
+  private def level (ul: UserLevel): LevelVar = {
     val l = mkLevel();
-    val me = CONTEXT === this;
+    def me (implicit CONTEXT: Symbolic) = CONTEXT === this;
     ul match {
       case Anyone => 
-      case Self => policy(l, ! me)
-      case Friends => policy(l, ! (me || friends.has(CONTEXT)));
+      case Self => policy(l, (CONTEXT: Symbolic) => ! me (CONTEXT))
+      case Friends => policy(l,
+        (CONTEXT: Symbolic) => ! (me (CONTEXT) || friends.has(CONTEXT)));
     }
     l
   }
