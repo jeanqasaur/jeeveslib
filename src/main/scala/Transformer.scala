@@ -11,17 +11,6 @@ package cap.scalasmt
  */
 object Impossible extends RuntimeException
 object Partial {
-  def eqs(f: Formula)(implicit env: Environment) = {
-    var out = env;
-    for (c <- f.clauses) c match {    
-      // This is used only for contexts, right?
-//      case ObjectEq(v: ObjectVar[_], Object(o)) => out = out + (v -> o)
-//      case ObjectEq(Object(o), v: ObjectVar[_]) => out = out + (v -> o)
-      case _ =>
-    }
-    out
-  }
-
   sealed trait TransformEval[T] {
     def teval (e: T) (implicit env: Environment) : T
   }
@@ -146,7 +135,7 @@ object Partial {
     {f match {
       case BoolConditional(a, b, c) => 
         val sa = eval(a); 
-        BoolConditional(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
+        BoolConditional(sa, eval(b), eval(c))
       case BoolEq(a, b) =>
         BoolEq(eval(a), eval(b))
       case And(a, b) =>
@@ -212,7 +201,7 @@ object Partial {
     {e match {
       case IntFacet(a, b, c) => 
         val sa = eval(a) 
-        IntFacet(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
+        IntFacet(sa, eval(b), eval(c))
       case Plus(a, b) =>
         eval[BigInt, IntExpr, BigInt, IntExpr](
           a, b, (sa: BigInt, sb: BigInt) => sa + sb, Plus)
@@ -234,7 +223,7 @@ object Partial {
     {e match {
       case ObjectConditional(a, b, c) => 
         val sa = eval(a)
-        ObjectConditional(sa, eval(b)(eqs(sa)), eval(c)(eqs(eval(! sa))))
+        ObjectConditional(sa, eval(b), eval(c))
       case e => e
     }} match {
       case e if env.hasAll(e.vars) => Object(e.eval)
