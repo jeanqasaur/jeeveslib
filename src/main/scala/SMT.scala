@@ -158,11 +158,12 @@ object SMT {
     case ObjectConditional(cond, thn, els) => "(if " + formula(cond) + " " + atom(thn) + " " + atom(els) + ")"
     case Object(o) => sc.encode(o)
     case ObjectField(root, f) => "(" + f + " " + atom(root) + ")"
-    case v: ObjectVar[_] =>  
+/*    case v: ObjectVar[_] =>  
       if (env.has(v)) 
         sc.encode(env(v))
       else
         v.toString
+*/
   }
 
   private def set(e: Expr[Set[Atom]])(implicit q: String, env: Environment, sc: Scope): String = e match {
@@ -268,7 +269,7 @@ object SMT {
 
     // Adds the values mapped to variables in the scope.
     val variables = {for (v <- cur.vars; if env.has(v)) yield v match {
-      case v: ObjectVar[_] => Set(env(v))
+//      case v: ObjectVar[_] => Set(env(v))
       case v: ObjectSetVar => env(v)
       case _ => Set[Atom]()
     }}.flatten
@@ -299,19 +300,13 @@ object SMT {
     {for (v <- vars; if ! env.has(v))
       yield "(declare-fun " + v + {v match {
         case _: BoolVar => " () Bool)"
-        case _: ObjectVar[_] => " () Object)"
+//        case _: ObjectVar[_] => " () Object)"
         case _: ObjectSetVar => " (Object) Bool)"
     }}}.toList :::
     // declare types
     "(declare-datatypes () ((Type " + objects.map(sc.atomClassId(_)).mkString(" ") + ")))" ::
     "(declare-fun $type (Object) Type)" ::
     {for (o <- objects) yield "(assert (= ($type " + sc.encode(o) + ") " + sc.atomClassId(o) + "))"}.toList:::
-    {for (v <- vars.collect{case v: ObjectVar[_] if ! env.has(v) => v}) 
-      yield "(assert (or " + 
-      {for (klas <- objects.map(a => if (a == null) null else a.getClass); 
-          if (klas == null) || v.mayAssign(klas)) 
-          yield "(= ($type " + v + ") " + sc.classId(klas) + ")"}.mkString(" ") +
-    "))"}.toList :::
     // declare field values
     {for (o <- objects; f <- fields) 
       yield "(assert (= (" + f + " " + sc.encode(o) + ") " + {f match {
@@ -377,8 +372,8 @@ object SMT {
         v match {
           case v: BoolVar => 
             result = result + (v -> value.toBoolean);
-          case v: ObjectVar[_] =>
-            result = result + (v -> scope.decode(value));
+/*          case v: ObjectVar[_] =>
+            result = result + (v -> scope.decode(value)); */
           case v: ObjectSetVar =>
             throw SolverException("unsupported opertion") 
         }

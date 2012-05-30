@@ -11,12 +11,13 @@ class ExampleAtomList extends FunSuite with Sceeves {
   def eval[T](expr: Expr[T]) = expr.eval
 
   /*
-  def mkElt(x: Dummy): ObjectVar[Dummy] = {
+  def mkElt(x: Dummy): ObjectExpr[Atom] = {
     val v: ObjectVar[Dummy] = pickObject(x);
     assume (v === x);
     v
   }
   */
+  
   val c = (1 to 3).toList.map(Dummy(_))
 //  val s = c.map(mkElt)
 

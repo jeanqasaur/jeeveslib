@@ -18,8 +18,8 @@ object Partial {
     var out = env;
     for (c <- f.clauses) c match {    
       // This is used only for contexts, right?
-      case ObjectEq(v: ObjectVar[_], Object(o)) => out = out + (v -> o)
-      case ObjectEq(Object(o), v: ObjectVar[_]) => out = out + (v -> o)
+//      case ObjectEq(v: ObjectVar[_], Object(o)) => out = out + (v -> o)
+//      case ObjectEq(Object(o), v: ObjectVar[_]) => out = out + (v -> o)
       case _ =>
     }
     out
@@ -94,7 +94,6 @@ object Partial {
     implicit object IntIntMapping
     extends Mapping[BigInt, IntExpr, IntExpr] {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): IntExpr = {
-        println ("int int");
         (sa, sb) match {
           case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
           case (IntFacet (c1, t1, f1), IntFacet (c2, t2, f2)) =>

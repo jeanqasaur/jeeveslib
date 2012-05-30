@@ -81,6 +81,7 @@ class ExampleAtoms extends FunSuite {
     expect(false) {SMT.solve(y.sub.sub === NULL).isEmpty}
   }
 
+  /*
   test ("SMT variable translation") {
     val a = Var.makeObject[Atom];
     val b = Dummy(1);
@@ -88,6 +89,7 @@ class ExampleAtoms extends FunSuite {
     expect(false) {env.isEmpty}
     expect(b) {env.get(a)}
   }
+  */
 
   case class Record(F: IntExpr, I: BigInt) extends Atom
 
@@ -99,9 +101,11 @@ class ExampleAtoms extends FunSuite {
     expect(true) {SMT.solve(y.sub === NULL).isEmpty}
   }
 
+  /*
   test ("string expression") {
     var x = Var.makeObject[Atom];
     expect(false) {SMT.solve(x === "me").isEmpty}
     expect(true) {SMT.solve(x === "me" && x === "you").isEmpty}
   }
+  */
 }
