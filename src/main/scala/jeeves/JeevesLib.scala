@@ -109,8 +109,14 @@ trait JeevesLib extends Sceeves {
     cs match {
       case BoolVal (true) => Partial.eval (t ())(EmptyEnv)
       case BoolVal (false) => Partial.eval (f ())(EmptyEnv)
-      case BoolConditional (BoolVar (v), t, f) => {
-        throw Unimplemented
+      case BoolConditional (BoolVar (v), tc, fc) => {
+        pushPC (BoolVar (v));
+        val tr: Formula = jif (tc, t, f);
+        val fr: Formula = jif (fc, t, f);
+        val r: Formula = BoolConditional (BoolVar (v)
+          , Partial.eval (tr)(EmptyEnv), Partial.eval (fr)(EmptyEnv));
+        popPC ();
+        r
       }
       case _ => throw Impossible
     }
@@ -122,7 +128,16 @@ trait JeevesLib extends Sceeves {
     cs match {
       case BoolVal (true) => Partial.eval (t ())(EmptyEnv).asInstanceOf[T]
       case BoolVal (false) => Partial.eval (f ())(EmptyEnv).asInstanceOf[T]
-      case BoolConditional (c, t, f) => throw Unimplemented
+      case BoolConditional (BoolVar (v), tc, fc) => {
+        pushPC (BoolVar (v));
+        val tr: ObjectExpr[T] = jif (tc, t, f);
+        val fr: ObjectExpr[T] = jif (fc, t, f);
+        val r: ObjectExpr[T] = ObjectConditional[T] (BoolVar (v)
+          , Partial.eval (tr)(EmptyEnv).asInstanceOf[ObjectExpr[T]]
+          , Partial.eval (fr)(EmptyEnv).asInstanceOf[ObjectExpr[T]]);
+        popPC ();
+        r
+      }
       case _ => throw Impossible
     }
   }
