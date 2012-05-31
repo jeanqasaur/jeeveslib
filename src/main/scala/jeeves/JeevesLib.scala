@@ -7,7 +7,7 @@ package cap.jeeves
  */
 
 import cap.scalasmt._
-import scala.collection.mutable.HashMap;
+import scala.collection.mutable.WeakHashMap;
 import scala.collection.mutable.Stack;
 import Debug.debug
 
@@ -25,8 +25,8 @@ trait JeevesLib extends Sceeves {
     case LOW => false
   }
 
-  private var _policies: HashMap[LevelVar, (Level, Symbolic => Formula)] =
-    new HashMap()
+  private var _policies: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
+    new WeakHashMap()
 
   /* */
   private val _pc: Stack[LevelVar] = new Stack ()
