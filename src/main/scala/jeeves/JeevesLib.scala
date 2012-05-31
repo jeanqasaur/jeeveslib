@@ -32,6 +32,12 @@ trait JeevesLib extends Sceeves {
   private val _pc: Stack[LevelVar] = new Stack ()
   private def pushPC (v: LevelVar): Unit = _pc.push (v)
   private def popPC (): LevelVar = _pc.pop ()
+  private def getPCFormula (): Formula = {
+    _pc.fold(BoolVal(true))(And)
+  }
+  private def mkGuardedPolicy (p: Symbolic => Formula): (Symbolic => Formula) = {
+    (CONTEXT: Symbolic) => (getPCFormula () ==> p (CONTEXT))
+  }
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
 
@@ -79,9 +85,8 @@ trait JeevesLib extends Sceeves {
       yield t;
   }
 
-
   def jif[T] (c: Formula, t: => T, f: => T) = {
-    Partial.eval(c)(EmptyEnv)
+    Partial.eval(c)(EmptyEnv) 
     popPC();
   }
 }
