@@ -7,6 +7,9 @@ import Zeros._
  * @author kuat
  */
 
+object Impossible extends RuntimeException
+object Unimplemented extends RuntimeException
+
 /**
  * Expressions.
  */
@@ -324,8 +327,8 @@ object `package` {
   def NULL = Object(null)
   def OR(vs: Traversable[Formula]) = vs.foldLeft(false: Formula)(_ || _)
   def AND(vs: Traversable[Formula]) = vs.foldLeft(true: Formula)(_ && _)
-  def ABS(x: IntExpr) = IF (x > 0) {x} ELSE {-x}
 }
+
 /** Lists of symbolic values. */
 case class IntExprs[T >: Null <: IntExpr](vs: Traversable[T]) {
   def has(i: IntExpr): Formula = OR(for (v <- vs) yield i === v)

@@ -53,5 +53,3 @@ trait Sceeves {
   def concretize[T](f: Formula, e: Expr[T]): T = 
     e.eval(solve(f :: CONSTRAINTS));
 }
-
-

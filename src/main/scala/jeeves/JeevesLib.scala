@@ -7,7 +7,7 @@ package cap.jeeves
  */
 
 import cap.scalasmt._
-import scala.collection.mutable.WeakHashMap;
+import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Stack;
 import Debug.debug
 
@@ -25,8 +25,8 @@ trait JeevesLib extends Sceeves {
     case LOW => false
   }
 
-  private var _policies: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
-    new WeakHashMap()
+  private var _policies: HashMap[LevelVar, (Level, Symbolic => Formula)] =
+    new HashMap()
 
   /* */
   private val _pc: Stack[LevelVar] = new Stack ()
@@ -85,8 +85,15 @@ trait JeevesLib extends Sceeves {
       yield t;
   }
 
-  def jif[T] (c: Formula, t: => T, f: => T) = {
-    Partial.eval(c)(EmptyEnv) 
+  /* Jeeves conditional. */
+  def jif[T >: Null <: Atom] (c: Formula, t: Unit => T, f: Unit => T): T = {
+    val cs: Formula = Partial.eval(c)(EmptyEnv);
+    cs match {
+      case BoolVal (true) => Partial.eval (t ())
+      case BoolVal (false) => Partial.eval (f ())
+      case BoolVar (_) => throw Unimplemented
+      case BoolConditional (c, t, f) => throw Unimplemented
+    }
     popPC();
   }
 }

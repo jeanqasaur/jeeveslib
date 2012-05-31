@@ -9,7 +9,6 @@ package cap.scalasmt
  * Partial evaluation with  
  * constant and equality propagation.
  */
-object Impossible extends RuntimeException
 object Partial {
   sealed trait TransformEval[T] {
     def teval (e: T) (implicit env: Environment) : T
