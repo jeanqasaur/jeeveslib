@@ -116,10 +116,9 @@ object Partial {
       // (facet, facet)
       , (c1, t1, f1, c2, t2, f2) =>
         te2.teval (
-          v.facetCons (c1 && c2, exprCons (t1, t2)
-            , v.facetCons (
-              c1, exprCons (t1, f2)
-              , v.facetCons (c2, exprCons (f1, t2), exprCons (f1, f2)))) )
+          v.facetCons (c1
+            , v.facetCons (c2, exprCons (t1, t2), exprCons (t1, f2))
+            , v.facetCons (c2, exprCons (f1, t2), exprCons (f1, f2)) ) )
       // (_, facet)
       , (v1, c, t, f) =>
           te2.teval (v.facetCons (c, exprCons (v1, t), exprCons (v1, f)))

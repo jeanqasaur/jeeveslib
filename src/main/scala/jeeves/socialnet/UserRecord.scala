@@ -68,10 +68,7 @@ extends JeevesRecord {
   }
 
   private def ABS(x: IntExpr): IntExpr = {
-    // TODO: Replace this with jif.
-    val a = mkLevel ();
-    policy (a, _ => x < 0)
-    IntFacet (a, -x, x)
+    jif (x >= 0, _ => x, _ => -x)
   }
   private def DISTANCE(a: Symbolic, b: Symbolic) = 
     ABS(a.X - b.X) + ABS(a.Y - b.Y) 

@@ -85,16 +85,46 @@ trait JeevesLib extends Sceeves {
       yield t;
   }
 
-  /* Jeeves conditional. */
-  def jif[T >: Null <: Atom] (c: Formula, t: Unit => T, f: Unit => T): T = {
+  /* Jeeves conditionals. */
+  def jif (c: Formula, t: Unit => IntExpr, f: Unit => IntExpr): IntExpr = {
     val cs: Formula = Partial.eval(c)(EmptyEnv);
     cs match {
-      case BoolVal (true) => Partial.eval (t ())
-      case BoolVal (false) => Partial.eval (f ())
-      case BoolVar (_) => throw Unimplemented
-      case BoolConditional (c, t, f) => throw Unimplemented
+      case BoolVal (true) => Partial.eval (t ())(EmptyEnv)
+      case BoolVal (false) => Partial.eval (f ())(EmptyEnv)
+      case BoolConditional (BoolVar (v), tc, fc) => {
+        pushPC (BoolVar (v));
+        val tr: IntExpr = jif (tc, t, f);
+        val fr: IntExpr = jif (fc, t, f);
+        val r: IntExpr = IntFacet (BoolVar (v)
+          , Partial.eval (tr)(EmptyEnv), Partial.eval (fr)(EmptyEnv));
+        popPC ();
+        r
+      }
+      case _ => throw Impossible
     }
-    popPC();
+  }
+
+  def jif (c: Formula, t: Unit => Formula, f: Unit => Formula): Formula = {
+    val cs: Formula = Partial.eval(c)(EmptyEnv);
+    cs match {
+      case BoolVal (true) => Partial.eval (t ())(EmptyEnv)
+      case BoolVal (false) => Partial.eval (f ())(EmptyEnv)
+      case BoolConditional (BoolVar (v), t, f) => {
+        throw Unimplemented
+      }
+      case _ => throw Impossible
+    }
+  }
+
+  def jif[T >: Null <: Atom] (
+    c: Formula, t: Unit => ObjectExpr[T], f: Unit => ObjectExpr[T]): ObjectExpr[T] = {
+    val cs: Formula = Partial.eval(c)(EmptyEnv);
+    cs match {
+      case BoolVal (true) => Partial.eval (t ())(EmptyEnv).asInstanceOf[T]
+      case BoolVal (false) => Partial.eval (f ())(EmptyEnv).asInstanceOf[T]
+      case BoolConditional (c, t, f) => throw Unimplemented
+      case _ => throw Impossible
+    }
   }
 }
 
