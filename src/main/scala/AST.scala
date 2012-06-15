@@ -35,7 +35,6 @@ object Var {
   private var COUNTER = 0
   private def inc() = {COUNTER = COUNTER + 1; COUNTER.toString}
   def makeBool = BoolVar(inc())
-  def makeObjectSet = ObjectSetVar(inc())
 } 
 sealed trait BinaryExpr[T <: Expr[_]] {
   assert (left != null)
@@ -165,6 +164,16 @@ case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
   def eval(implicit env: Environment) = f(root.eval).eval
 }
 
+sealed abstract class FunctionExpr[A, B] extends Expr[A => B]
+case class FunctionVal[A, B](v: A => B)
+extends FunctionExpr[A, B] with Constant[A => B] {
+  def default: (A => B) = throw Impossible
+  def ===(that: Expr[A => B]): Expr[Boolean] = BoolVal(this == that)
+  def app (arg: A): B = v (arg)
+}
+// TODO
+// case class FunctionFacet(cond: Formula, thn: FunctionExpr, els: FunctionExpr)
+
 /**
  * Object and field expressions.
  */
@@ -252,9 +261,6 @@ case class Singleton(sub: ObjectExpr[Atom])
   def eval(implicit env: Environment) = Set(sub.eval)
 }
 case class ObjectSet(v: Set[Atom]) extends RelExpr with Constant[Set[Atom]] 
-case class ObjectSetVar(id: String) extends RelExpr with Var[Set[Atom]] {
-  override def toString = "s" + id
-}
 case class RelJoin(root: RelExpr, f: FieldDesc[Atom]) extends RelExpr {
   def vars = root.vars
   def eval(implicit env: Environment) = (for (o <- root.eval) yield f(o).eval)
@@ -328,6 +334,9 @@ object `package` {
   def OR(vs: Traversable[Formula]) = vs.foldLeft(false: Formula)(_ || _)
   def AND(vs: Traversable[Formula]) = vs.foldLeft(true: Formula)(_ && _)
 }
+
+
+
 
 /** Lists of symbolic values. */
 case class IntExprs[T >: Null <: IntExpr](vs: Traversable[T]) {

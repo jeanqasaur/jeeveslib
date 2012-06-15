@@ -176,11 +176,6 @@ object SMT {
       val r = q + "0";
       "(exists ((" + r + " Object)) (and (= " + q + 
         " (" + f + " " + r + ")) " + set(root)(r, env, sc) + "))"
-    case v: ObjectSetVar => 
-      if (env.has(v))
-        set(ObjectSet(env(v)))
-      else
-        "(" + v + " " + q + ")"
   }
 
   private def sanitize(s: String) = 
@@ -269,7 +264,6 @@ object SMT {
 
     // Adds the values mapped to variables in the scope.
     val variables = {for (v <- cur.vars; if env.has(v)) yield v match {
-      case v: ObjectSetVar => env(v)
       case _ => Set[Atom]()
     }}.flatten
 
@@ -300,7 +294,7 @@ object SMT {
       yield "(declare-fun " + v + {v match {
         case _: BoolVar => " () Bool)"
 //        case _: ObjectVar[_] => " () Object)"
-        case _: ObjectSetVar => " (Object) Bool)"
+//        case _: ObjectSetVar => " (Object) Bool)"
     }}}.toList :::
     // declare types
     "(declare-datatypes () ((Type " + objects.map(sc.atomClassId(_)).mkString(" ") + ")))" ::
@@ -373,8 +367,6 @@ object SMT {
             result = result + (v -> value.toBoolean);
 /*          case v: ObjectVar[_] =>
             result = result + (v -> scope.decode(value)); */
-          case v: ObjectSetVar =>
-            throw SolverException("unsupported opertion") 
         }
       }
 
