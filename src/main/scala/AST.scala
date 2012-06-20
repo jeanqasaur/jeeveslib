@@ -72,10 +72,17 @@ sealed abstract class Formula extends Expr[Boolean] {
   def ==> (that: Formula) = Not(this) || that
   def <==> (that: Formula) = ===(that)
   def unary_! = Not(this)
-  def ?(thn: Formula) = new {def !(els: Formula) = BoolConditional(Formula.this, thn, els)}
+  def ?(thn: Formula) =
+    new {def !(els: Formula) = BoolConditional(Formula.this, thn, els)}
   def ?(thn: IntExpr) = new {def !(els: IntExpr) =
     IntFacet(Formula.this, thn, els)}
-  def ?(thn: ObjectExpr[Atom]) = new {def !(els: ObjectExpr[Atom]) = ObjectConditional(Formula.this, thn, els)}
+  def ?(thn: ObjectExpr[Atom]) =
+    new {def !(els: ObjectExpr[Atom]) =
+      ObjectConditional(Formula.this, thn, els)}
+  // TODO: Define more function expressions...
+  def ?[A, B](thn: FunctionExpr[A, B]) =
+    new {def !(els: FunctionExpr[A, B]) =
+      FunctionFacet(Formula.this, thn, els)}
 
   def clauses: List[Formula] = this match {
     case And(a,b) => a.clauses ++ b.clauses

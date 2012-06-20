@@ -54,12 +54,19 @@ trait JeevesLib extends Sceeves {
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
 
-  def mkSensitiveInt(lvar: LevelVar, high: IntExpr, low: IntExpr = -1): IntExpr = 
+  def mkSensitiveInt(lvar: LevelVar, high: IntExpr, low: IntExpr = -1)
+    : IntExpr = 
     lvar ? high ! low
-  
-  def mkSensitive(lvar: LevelVar, high: Symbolic, low: Symbolic = NULL): Symbolic = 
+  def mkSensitive(lvar: LevelVar, high: Symbolic, low: Symbolic = NULL)
+    : Symbolic = 
     lvar ? high ! low
-  
+  def mkSensitiveIntFunction(lvar: LevelVar
+    , high: FunctionExpr[IntExpr, IntExpr], low: FunctionExpr[IntExpr, IntExpr])
+  : FunctionExpr[IntExpr, IntExpr] = lvar ? high ! low
+  def mkSensitiveFunction(lvar: LevelVar
+    , high: FunctionExpr[Atom, Atom], low: FunctionExpr[Atom, Atom])
+  : FunctionExpr[Atom, Atom] = lvar ? high ! low
+
   /**
    * Policies take the form policy(a, f), where a is the level variable and f isi
    * a formula that sets a to LOW if f is true.
@@ -149,10 +156,10 @@ trait JeevesLib extends Sceeves {
       , ObjectConditional[T])
   }
 
-  def jfun[A, B, BS] (f: FunctionExpr[A, B], arg: A)
-    (implicit vf: ValFacet[B, BS]): BS = {
+  def jfun[A, B] (f: FunctionExpr[A, B], arg: A)
+    (implicit vf: FacetCons[B]): B = {
     f match {
-      case FunctionVal (f) => vf.valCons(f (arg))
+      case FunctionVal (f) => f (arg)
       case FunctionFacet (BoolVar (v), thn, els) =>
         if (_pc.contains (PathVar (v))) {
           jfun (thn, arg)
@@ -169,7 +176,7 @@ trait JeevesLib extends Sceeves {
           val fr = jfun (els, arg)
           popPC ();
 
-          val r = vf.facetCons(BoolVar (v), tr, tr)
+          val r = vf.facetCons(BoolVar (v), tr, fr)
           r
         }
       case _ => throw Impossible
