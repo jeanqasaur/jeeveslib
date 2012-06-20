@@ -149,6 +149,30 @@ trait JeevesLib extends Sceeves {
       , ObjectConditional[T])
   }
 
-  /* Jeeves functions. */
-//  def jfunEval[T](
+  def jfun[A, B, BS] (f: FunctionExpr[A, B], arg: A)
+    (implicit vf: ValFacet[B, BS]): BS = {
+    f match {
+      case FunctionVal (f) => vf.valCons(f (arg))
+      case FunctionFacet (BoolVar (v), thn, els) =>
+        if (_pc.contains (PathVar (v))) {
+          jfun (thn, arg)
+        } else if (_pc.contains (NegPathVar (v))) {
+          jfun (els, arg)
+        } else {
+          // First evaluate the true branch.
+          pushPC (v);
+          val tr = jfun (thn, arg)
+          popPC ();
+
+          // Then evaluate the false branch.
+          pushNegPC (v);
+          val fr = jfun (els, arg)
+          popPC ();
+
+          val r = vf.facetCons(BoolVar (v), tr, tr)
+          r
+        }
+      case _ => throw Impossible
+    }
+  }
 }

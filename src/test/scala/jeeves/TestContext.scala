@@ -5,7 +5,7 @@ import org.scalatest.Assertions
 import cap.scalasmt._
 import cap.jeeves._
 
-class ExampleContext extends FunSuite with JeevesLib {
+class TestContext extends FunSuite with JeevesLib {
 
   case class Dummy(ID: BigInt) extends JeevesRecord
   case class DummyContext(id: BigInt, viewer: Dummy) extends JeevesRecord

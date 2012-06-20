@@ -25,22 +25,6 @@ object Partial {
     }
   }
 
-  sealed trait ValFacet[T, TS] {
-    def valCons (v: T): TS
-    def facetCons(c: Formula, t: TS, f: TS): TS
-  }
-  object ValFacet {
-    implicit object BoolValFacet extends ValFacet[Boolean, Formula] {
-      def valCons (b) = BoolVal(b)
-      def facetCons (c: Formula, t: Formula, f: Formula): Formula =
-        BoolConditional (c, t, f)
-    }
-    implicit object IntValFacet extends ValFacet[BigInt, IntExpr] {
-      def valCons (i) = IntVal(i)
-      def facetCons (c: Formula, t: IntExpr, f: IntExpr): IntExpr =
-        IntFacet (c, t, f)
-    }
-  }
   sealed trait CaseMatch[T1, T1S, T2S] {
     def caseMatch (a: T1S, b: T1S
       , fVals: (T1, T1) => T2S
