@@ -365,8 +365,6 @@ object SMT {
         v match {
           case v: BoolVar => 
             result = result + (v -> value.toBoolean);
-/*          case v: ObjectVar[_] =>
-            result = result + (v -> scope.decode(value)); */
         }
       }
 

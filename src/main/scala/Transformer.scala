@@ -41,7 +41,7 @@ object Partial {
         IntFacet (c, t, f)
     }
   }
-  sealed trait Mapping[T1, T1S, T2S] {
+  sealed trait CaseMatch[T1, T1S, T2S] {
     def caseMatch (a: T1S, b: T1S
       , fVals: (T1, T1) => T2S
       , fFacets: (Formula, T1S, T1S, Formula, T1S, T1S) => T2S
@@ -49,9 +49,9 @@ object Partial {
       , fBothR: (Formula, T1S, T1S, T1S) => T2S
       , fOther: (T1S, T1S) => T2S): T2S
   }
-  object Mapping {
-    implicit object BoolBoolMapping
-    extends Mapping[Boolean, Formula, Formula] {
+  object CaseMatch {
+    implicit object BoolBoolCaseMatch
+    extends CaseMatch[Boolean, Formula, Formula] {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (BoolVal (sa), BoolVal (sb)) => fVals (sa, sb)
@@ -63,8 +63,8 @@ object Partial {
         }
       }
     }
-    implicit object IntBoolMapping
-    extends Mapping[BigInt, IntExpr, Formula] {
+    implicit object IntBoolCaseMatch
+    extends CaseMatch[BigInt, IntExpr, Formula] {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
@@ -76,8 +76,8 @@ object Partial {
         }
       }
     }
-    implicit object IntIntMapping
-    extends Mapping[BigInt, IntExpr, IntExpr] {
+    implicit object IntIntCaseMatch
+    extends CaseMatch[BigInt, IntExpr, IntExpr] {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): IntExpr = {
         (sa, sb) match {
           case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
@@ -89,8 +89,8 @@ object Partial {
         }
       }
     }
-    implicit object ObjectBoolMapping
-    extends Mapping[Atom, ObjectExpr[Atom], Formula] {
+    implicit object ObjectBoolCaseMatch
+    extends CaseMatch[Atom, ObjectExpr[Atom], Formula] {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (Object (sa), Object (sb)) => fVals (sa, sb)
@@ -107,7 +107,7 @@ object Partial {
   def eval[T1, T1S, T2, T2S] (a: T1S, b: T1S
     , op: (T1, T1) => T2, exprCons: (T1S, T1S) => T2S)
     (implicit env: Environment
-      , m: Mapping[T1, T1S, T2S]
+      , m: CaseMatch[T1, T1S, T2S]
       , v: ValFacet[T2, T2S]
       , te1: TransformEval[T1S], te2: TransformEval[T2S]): T2S = {
     m.caseMatch(te1.teval(a), te1.teval(b)

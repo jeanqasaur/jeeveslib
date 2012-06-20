@@ -35,44 +35,12 @@ class ExampleContext extends FunSuite with JeevesLib {
     expect(false) { concretize(highCtxt, x_s~'ID === y_s~'ID) }
   }
 
-/*
-  test ("context viewer values") {
-    expect(1) { concretize(highCtxt, CONTEXT.viewer~'ID) }
-    expect(0) { concretize(lowCtxt, CONTEXT.viewer~'ID) }
-    expect(true) {
-      concretize(highCtxt, CONTEXT.viewer~'ID === IntVal(1))
-    }
-    expect(false) {
-      concretize(highCtxt, CONTEXT.viewer~'ID === IntVal(0))
-    }
-  }
-*/
-
   test ("formula with context id and object field - false") {
-//    expect(0) { concretize(lowCtxt, CONTEXT~'id) }
     expect(-1) { concretize(lowCtxt, x_s~'ID) }
-    /*
-    expect(false) {
-      concretize(lowCtxt, CONTEXT~'id === x_s~'ID)
-    }
-    */
   }
 
-  /*
-  test ("formula with context viewer and object field - true") {
-    expect(true) {
-      concretize(highCtxt, CONTEXT.viewer~'ID === x_s~'ID)
-    }
-  }
-  */
   test ("formula with context viewer and object field - false") {
-//    expect(0) { concretize(lowCtxt, CONTEXT.viewer~'ID) }
     expect(-1) { concretize(lowCtxt, x_s~'ID) }
-    /*
-    expect(false) {
-      concretize(lowCtxt, CONTEXT.viewer~'ID === x_s~'ID)
-    }
-    */
   }
 
   test ("high confidentiality context") {
@@ -96,17 +64,4 @@ class ExampleContext extends FunSuite with JeevesLib {
   test ("high confidentiality context - list") {
     expect(true) { concretize(highCtxt, s.has(Dummy(1))) }
   }
-
-  /*
-  test ("hasFormula") {
-    expect(true) {
-      concretize(highCtxt, s.hasFormula(x =>
-        x.ID === CONTEXT.viewer.ID))
-    }
-    expect(false) {
-      concretize(lowCtxt, s.hasFormula(x =>
-        x.ID === CONTEXT.viewer.ID))
-    }
-  }
-  */
 }

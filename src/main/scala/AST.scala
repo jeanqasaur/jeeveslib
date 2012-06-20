@@ -164,15 +164,17 @@ case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
   def eval(implicit env: Environment) = f(root.eval).eval
 }
 
-sealed abstract class FunctionExpr[A, B] extends Expr[A => B]
-case class FunctionVal[A, B](v: A => B)
-extends FunctionExpr[A, B] with Constant[A => B] {
+sealed abstract class FunctionExpr[A, B] extends Expr[A => B] {
   def default: (A => B) = throw Impossible
   def ===(that: Expr[A => B]): Expr[Boolean] = BoolVal(this == that)
+}
+case class FunctionVal[A, B](v: A => B)
+extends FunctionExpr[A, B] with Constant[A => B] {
   def app (arg: A): B = v (arg)
 }
-// TODO
-// case class FunctionFacet(cond: Formula, thn: FunctionExpr, els: FunctionExpr)
+case class FunctionFacet[A, B](
+  cond: Formula, thn: FunctionExpr[A,B], els: FunctionExpr[A,B])
+extends FunctionExpr[A, B] with Ite[A => B]
 
 /**
  * Object and field expressions.
