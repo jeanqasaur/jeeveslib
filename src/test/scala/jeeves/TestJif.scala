@@ -12,7 +12,7 @@ class TestJif extends FunSuite with JeevesLib {
     val a = mkLevel();
     val x = mkSensitiveInt(a, 0, 1)
     // If ctxt != 0, then a is LOW.
-    policy (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
+    exclude (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
     val r = jif (x === 0, (_: Unit) => IntVal(3), (_: Unit) => IntVal(4))
     expect (IntFacet(a, IntVal(3), IntVal(4))) { r }
     expect (3) { concretize(Dummy(0), r) }
@@ -23,7 +23,7 @@ class TestJif extends FunSuite with JeevesLib {
     val a = mkLevel();
     val x = mkSensitive(a, Dummy(0), Dummy(1))
     // If ctxt != 0, then a is LOW.
-    policy (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
+    exclude (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
     val r =
       jif (x === Dummy(0)
         , (_: Unit) => Object(Dummy(3)), (_: Unit) => Object(Dummy(4)))
@@ -32,7 +32,7 @@ class TestJif extends FunSuite with JeevesLib {
     expect (Dummy(4)) { concretize(Dummy(1), r) }
   }
 
-  test ("policy under conditional") {
+  test ("exclude under conditional") {
     // TODO: Do we want this?
   }
 
@@ -40,7 +40,7 @@ class TestJif extends FunSuite with JeevesLib {
     val a = mkLevel();
     val x = mkSensitiveInt(a, 0, 1)
     val y = mkSensitiveInt(a, 2, 3)
-    policy (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
+    exclude (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
     val r =
       jif ( x === 0
         , ((_: Unit) =>
@@ -59,8 +59,8 @@ class TestJif extends FunSuite with JeevesLib {
     val x = mkSensitiveInt(a, 0, 1)
     val y = mkSensitiveInt(b, 2, 3)
 
-    policy (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
-    policy (b, (ctxt: Symbolic) => !(ctxt === Dummy(1)))
+    exclude (a, (ctxt: Symbolic) => !(ctxt === Dummy(0)))
+    exclude (b, (ctxt: Symbolic) => !(ctxt === Dummy(1)))
 
     val r =
       jif ( x === 0

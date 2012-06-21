@@ -40,7 +40,7 @@ class Authentication extends FunSuite with JeevesLib {
     class File(private val _loc: String) extends JeevesRecord {
       // File read location.
       val canWrite = mkLevel ()
-      policy (canWrite
+      exclude (canWrite
       , (CONTEXT: Symbolic) =>
         !((CONTEXT.prin === Authentication.Admin)
               && (CONTEXT.cred.p === CONTEXT.prin)))

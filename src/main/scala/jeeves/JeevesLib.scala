@@ -68,15 +68,15 @@ trait JeevesLib extends Sceeves {
   : FunctionExpr[Atom, Atom] = lvar ? high ! low
 
   /**
-   * Policies take the form policy(a, f), where a is the level variable and f isi
-   * a formula that sets a to LOW if f is true.
+   * Policies take the form exclude(a, f), where a is the level variable and f
+   * is a formula that sets a to LOW if f is true.
    * 
    * We store policies as a weak hash map between the level variable and a pair
    * of the value (LOW/HIGH) and the policy.  If the system has no more pointers
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-  def policy(lvar: LevelVar, f: Symbolic => Formula) = {
+  def exclude(lvar: LevelVar, f: Symbolic => Formula) = {
     _policies += (lvar -> (LOW, mkGuardedPolicy (f)))
   }
   
@@ -156,6 +156,7 @@ trait JeevesLib extends Sceeves {
       , ObjectConditional[T])
   }
 
+  // TODO: Add more simplification.
   def jfun[A, B] (f: FunctionExpr[A, B], arg: A)
     (implicit vf: FacetCons[B]): B = {
     f match {

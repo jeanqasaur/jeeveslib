@@ -14,7 +14,7 @@ class TestContext extends FunSuite with JeevesLib {
 
   def mkElt(x: Dummy): Symbolic = {
     val l = mkLevel();
-    policy(l, (CONTEXT: Symbolic) => !(CONTEXT.viewer.ID === IntVal(1)));
+    exclude(l, (CONTEXT: Symbolic) => !(CONTEXT.viewer.ID === IntVal(1)));
     mkSensitive(l, x, defaultVal)
   }
 

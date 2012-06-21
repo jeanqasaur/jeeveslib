@@ -32,7 +32,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
 
     val name: Symbolic = {
       val a = mkLevel ();
-      policy(a, (CONTEXT: Symbolic) => !(CONTEXT === alice))
+      exclude(a, (CONTEXT: Symbolic) => !(CONTEXT === alice))
       mkSensitive(a // Level variable
         , aliceName     // High-confidentiality value
         , anonymousName // Low-confidentiality value
@@ -74,7 +74,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     private val _titleL = mkLevel()
     private val _acceptedL = mkLevel()
 
-    policy(_titleL
+    exclude(_titleL
       , (CONTEXT: Symbolic) =>
         !((CONTEXT.viewer === author) || (_isInternalF (CONTEXT))
             || ((CONTEXT.stage === Public) && (getIsAccepted ()))) )
@@ -104,7 +104,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     extends JeevesRecord {
  
     private val _reviewerL = mkLevel()
-    policy( _reviewerL
+    exclude( _reviewerL
       , (CONTEXT: Symbolic) =>
         !((CONTEXT.viewer === reviewer)
           || (CONTEXT.viewer.role === PCRole)) )
@@ -113,7 +113,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     }
 
     private val _scoreL = mkLevel()
-    policy ( _reviewerL, (CONTEXT: Symbolic) => !(_isInternalF (CONTEXT)))
+    exclude ( _reviewerL, (CONTEXT: Symbolic) => !(_isInternalF (CONTEXT)))
     def getScore() = {
       mkSensitiveInt(_scoreL, score, -1)
     }
@@ -131,7 +131,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
   // TODO: Make some papers and reviews.
   val paper0 = new Paper("Paper", aliceUser, Nil, false)
 
-  test ("title policy") {
+  test ("title exclude") {
     expect("Paper") { paper0.showTitle(ConfContext(aliceUser, Submission)) }
     expect("") { paper0.showTitle(ConfContext(defaultUser, Submission)) }
     expect("Paper") { paper0.showTitle(ConfContext(bobUser, Submission)) }

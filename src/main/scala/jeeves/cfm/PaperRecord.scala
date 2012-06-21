@@ -43,7 +43,7 @@ class PaperRecord( val id : Int
   // The name of the paper is always visible to the authors.
   def updateName(_name: Title): Symbolic = {
     val level = mkLevel ();
-    policy (level
+    exclude (level
       , (CONTEXT: Symbolic) =>
         !(isAuthor (CONTEXT) || isInternal (CONTEXT)
           || isPublic (getTags ()) (CONTEXT)));
@@ -53,7 +53,7 @@ class PaperRecord( val id : Int
 
   val authors: List[Symbolic] = {
     val level = mkLevel ();
-    policy ( level
+    exclude ( level
            , (CONTEXT: Symbolic) =>
               !(isAuthor (CONTEXT)
                 || (isInternal (CONTEXT) && (CONTEXT.stage === Decision)) ||
@@ -66,15 +66,15 @@ class PaperRecord( val id : Int
     val level = mkLevel ();
     tag match {
       case NeedsReview =>
-        policy (level,
+        exclude (level,
           (CONTEXT: Symbolic) =>
             !(isInternal (CONTEXT) && (CONTEXT.stage === Review)));
       case ReviewedBy (reviewer) =>
-        policy (level, (CONTEXT: Symbolic) => !(isInternal (CONTEXT)))
+        exclude (level, (CONTEXT: Symbolic) => !(isInternal (CONTEXT)))
       // Can see the "Accepted" tag if is an internal user at the decision
       // stage or if all information is visible.
       case Accepted =>
-        policy (level
+        exclude (level
           , (CONTEXT: Symbolic) =>
             !((isInternal (CONTEXT) && (CONTEXT.stage === Decision))
               || (CONTEXT.stage === Public)));
@@ -112,7 +112,7 @@ class PaperRecord( val id : Int
       val level = mkLevel();
       val s = 
         new PaperReview(reviewId, reviewer, rtext, score);
-      policy( level
+      exclude( level
             , !((CONTEXT.stage === Review && (hasTag (ReviewedBy (reviewer)))) ||
                 ((CONTEXT.stage === Decision) && isInternal) ||
                 (isAuthor &&

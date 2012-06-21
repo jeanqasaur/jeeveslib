@@ -16,7 +16,7 @@ class Circular extends FunSuite with JeevesLib {
   test("circular dependency") {
     val a = mkLevel()
     val v = mkSensitive(a, Node(1), Node(0))
-    policy(a, (CONTEXT: Symbolic) => !(CONTEXT === Node(1)))
+    exclude(a, (CONTEXT: Symbolic) => !(CONTEXT === Node(1)))
     expect(Node(1)) {
       concretize(v, v)
     }
