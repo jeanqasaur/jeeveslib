@@ -43,9 +43,9 @@ class PaperRecord( val id : Int
   // The name of the paper is always visible to the authors.
   def updateName(_name: Title): Symbolic = {
     val level = mkLevel ();
-    exclude (level
+    restrict (level
       , (CONTEXT: Symbolic) =>
-        !(isAuthor (CONTEXT) || isInternal (CONTEXT)
+        (isAuthor (CONTEXT) || isInternal (CONTEXT)
           || isPublic (getTags ()) (CONTEXT)));
     mkSensitive(level, _name, Title(""))
   }
@@ -53,9 +53,9 @@ class PaperRecord( val id : Int
 
   val authors: List[Symbolic] = {
     val level = mkLevel ();
-    exclude ( level
+    restrict ( level
            , (CONTEXT: Symbolic) =>
-              !(isAuthor (CONTEXT)
+              (isAuthor (CONTEXT)
                 || (isInternal (CONTEXT) && (CONTEXT.stage === Decision)) ||
                 isPublic (getTags ()) (CONTEXT)) );
     _authors.map(a => mkSensitive(level, a, NULL))
@@ -66,17 +66,17 @@ class PaperRecord( val id : Int
     val level = mkLevel ();
     tag match {
       case NeedsReview =>
-        exclude (level,
+        restrict (level,
           (CONTEXT: Symbolic) =>
-            !(isInternal (CONTEXT) && (CONTEXT.stage === Review)));
+            (isInternal (CONTEXT) && (CONTEXT.stage === Review)));
       case ReviewedBy (reviewer) =>
-        exclude (level, (CONTEXT: Symbolic) => !(isInternal (CONTEXT)))
+        restrict (level, (CONTEXT: Symbolic) => isInternal (CONTEXT))
       // Can see the "Accepted" tag if is an internal user at the decision
       // stage or if all information is visible.
       case Accepted =>
-        exclude (level
+        restrict (level
           , (CONTEXT: Symbolic) =>
-            !((isInternal (CONTEXT) && (CONTEXT.stage === Decision))
+            ((isInternal (CONTEXT) && (CONTEXT.stage === Decision))
               || (CONTEXT.stage === Public)));
     }
     mkSensitive(level, tag, NULL)
@@ -112,7 +112,7 @@ class PaperRecord( val id : Int
       val level = mkLevel();
       val s = 
         new PaperReview(reviewId, reviewer, rtext, score);
-      exclude( level
+      restrict( level
             , !((CONTEXT.stage === Review && (hasTag (ReviewedBy (reviewer)))) ||
                 ((CONTEXT.stage === Decision) && isInternal) ||
                 (isAuthor &&

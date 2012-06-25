@@ -7,6 +7,7 @@ package cap.jeeves
  */
 
 import cap.scalasmt._
+import scala.collection.mutable.Map;
 import scala.collection.mutable.WeakHashMap;
 import scala.collection.mutable.Stack;
 import Debug.debug
@@ -27,6 +28,8 @@ trait JeevesLib extends Sceeves {
 
   private var _policies: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
     new WeakHashMap()
+//  private var _storedPolicies: Map[LevelVar, List[
+
 
   sealed trait PathCondition
   case class PathVar (id: String) extends PathCondition
@@ -68,7 +71,7 @@ trait JeevesLib extends Sceeves {
   : FunctionExpr[Atom, Atom] = lvar ? high ! low
 
   /**
-   * Policies take the form exclude(a, f), where a is the level variable and f
+   * Policies take the form restrict(a, f), where a is the level variable and f
    * is a formula that sets a to LOW if f is true.
    * 
    * We store policies as a weak hash map between the level variable and a pair
@@ -76,8 +79,20 @@ trait JeevesLib extends Sceeves {
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-  def exclude(lvar: LevelVar, f: Symbolic => Formula) = {
-    _policies += (lvar -> (LOW, mkGuardedPolicy (f)))
+  def restrict(lvar: LevelVar, f: Symbolic => Formula) = {
+    _policies += (lvar -> (LOW, mkGuardedPolicy ((ctxt: Symbolic) => Not (f (ctxt)))))
+  }
+
+  /**
+   * Programming with only "restrict" is a pain, so we allow people to collect
+   * "permit" policies on things.
+   */
+  def permit(lvar: LevelVar, f: Symbolic => Formula) = {
+
+  }
+  // This function restricts everything except for what has been permitted.
+  def commitPolicies(lvar: LevelVar) = {
+
   }
   
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))

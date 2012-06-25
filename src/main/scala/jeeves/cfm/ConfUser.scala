@@ -22,7 +22,7 @@ case class ConfUser( val name: Name, _password: String, val role: UserStatus )
   extends JeevesRecord {
     val password = {
       val level = mkLevel ();
-      exclude (level, (CONTEXT: Symbolic) => !(CONTEXT.viewer === this));
+      restrict (level, (CONTEXT: Symbolic) => (CONTEXT.viewer === this));
       mkSensitive(level, Password(_password), Password(""))
     }
   }

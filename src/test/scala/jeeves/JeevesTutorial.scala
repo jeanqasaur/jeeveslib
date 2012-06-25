@@ -32,7 +32,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
 
     val name: Symbolic = {
       val a = mkLevel ();
-      exclude(a, (CONTEXT: Symbolic) => !(CONTEXT === alice))
+      restrict(a, (CONTEXT: Symbolic) => CONTEXT === alice)
       mkSensitive(a // Level variable
         , aliceName     // High-confidentiality value
         , anonymousName // Low-confidentiality value
@@ -74,9 +74,9 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     private val _titleL = mkLevel()
     private val _acceptedL = mkLevel()
 
-    exclude(_titleL
+    restrict(_titleL
       , (CONTEXT: Symbolic) =>
-        !((CONTEXT.viewer === author) || (_isInternalF (CONTEXT))
+        ((CONTEXT.viewer === author) || (_isInternalF (CONTEXT))
             || ((CONTEXT.stage === Public) && (getIsAccepted ()))) )
     def getTitle() = {
       mkSensitive(_titleL, StringVal(title), StringVal(""))
@@ -104,16 +104,16 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     extends JeevesRecord {
  
     private val _reviewerL = mkLevel()
-    exclude( _reviewerL
+    restrict( _reviewerL
       , (CONTEXT: Symbolic) =>
-        !((CONTEXT.viewer === reviewer)
+        ((CONTEXT.viewer === reviewer)
           || (CONTEXT.viewer.role === PCRole)) )
     def getReviewer() = {
       mkSensitive(_reviewerL, reviewer, defaultUser)
     }
 
     private val _scoreL = mkLevel()
-    exclude ( _reviewerL, (CONTEXT: Symbolic) => !(_isInternalF (CONTEXT)))
+    restrict ( _reviewerL, (CONTEXT: Symbolic) => _isInternalF (CONTEXT))
     def getScore() = {
       mkSensitiveInt(_scoreL, score, -1)
     }
@@ -131,7 +131,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
   // TODO: Make some papers and reviews.
   val paper0 = new Paper("Paper", aliceUser, Nil, false)
 
-  test ("title exclude") {
+  test ("title restrict") {
     expect("Paper") { paper0.showTitle(ConfContext(aliceUser, Submission)) }
     expect("") { paper0.showTitle(ConfContext(defaultUser, Submission)) }
     expect("Paper") { paper0.showTitle(ConfContext(bobUser, Submission)) }

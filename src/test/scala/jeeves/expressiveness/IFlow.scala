@@ -18,5 +18,14 @@ class IFlow extends FunSuite with JeevesLib {
   case object Low extends Label
   case class Join(l1: Label, l2: Label) extends Label
 
-  // TODO: Rest of the example.
+  // TODO: Figure out how to frame canFlow in terms of this...
+  private def canFlow (l1: Label, l2: Label): Unit = {
+    
+  }
+
+  // NOTE(JY): It is hard to write this example based on the Fine example
+  // because we only have "exclude."
+
+  // TODO(JY): Figure out how level variables fit with these labels...
+  // Are the labels level variables?
 }
