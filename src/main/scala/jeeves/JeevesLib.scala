@@ -30,7 +30,6 @@ trait JeevesLib extends Sceeves {
     new WeakHashMap()
 //  private var _storedPolicies: Map[LevelVar, List[
 
-
   sealed trait PathCondition
   case class PathVar (id: String) extends PathCondition
   case class NegPathVar (id: String) extends PathCondition
@@ -157,12 +156,17 @@ trait JeevesLib extends Sceeves {
   }
   def jassign[T >: Null <: Atom](v: ObjectExpr[T], v_old: ObjectExpr[T])
     : ObjectConditional[T] = {
-    // TODO: How do we capture who is doing the assignment?
     ObjectConditional (getPCFormula (), v, v_old)
   }
 
-  // TODO: Replace concretize with other things...
-  // TODO: Disallow concretize under symbolic conditionals??
+  /**
+   * Guarded assignment--integrity.
+   */
+  def guardedAssign[T](ctxt: Symbolic, k: LevelVar, v: Expr[T], v_old: Expr[T])
+    : Expr[T] = {
+    val kc: Boolean = unsafeConcretize(ctxt, k);
+    if (kc) { v } else { v_old }
+  }
 
   /**
    * Jeeves conditionals.

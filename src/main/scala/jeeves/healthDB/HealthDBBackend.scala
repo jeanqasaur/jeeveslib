@@ -21,8 +21,8 @@ object HealthDBBackend extends JeevesLib {
     _userCount = _userCount + 1;
     id
   }
-  def mkUser(name: String): UserRecord = {
-    new UserRecord(getNextUserId(), S(name))
+  def mkUser(name: String, status: UserStatus): UserRecord = {
+    new UserRecord(getNextUserId(), S(name), status)
   }
 
   def sendMsg (p: PatientRecord) (msg: String): Unit = {
