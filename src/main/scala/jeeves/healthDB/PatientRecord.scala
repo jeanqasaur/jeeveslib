@@ -15,9 +15,13 @@ class PatientRecord(
   , private val _doctor: UserRecord
   , private val _meds: List[MedicationRecord]) extends JeevesRecord {
   private val defaultUser = UserRecord(-1, S(""), Other)
+  private def isPatientOrDoctor (ctxt: Symbolic): Formula = {
+    (ctxt.identity === this) || (ctxt.identity === doctor)
+  }
 
   // Patient identity.
-  val np = mkLevel ()
+  private val np = mkLevel ()
+  restrict (np, (ctxt: Symbolic) => isPatientOrDoctor(ctxt))
   var identity = mkSensitive(np, _identity, defaultUser)
   def getIdentity = {
     mkSensitive(np, _identity, defaultUser)
@@ -27,7 +31,8 @@ class PatientRecord(
   }
 
   // Doctor identity.
-  val dp = mkLevel ()
+  private val dp = mkLevel ()
+  restrict (dp, (ctxt: Symbolic) => isPatientOrDoctor(ctxt))
   var doctor: Symbolic = mkSensitive(dp, _doctor, defaultUser)
   // TODO: Figure out why we need these explicit conversions...
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
@@ -36,6 +41,27 @@ class PatientRecord(
     doctor = guardedAssign (
       ctxt.asInstanceOf[Symbolic], canSet
       , mkSensitive(dp, newDoctor, defaultUser), doctor).asInstanceOf[Symbolic]
+  }
+
+  // Medication list.
+  private val mp = mkLevel ()
+  restrict (dp, (ctxt: Symbolic) => isPatientOrDoctor(ctxt))
+
+  var _actualMeds = _meds // Keep this in order to remove.
+  var meds = _meds.map(m => mkSensitive(mp, m, NULL))
+  def addMed (newMed: MedicationRecord) (implicit ctxt: HealthContext): Unit = {
+    val canSet = mkLevel ()
+    restrict (canSet, (ctxt: Symbolic) => ctxt.user.status === Admin)
+    _actualMeds = guardedAssign (
+      ctxt.asInstanceOf[Symbolic], canSet
+      , newMed :: _actualMeds, _actualMeds ) 
+    meds = guardedAssign (
+      ctxt.asInstanceOf[Symbolic], canSet
+      , (mkSensitive(mp, newMed, NULL)) :: meds, meds )
+  }
+  // TODO
+  def removeMed () (implicit ctxt: HealthContext): Unit = {
+    
   }
 }
 

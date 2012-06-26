@@ -162,8 +162,7 @@ trait JeevesLib extends Sceeves {
   /**
    * Guarded assignment--integrity.
    */
-  def guardedAssign[T](ctxt: Symbolic, k: LevelVar, v: Expr[T], v_old: Expr[T])
-    : Expr[T] = {
+  def guardedAssign[T](ctxt: Symbolic, k: LevelVar, v: T, v_old: T): T = {
     val kc: Boolean = unsafeConcretize(ctxt, k);
     if (kc) { v } else { v_old }
   }
