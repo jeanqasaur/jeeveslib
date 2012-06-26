@@ -26,9 +26,11 @@ trait JeevesLib extends Sceeves {
     case LOW => false
   }
 
+  // The entire policy store.
   private var _policies: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
     new WeakHashMap()
-//  private var _storedPolicies: Map[LevelVar, List[
+  // The temporary policy store for "permit."
+  private val _storedPolicies: Map[LevelVar, List[Symbolic => Formula]] = Map()
 
   sealed trait PathCondition
   case class PathVar (id: String) extends PathCondition
@@ -88,11 +90,32 @@ trait JeevesLib extends Sceeves {
    * "permit" policies on things.
    */
   def permit(lvar: LevelVar, f: Symbolic => Formula) = {
-
+    _storedPolicies.get(lvar) match {
+      case Some(policies: List[Symbolic => Formula]) =>
+       _storedPolicies += (lvar -> (f :: policies))
+      case None => _storedPolicies += (lvar -> List(f))
+    }
   }
   // This function restricts everything except for what has been permitted.
   def commitPolicies(lvar: LevelVar) = {
+    def mkSingleFormula (f_acc: Symbolic => Formula, f: Symbolic => Formula)
+      : Symbolic => Formula = {
+      (ctxt : Symbolic) => Or (f_acc (ctxt), f (ctxt))
+    }
 
+    _storedPolicies.get(lvar) match {
+      case Some(policies) =>
+        val policyFormula: Symbolic => Formula =
+          policies.foldLeft(
+            (ctxt: Symbolic) => BoolVal(true): Formula)(mkSingleFormula)
+        _policies +=
+          (lvar ->
+            ( LOW
+              // TODO: Figure out if this is where the guard should be...
+            , mkGuardedPolicy ((ctxt: Symbolic) => Not (policyFormula (ctxt)))))
+        _storedPolicies.remove(lvar)
+      case None => ()
+    }
   }
   
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
