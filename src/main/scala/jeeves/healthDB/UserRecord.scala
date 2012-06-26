@@ -8,4 +8,4 @@ package cap.jeeves.healthDB
 import cap.scalasmt._
 import HealthDBBackend._
 
-class UserRecord(_name: S) extends JeevesRecord
+case class UserRecord(id: Int, _name: S) extends JeevesRecord

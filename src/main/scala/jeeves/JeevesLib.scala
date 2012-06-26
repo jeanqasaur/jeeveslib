@@ -80,7 +80,8 @@ trait JeevesLib extends Sceeves {
    * as well.
    */
   def restrict(lvar: LevelVar, f: Symbolic => Formula) = {
-    _policies += (lvar -> (LOW, mkGuardedPolicy ((ctxt: Symbolic) => Not (f (ctxt)))))
+    _policies += (lvar ->
+      (LOW, mkGuardedPolicy ((ctxt: Symbolic) => Not (f (ctxt)))))
   }
 
   /**
@@ -97,7 +98,16 @@ trait JeevesLib extends Sceeves {
   
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
 
-  def concretize[T](ctx: Symbolic, e: Expr[T]) = {
+  private def conditionOnPC[T](
+    ctxt: Symbolic, f1: Unit => T, f2: Unit => T): T = {
+    val path: Boolean = unsafeConcretize(ctxt, getPCFormula ())
+    if (path) { f1 () } else { f2 () }
+  }
+
+  /**
+   * Unsafe concretization (does not take PC into account).
+   */ 
+  private def unsafeConcretize[T](ctx: Symbolic, e: Expr[T]) = {
     debug(" *** # _policies: " + _policies.size)
     val context =
       AND(_policies.map{
@@ -107,19 +117,52 @@ trait JeevesLib extends Sceeves {
   }
 
   /**
-   * Collections of symbolic values.
-   */ 
-
-  def concretize[T](ctx: Symbolic, e: (Expr[T], Expr[T])): (T, T) = 
+   * Concretization: Returns the default value if the path condition is not
+   * satisfied.
+   */
+  def concretize[T] (ctxt: Symbolic, e: Expr[T]): T = {
+    conditionOnPC (ctxt
+      , (_: Unit) => unsafeConcretize(ctxt, e), (_: Unit) => e.default)
+  }
+  def concretize[T] (ctx: Symbolic, e: (Expr[T], Expr[T])): (T, T) =
     (concretize(ctx, e._1), concretize(ctx, e._2))
-
-  def concretize[T >: Null <: Atom](ctx: Symbolic, lst: Traversable[Symbolic])
-  : List[T] = {
+  def concretize[T >: Null <: Atom](
+    ctx: Symbolic, lst: Traversable[Symbolic]): List[T] = {
     for (o <- lst.toList;
       t = concretize(ctx, o).asInstanceOf[T];
       if (t != null))
       yield t;
   }
+
+  /**
+   * Printing: only happens if the path condition allows it.
+   */
+  def jprint[T] (ctxt: Symbolic, e: Expr[T]): Unit = {
+    conditionOnPC (ctxt
+      , (_: Unit) => println (concretize(ctxt, e)), (_: Unit) => ())
+  }
+
+  /**
+   * Produces a value for assignment.
+   * TODO:
+   * - Do we want to concretize under the primary context?
+   *     NOTE: It seems like we should...
+   * - Do we want to prevent assignments under conditionals?
+   */
+  def jassign(v: IntExpr, v_old: IntExpr): IntExpr = {
+    IntFacet (getPCFormula (), v, v_old)
+  }
+  def jassign(v: Formula, v_old: Formula): Formula = {
+    BoolConditional (getPCFormula (), v, v_old)
+  }
+  def jassign[T >: Null <: Atom](v: ObjectExpr[T], v_old: ObjectExpr[T])
+    : ObjectConditional[T] = {
+    // TODO: How do we capture who is doing the assignment?
+    ObjectConditional (getPCFormula (), v, v_old)
+  }
+
+  // TODO: Replace concretize with other things...
+  // TODO: Disallow concretize under symbolic conditionals??
 
   /**
    * Jeeves conditionals.
@@ -169,6 +212,9 @@ trait JeevesLib extends Sceeves {
       , ((e: ObjectExpr[T]) =>
           Partial.eval (e)(EmptyEnv).asInstanceOf[ObjectExpr[T]])
       , ObjectConditional[T])
+  }
+  def jif (c: Formula, t: Unit => Unit, f: Unit => Unit): Unit = {
+    jifEval (c, t, f, (_: Unit) => (), (_: Formula, _: Unit, _: Unit) => ())
   }
 
   // TODO: Add more simplification.

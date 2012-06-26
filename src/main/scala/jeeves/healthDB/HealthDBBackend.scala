@@ -15,16 +15,30 @@ import Expr._
 object HealthDBBackend extends JeevesLib {
   private var patients: List[PatientRecord] = Nil;
 
-  /*
-  def addUser(u: UserRecord) {
-    users = u :: users
+  private var _userCount = 0
+  private def getNextUserId(): Int = {
+    val id = _userCount;
+    _userCount = _userCount + 1;
+    id
   }
-  
-  def addFriend(record1: UserRecord, record2: UserRecord) {
-    record1.add(record2);
-    record2.add(record1);
+  def mkUser(name: String): UserRecord = {
+    new UserRecord(getNextUserId(), S(name))
   }
 
+  def sendMsg (p: PatientRecord) (msg: String): Unit = {
+    // TODO: Send message to user
+  }
+
+  def countPatients (doctor: UserRecord): IntExpr = {
+    var count: IntExpr = 0
+    patients.foreach { p =>
+      jif ((p.doctor === doctor)
+        , ((_: Unit) => count = count + 1)
+        , ((_: Unit) => ()) )
+    }
+    count
+  }
+  /*
   def removeFriend(record1: UserRecord, record2: UserRecord) {
     record1.remove(record2);
     record2.remove(record1);
