@@ -54,7 +54,7 @@ object HealthDBBackend extends JeevesLib {
     for (f <- u.getFriends())
       yield email(f, u.name)
 
-  def email(f: Symbolic, b: Symbolic) = 
+  def email(f: Sensitive, b: Sensitive) = 
     Receipt(concretize(f, f.email), concretize(f, b))
 
   case class Receipt(email: Atom, body: Atom)

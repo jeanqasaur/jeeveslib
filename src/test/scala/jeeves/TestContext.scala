@@ -12,18 +12,18 @@ class TestContext extends FunSuite with JeevesLib {
 
   val defaultVal = Dummy(-1)
 
-  def mkElt(x: Dummy): Symbolic = {
+  def mkElt(x: Dummy): Sensitive = {
     val l = mkLevel();
-    restrict(l, (CONTEXT: Symbolic) => CONTEXT.viewer.ID === IntVal(1));
+    restrict(l, (CONTEXT: Sensitive) => CONTEXT.viewer.ID === IntVal(1));
     mkSensitive(l, x, defaultVal)
   }
 
   val x: Dummy = Dummy(1);
   val highCtxt: DummyContext = DummyContext(1, Dummy(1))
   val lowCtxt: DummyContext = DummyContext(0, Dummy(0))
-  val x_s: Symbolic = mkElt(x);
+  val x_s: Sensitive = mkElt(x);
   val y: Dummy = Dummy(2);
-  val y_s: Symbolic = mkElt(y); 
+  val y_s: Sensitive = mkElt(y); 
  
   val c = (1 to 3).toList.map(Dummy(_))
   val s = c.map(mkElt)

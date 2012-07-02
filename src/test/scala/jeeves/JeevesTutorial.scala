@@ -30,9 +30,9 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     val aliceName = StringVal("Alice")
     val anonymousName = StringVal("Anonymous")
 
-    val name: Symbolic = {
+    val name: Sensitive = {
       val a = mkLevel ();
-      restrict(a, (CONTEXT: Symbolic) => CONTEXT === alice)
+      restrict(a, (CONTEXT: Sensitive) => CONTEXT === alice)
       mkSensitive(a // Level variable
         , aliceName     // High-confidentiality value
         , anonymousName // Low-confidentiality value
@@ -60,7 +60,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
   val bobUser = ConfUser(getNextUid (), ReviewerRole)
   val claireUser = ConfUser(getNextUid (), PCRole)
 
-  private def _isInternalF (implicit CONTEXT: Symbolic): Formula = {
+  private def _isInternalF (implicit CONTEXT: Sensitive): Formula = {
     ((CONTEXT.viewer.role === ReviewerRole)
     || (CONTEXT.viewer.role === PCRole))
   }
@@ -75,7 +75,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     private val _acceptedL = mkLevel()
 
     restrict(_titleL
-      , (CONTEXT: Symbolic) =>
+      , (CONTEXT: Sensitive) =>
         ((CONTEXT.viewer === author) || (_isInternalF (CONTEXT))
             || ((CONTEXT.stage === Public) && (getIsAccepted ()))) )
     def getTitle() = {
@@ -105,7 +105,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
  
     private val _reviewerL = mkLevel()
     restrict( _reviewerL
-      , (CONTEXT: Symbolic) =>
+      , (CONTEXT: Sensitive) =>
         ((CONTEXT.viewer === reviewer)
           || (CONTEXT.viewer.role === PCRole)) )
     def getReviewer() = {
@@ -113,7 +113,7 @@ class JeevesTutorial extends FunSuite with JeevesLib {
     }
 
     private val _scoreL = mkLevel()
-    restrict ( _reviewerL, (CONTEXT: Symbolic) => _isInternalF (CONTEXT))
+    restrict ( _reviewerL, (CONTEXT: Sensitive) => _isInternalF (CONTEXT))
     def getScore() = {
       mkSensitiveInt(_scoreL, score, -1)
     }

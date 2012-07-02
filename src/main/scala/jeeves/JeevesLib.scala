@@ -16,7 +16,7 @@ trait JeevesLib extends Sceeves {
   trait JeevesRecord extends Atom with Serializable
 
   type LevelVar = BoolVar;
-  type Symbolic = ObjectExpr[Atom];
+  type Sensitive = ObjectExpr[Atom];
   
   sealed trait Level extends Serializable
   object HIGH extends Level
@@ -27,10 +27,10 @@ trait JeevesLib extends Sceeves {
   }
 
   // The entire policy store.
-  private var _policies: WeakHashMap[LevelVar, (Level, Symbolic => Formula)] =
+  private var _policies: WeakHashMap[LevelVar, (Level, Sensitive => Formula)] =
     new WeakHashMap()
   // The temporary policy store for "permit."
-  private val _storedPolicies: Map[LevelVar, List[Symbolic => Formula]] = Map()
+  private val _storedPolicies: Map[LevelVar, List[Sensitive => Formula]] = Map()
 
   sealed trait PathCondition
   case class PathVar (id: String) extends PathCondition
@@ -40,20 +40,27 @@ trait JeevesLib extends Sceeves {
   private def pushPC (id: String): Unit = _pc.push (PathVar (id))
   private def pushNegPC (id: String): Unit = _pc.push (NegPathVar (id))
   private def popPC (): PathCondition = _pc.pop ()
-  private def getPCFormula (): Formula = {
-    def pcToFormula (pc: PathCondition): Formula = {
-      pc match {
-        case PathVar (id) => BoolVar (id)
-        case NegPathVar (id) => Not (BoolVar (id))
+  private def getPCFormula (): Option[Formula] = {
+    if (_pc.isEmpty) { None
+    } else {
+      def pcToFormula (pc: PathCondition): Formula = {
+        pc match {
+          case PathVar (id) => BoolVar (id)
+          case NegPathVar (id) => Not (BoolVar (id))
+        }
       }
+      def mkAnd (f: Formula, pc: PathCondition): Formula = {
+        And(f, pcToFormula (pc))
+      }
+      Some(_pc.foldLeft((BoolVal(true): Formula))(mkAnd))
     }
-    def mkAnd (f: Formula, pc: PathCondition): Formula = {
-      And(f, pcToFormula (pc))
-    }
-    _pc.foldLeft((BoolVal(true): Formula))(mkAnd)
   }
-  private def mkGuardedPolicy (p: Symbolic => Formula): (Symbolic => Formula) = {
-    (CONTEXT: Symbolic) => (getPCFormula () ==> p (CONTEXT))
+  private def mkGuardedPolicy (p: Sensitive => Formula)
+  : (Sensitive => Formula) = {
+    getPCFormula () match {
+      case Some(f) => (CONTEXT: Sensitive) => (f ==> p (CONTEXT))
+      case None => p
+    }
   }
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
@@ -61,8 +68,8 @@ trait JeevesLib extends Sceeves {
   def mkSensitiveInt(lvar: LevelVar, high: IntExpr, low: IntExpr = -1)
     : IntExpr = 
     lvar ? high ! low
-  def mkSensitive(lvar: LevelVar, high: Symbolic, low: Symbolic = NULL)
-    : Symbolic = 
+  def mkSensitive(lvar: LevelVar, high: Sensitive, low: Sensitive = NULL)
+    : Sensitive = 
     lvar ? high ! low
   def mkSensitiveIntFunction(lvar: LevelVar
     , high: FunctionExpr[IntExpr, IntExpr], low: FunctionExpr[IntExpr, IntExpr])
@@ -80,39 +87,39 @@ trait JeevesLib extends Sceeves {
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-  def restrict(lvar: LevelVar, f: Symbolic => Formula) = {
+  def restrict(lvar: LevelVar, f: Sensitive => Formula) = {
     _policies += (lvar ->
-      (LOW, mkGuardedPolicy ((ctxt: Symbolic) => Not (f (ctxt)))))
+      (LOW, mkGuardedPolicy ((ctxt: Sensitive) => Not (f (ctxt)))))
   }
 
   /**
    * Programming with only "restrict" is a pain, so we allow people to collect
    * "permit" policies on things.
    */
-  def permit(lvar: LevelVar, f: Symbolic => Formula) = {
+  def permit(lvar: LevelVar, p: Sensitive => Formula) = {
+    val guardedPolicy = mkGuardedPolicy (p);
     _storedPolicies.get(lvar) match {
-      case Some(policies: List[Symbolic => Formula]) =>
-       _storedPolicies += (lvar -> (f :: policies))
-      case None => _storedPolicies += (lvar -> List(f))
+      case Some(policies: List[Sensitive => Formula]) =>
+       _storedPolicies += (lvar -> (guardedPolicy :: policies))
+      case None => _storedPolicies += (lvar -> List(guardedPolicy))
     }
   }
   // This function restricts everything except for what has been permitted.
   def commitPolicies(lvar: LevelVar) = {
-    def mkSingleFormula (f_acc: Symbolic => Formula, f: Symbolic => Formula)
-      : Symbolic => Formula = {
-      (ctxt : Symbolic) => Or (f_acc (ctxt), f (ctxt))
+    def mkSingleFormula (f_acc: Sensitive => Formula, f: Sensitive => Formula)
+      : Sensitive => Formula = {
+      (ctxt : Sensitive) => Or (f_acc (ctxt), f (ctxt))
     }
 
     _storedPolicies.get(lvar) match {
       case Some(policies) =>
-        val policyFormula: Symbolic => Formula =
+        val policyFormula: Sensitive => Formula =
           policies.foldLeft(
-            (ctxt: Symbolic) => BoolVal(true): Formula)(mkSingleFormula)
+            (ctxt: Sensitive) => BoolVal(true): Formula)(mkSingleFormula)
         _policies +=
           (lvar ->
             ( LOW
-              // TODO: Figure out if this is where the guard should be...
-            , mkGuardedPolicy ((ctxt: Symbolic) => Not (policyFormula (ctxt)))))
+            , mkGuardedPolicy ((ctxt: Sensitive) => Not (policyFormula (ctxt)))))
         _storedPolicies.remove(lvar)
       case None => ()
     }
@@ -121,15 +128,19 @@ trait JeevesLib extends Sceeves {
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
 
   private def conditionOnPC[T](
-    ctxt: Symbolic, f1: Unit => T, f2: Unit => T): T = {
-    val path: Boolean = unsafeConcretize(ctxt, getPCFormula ())
-    if (path) { f1 () } else { f2 () }
+    ctxt: Sensitive, f1: Unit => T, f2: Unit => T): T = {
+    getPCFormula ()  match {
+      case Some(f) =>
+        val path: Boolean = unsafeConcretize(ctxt, f)
+        if (path) { f1 () } else { f2 () }
+      case None => f1 ()
+    }
   }
 
   /**
    * Unsafe concretization (does not take PC into account).
    */ 
-  private def unsafeConcretize[T](ctx: Symbolic, e: Expr[T]) = {
+  private def unsafeConcretize[T](ctx: Sensitive, e: Expr[T]) = {
     debug(" *** # _policies: " + _policies.size)
     val context =
       AND(_policies.map{
@@ -142,14 +153,14 @@ trait JeevesLib extends Sceeves {
    * Concretization: Returns the default value if the path condition is not
    * satisfied.
    */
-  def concretize[T] (ctxt: Symbolic, e: Expr[T]): T = {
+  def concretize[T] (ctxt: Sensitive, e: Expr[T]): T = {
     conditionOnPC (ctxt
       , (_: Unit) => unsafeConcretize(ctxt, e), (_: Unit) => e.default)
   }
-  def concretize[T] (ctx: Symbolic, e: (Expr[T], Expr[T])): (T, T) =
+  def concretize[T] (ctx: Sensitive, e: (Expr[T], Expr[T])): (T, T) =
     (concretize(ctx, e._1), concretize(ctx, e._2))
   def concretize[T >: Null <: Atom](
-    ctx: Symbolic, lst: Traversable[Symbolic]): List[T] = {
+    ctx: Sensitive, lst: Traversable[Sensitive]): List[T] = {
     for (o <- lst.toList;
       t = concretize(ctx, o).asInstanceOf[T];
       if (t != null))
@@ -159,7 +170,7 @@ trait JeevesLib extends Sceeves {
   /**
    * Printing: only happens if the path condition allows it.
    */
-  def jprint[T] (ctxt: Symbolic, e: Expr[T]): Unit = {
+  def jprint[T] (ctxt: Sensitive, e: Expr[T]): Unit = {
     conditionOnPC (ctxt
       , (_: Unit) => println (concretize(ctxt, e)), (_: Unit) => ())
   }
@@ -172,22 +183,33 @@ trait JeevesLib extends Sceeves {
    * - Do we want to prevent assignments under conditionals?
    */
   def jassign(v: IntExpr, v_old: IntExpr): IntExpr = {
-    IntFacet (getPCFormula (), v, v_old)
+    getPCFormula () match {
+      case Some (f) => IntFacet (f, v, v_old)
+      case None => v
+    }
   }
   def jassign(v: Formula, v_old: Formula): Formula = {
-    BoolConditional (getPCFormula (), v, v_old)
+    getPCFormula () match {
+      case Some (f) => BoolConditional (f, v, v_old)
+      case None => v
+    }
   }
   def jassign[T >: Null <: Atom](v: ObjectExpr[T], v_old: ObjectExpr[T])
-    : ObjectConditional[T] = {
-    ObjectConditional (getPCFormula (), v, v_old)
+    : ObjectExpr[T] = {
+    getPCFormula () match {
+      case Some (f) => ObjectConditional (f, v, v_old)
+      case None => v
+    }
   }
 
   /**
    * Guarded assignment--integrity.
    */
-  def guardedAssign[T](ctxt: Symbolic, k: LevelVar, v: T, v_old: T): T = {
-    val kc: Boolean = unsafeConcretize(ctxt, k);
-    if (kc) { v } else { v_old }
+  def guardedAssign[T](ctxt: Sensitive, k: LevelVar, v: T, v_old: T): T = {
+    if (_pc.isEmpty) {
+      val kc: Boolean = unsafeConcretize(ctxt, k);
+      if (kc) { v } else { v_old }
+    } else { v_old }
   }
 
   /**

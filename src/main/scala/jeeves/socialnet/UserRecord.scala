@@ -38,7 +38,7 @@ extends JeevesRecord {
   def remove(u: UserRecord) {friends = friends - u}
   def setLocation(x: BigInt, y: BigInt) {
     val l = mkLevel();
-    restrict(l, (CONTEXT: Symbolic) => DISTANCE(CONTEXT, this) < 10);
+    restrict(l, (CONTEXT: Sensitive) => DISTANCE(CONTEXT, this) < 10);
     this.X = mkSensitiveInt(l, x, 1000);
     this.Y = mkSensitiveInt(l, y, 1000);
   }
@@ -57,12 +57,12 @@ extends JeevesRecord {
   /** Helpers */
   private def level (ul: UserLevel): LevelVar = {
     val l = mkLevel();
-    def me (implicit CONTEXT: Symbolic) = CONTEXT === this;
+    def me (implicit CONTEXT: Sensitive) = CONTEXT === this;
     ul match {
       case Anyone => 
-      case Self => restrict(l, (CONTEXT: Symbolic) => me (CONTEXT))
+      case Self => restrict(l, (CONTEXT: Sensitive) => me (CONTEXT))
       case Friends => restrict(l,
-        (CONTEXT: Symbolic) => (me (CONTEXT) || friends.has(CONTEXT)));
+        (CONTEXT: Sensitive) => (me (CONTEXT) || friends.has(CONTEXT)));
     }
     l
   }
@@ -70,6 +70,6 @@ extends JeevesRecord {
   private def ABS(x: IntExpr): IntExpr = {
     jif (x >= 0, _ => x, _ => -x)
   }
-  private def DISTANCE(a: Symbolic, b: Symbolic) = 
+  private def DISTANCE(a: Sensitive, b: Sensitive) = 
     ABS(a.X - b.X) + ABS(a.Y - b.Y) 
 }
