@@ -155,7 +155,7 @@ object SMT {
   }
 
   private def atom(e: Expr[Atom])(implicit env: Environment, sc: Scope): String = e match {
-    case ObjectConditional(cond, thn, els) => "(if " + formula(cond) + " " + atom(thn) + " " + atom(els) + ")"
+    case ObjectFacet(cond, thn, els) => "(if " + formula(cond) + " " + atom(thn) + " " + atom(els) + ")"
     case Object(o) => sc.encode(o)
     case ObjectField(root, f) => "(" + f + " " + atom(root) + ")"
 /*    case v: ObjectVar[_] =>  

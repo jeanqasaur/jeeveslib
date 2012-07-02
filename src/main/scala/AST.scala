@@ -78,7 +78,7 @@ sealed abstract class Formula extends Expr[Boolean] {
     IntFacet(Formula.this, thn, els)}
   def ?(thn: ObjectExpr[Atom]) =
     new {def !(els: ObjectExpr[Atom]) =
-      ObjectConditional(Formula.this, thn, els)}
+      ObjectFacet(Formula.this, thn, els)}
   // TODO: Define more function expressions...
   def ?[A, B](thn: FunctionExpr[A, B]) =
     new {def !(els: FunctionExpr[A, B]) =
@@ -201,7 +201,7 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom] extends Expr[Atom] with Dyn
     ObjectField(this, ObjectFieldDesc(name))
   }
 }
-case class ObjectConditional[+T >: Null <: Atom](
+case class ObjectFacet[+T >: Null <: Atom](
   cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T])
   extends ObjectExpr[T] with Ite[Atom] 
 case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[Atom] 

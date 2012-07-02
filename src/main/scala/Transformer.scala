@@ -78,10 +78,10 @@ object Partial {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (Object (sa), Object (sb)) => fVals (sa, sb)
-          case (ObjectConditional (c1, t1, f1), ObjectConditional (c2, t2, f2)) =>
+          case (ObjectFacet (c1, t1, f1), ObjectFacet (c2, t2, f2)) =>
             fFacets (c1, t1, f1, c2, t2, f2)
-          case (v1, ObjectConditional (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
-          case (ObjectConditional (c1, t1, f1), v2) => fBothR (c1, t1, f1, v2)
+          case (v1, ObjectFacet (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
+          case (ObjectFacet (c1, t1, f1), v2) => fBothR (c1, t1, f1, v2)
           case _ => fOther (sa, sb)
         }
       }
@@ -185,7 +185,7 @@ object Partial {
     val sroot: ObjectExpr[Atom] = eval (root);
     sroot match {
       case Object (v) => te.teval ((f (v)).asInstanceOf[R])
-      case ObjectConditional (c, tb, fb) => {
+      case ObjectFacet (c, tb, fb) => {
           facetCons (c
             , evalDeref[T, R] (tb, f, facetCons)
             , evalDeref[T, R] (fb, f, facetCons))
@@ -220,17 +220,17 @@ object Partial {
   def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: Environment)
     : ObjectExpr[Atom] =
     {e match {
-      case ObjectConditional(a, b, c) => 
+      case ObjectFacet(a, b, c) => 
         val sa = eval(a)
-        ObjectConditional(sa, eval(b), eval(c))
+        ObjectFacet(sa, eval(b), eval(c))
       case ObjectField (root, f) =>
-        evalDeref[Atom, ObjectExpr[Atom]] (root, f, ObjectConditional[Atom])
+        evalDeref[Atom, ObjectExpr[Atom]] (root, f, ObjectFacet[Atom])
       case Object(_) => e
     }} match {
       case e if env.hasAll(e.vars) => Object(e.eval)
-      case ObjectConditional(BoolVal(true), thn, _) => thn
-      case ObjectConditional(BoolVal(false), _, els) => els
-      case ObjectConditional(_, a, b) if a == b => a
+      case ObjectFacet(BoolVal(true), thn, _) => thn
+      case ObjectFacet(BoolVal(false), _, els) => els
+      case ObjectFacet(_, a, b) if a == b => a
       case e => e
     }
 

@@ -19,7 +19,7 @@ object ValFacet {
   extends ValFacet[Atom, ObjectExpr[Atom]] {
     def valCons (o) = Object (o)
     def facetCons (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom])
-      : ObjectExpr[Atom] = ObjectConditional (c, t, f)
+      : ObjectExpr[Atom] = ObjectFacet (c, t, f)
   }
 }
 
@@ -38,6 +38,6 @@ object FacetCons {
   }
   implicit object ObjectFacetCons extends FacetCons[ObjectExpr[Atom]] {
     def facetCons (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom])
-      : ObjectExpr[Atom] = ObjectConditional (c, t, f)
+      : ObjectExpr[Atom] = ObjectFacet (c, t, f)
   }
 }
