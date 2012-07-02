@@ -25,18 +25,18 @@ object Partial {
     }
   }
 
-  sealed trait CaseMatch[T1, T1S, T2S] {
-    def caseMatch (a: T1S, b: T1S
+  sealed trait FacetJoin[T1, T1S, T2S] {
+    def facetJoin (a: T1S, b: T1S
       , fVals: (T1, T1) => T2S
       , fFacets: (Formula, T1S, T1S, Formula, T1S, T1S) => T2S
       , fBothL: (T1S, Formula, T1S, T1S) => T2S
       , fBothR: (Formula, T1S, T1S, T1S) => T2S
       , fOther: (T1S, T1S) => T2S): T2S
   }
-  object CaseMatch {
-    implicit object BoolBoolCaseMatch
-    extends CaseMatch[Boolean, Formula, Formula] {
-      def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
+  object FacetJoin {
+    implicit object BoolBoolFacetJoin
+    extends FacetJoin[Boolean, Formula, Formula] {
+      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (BoolVal (sa), BoolVal (sb)) => fVals (sa, sb)
           case (BoolFacet (c1, t1, f1), BoolFacet (c2, t2, f2)) =>
@@ -47,9 +47,9 @@ object Partial {
         }
       }
     }
-    implicit object IntBoolCaseMatch
-    extends CaseMatch[BigInt, IntExpr, Formula] {
-      def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
+    implicit object IntBoolFacetJoin
+    extends FacetJoin[BigInt, IntExpr, Formula] {
+      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
           case (IntFacet (c1, t1, f1), IntFacet (c2, t2, f2)) =>
@@ -60,9 +60,9 @@ object Partial {
         }
       }
     }
-    implicit object IntIntCaseMatch
-    extends CaseMatch[BigInt, IntExpr, IntExpr] {
-      def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): IntExpr = {
+    implicit object IntIntFacetJoin
+    extends FacetJoin[BigInt, IntExpr, IntExpr] {
+      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): IntExpr = {
         (sa, sb) match {
           case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
           case (IntFacet (c1, t1, f1), IntFacet (c2, t2, f2)) =>
@@ -73,9 +73,9 @@ object Partial {
         }
       }
     }
-    implicit object ObjectBoolCaseMatch
-    extends CaseMatch[Atom, ObjectExpr[Atom], Formula] {
-      def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
+    implicit object ObjectBoolFacetJoin
+    extends FacetJoin[Atom, ObjectExpr[Atom], Formula] {
+      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (Object (sa), Object (sb)) => fVals (sa, sb)
           case (ObjectFacet (c1, t1, f1), ObjectFacet (c2, t2, f2)) =>
@@ -91,10 +91,10 @@ object Partial {
   def eval[T1, T1S, T2, T2S] (a: T1S, b: T1S
     , op: (T1, T1) => T2, exprCons: (T1S, T1S) => T2S)
     (implicit env: Environment
-      , m: CaseMatch[T1, T1S, T2S]
+      , m: FacetJoin[T1, T1S, T2S]
       , v: ValFacet[T2, T2S]
       , te1: TransformEval[T1S], te2: TransformEval[T2S]): T2S = {
-    m.caseMatch(te1.teval(a), te1.teval(b)
+    m.facetJoin(te1.teval(a), te1.teval(b)
       // (constant, constant)
       , (sa: T1, sb: T1) => v.valCons (op (sa, sb))
       // (facet, facet)
