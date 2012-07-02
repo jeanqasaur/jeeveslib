@@ -27,7 +27,7 @@ class TestJif extends FunSuite with JeevesLib {
     val r =
       jif (x === Dummy(0)
         , (_: Unit) => Object(Dummy(3)), (_: Unit) => Object(Dummy(4)))
-    expect (ObjectConditional(a, Dummy(3), Dummy(4))) { r }
+    expect (ObjectFacet(a, Dummy(3), Dummy(4))) { r }
     expect (Dummy(3)) { concretize(Dummy(0), r) }
     expect (Dummy(4)) { concretize(Dummy(1), r) }
   }

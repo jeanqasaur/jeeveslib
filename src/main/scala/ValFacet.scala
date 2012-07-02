@@ -15,7 +15,7 @@ object ValFacet {
     def facetCons (c: Formula, t: IntExpr, f: IntExpr): IntExpr =
     IntFacet (c, t, f)
   }
-  implicit object ObjectFacet
+  implicit object ObjectValFacet
   extends ValFacet[Atom, ObjectExpr[Atom]] {
     def valCons (o) = Object (o)
     def facetCons (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom])

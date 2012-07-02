@@ -197,7 +197,7 @@ trait JeevesLib extends Sceeves {
   def jassign[T >: Null <: Atom](v: ObjectExpr[T], v_old: ObjectExpr[T])
     : ObjectExpr[T] = {
     getPCFormula () match {
-      case Some (f) => ObjectConditional (f, v, v_old)
+      case Some (f) => ObjectFacet (f, v, v_old)
       case None => v
     }
   }
@@ -259,7 +259,7 @@ trait JeevesLib extends Sceeves {
     jifEval (c, t, f
       , ((e: ObjectExpr[T]) =>
           Partial.eval (e)(EmptyEnv).asInstanceOf[ObjectExpr[T]])
-      , ObjectConditional[T])
+      , ObjectFacet[T])
   }
   def jif (c: Formula, t: Unit => Unit, f: Unit => Unit): Unit = {
     jifEval (c, t, f, (_: Unit) => (), (_: Formula, _: Unit, _: Unit) => ())
