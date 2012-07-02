@@ -135,7 +135,7 @@ object SMT {
     case Geq(a,b) => "(>= " + integer(a) + " " + integer(b) + ")" 
     case LT(a,b) => "(< " + integer(a) + " " + integer(b) + ")"
     case GT(a,b) => "(> " + integer(a) + " " + integer(b) + ")"  
-    case BoolConditional(c,a,b) => "(if " + formula(c) + " " + 
+    case BoolFacet(c,a,b) => "(if " + formula(c) + " " + 
       formula(a) + " " + formula(b) + ")" 
     case ObjectEq(a,b) => "(= " +  atom(a) + " " + atom(b) + ")"
     case RelEq(a,b) => "(forall ((x Object)) (iff " + 

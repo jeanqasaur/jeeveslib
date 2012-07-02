@@ -8,7 +8,7 @@ object ValFacet {
   implicit object BoolValFacet extends ValFacet[Boolean, Formula] {
   def valCons (b) = BoolVal(b)
   def facetCons (c: Formula, t: Formula, f: Formula): Formula =
-    BoolConditional (c, t, f)
+    BoolFacet (c, t, f)
   }
   implicit object IntValFacet extends ValFacet[BigInt, IntExpr] {
     def valCons (i) = IntVal(i)
@@ -29,7 +29,7 @@ sealed trait FacetCons[T] {
 object FacetCons {
   implicit object BoolFacetCons extends FacetCons[Formula] {
     def facetCons (c: Formula, t: Formula, f: Formula): Formula = {
-      BoolConditional (c, t, f)
+      BoolFacet (c, t, f)
     }
   }
   implicit object IntFacetCons extends FacetCons[IntExpr] {

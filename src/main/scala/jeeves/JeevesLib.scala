@@ -190,7 +190,7 @@ trait JeevesLib extends Sceeves {
   }
   def jassign(v: Formula, v_old: Formula): Formula = {
     getPCFormula () match {
-      case Some (f) => BoolConditional (f, v, v_old)
+      case Some (f) => BoolFacet (f, v, v_old)
       case None => v
     }
   }
@@ -221,7 +221,7 @@ trait JeevesLib extends Sceeves {
     cs match {
       case BoolVal (true) => evalFun (t ())
       case BoolVal (false) => evalFun (f ())
-      case BoolConditional (BoolVar (v), tc, fc) => {
+      case BoolFacet (BoolVar (v), tc, fc) => {
         // If we are already under a path containing the current condition,
         // we can just evaluate the true branch.
         if (_pc.contains (PathVar (v))) {
@@ -251,7 +251,7 @@ trait JeevesLib extends Sceeves {
   }
   def jif (c: Formula, t: Unit => Formula, f: Unit => Formula): Formula = {
     jifEval (c, t, f, (e: Formula) => Partial.eval (e)(EmptyEnv)
-      , BoolConditional)
+      , BoolFacet)
   }
   def jif[T >: Null <: Atom] (
     c: Formula, t: Unit => ObjectExpr[T], f: Unit => ObjectExpr[T])

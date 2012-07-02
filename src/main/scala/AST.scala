@@ -73,7 +73,7 @@ sealed abstract class Formula extends Expr[Boolean] {
   def <==> (that: Formula) = ===(that)
   def unary_! = Not(this)
   def ?(thn: Formula) =
-    new {def !(els: Formula) = BoolConditional(Formula.this, thn, els)}
+    new {def !(els: Formula) = BoolFacet(Formula.this, thn, els)}
   def ?(thn: IntExpr) = new {def !(els: IntExpr) =
     IntFacet(Formula.this, thn, els)}
   def ?(thn: ObjectExpr[Atom]) =
@@ -96,7 +96,7 @@ case class And(left: Formula, right: Formula) extends BinaryFormula {
 case class Or(left: Formula, right: Formula) extends BinaryFormula {
   def eval(implicit env: Environment) = left.eval || right.eval
 }
-case class BoolConditional(cond: Formula, thn: Formula, els: Formula) extends Formula with Ite[Boolean]
+case class BoolFacet(cond: Formula, thn: Formula, els: Formula) extends Formula with Ite[Boolean]
 case class Not(sub: Formula) extends Formula with UnaryExpr[Formula] {
   def eval(implicit env: Environment) = ! sub.eval
 }

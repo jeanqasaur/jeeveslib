@@ -39,10 +39,10 @@ object Partial {
       def caseMatch (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
         (sa, sb) match {
           case (BoolVal (sa), BoolVal (sb)) => fVals (sa, sb)
-          case (BoolConditional (c1, t1, f1), BoolConditional (c2, t2, f2)) =>
+          case (BoolFacet (c1, t1, f1), BoolFacet (c2, t2, f2)) =>
             fFacets (c1, t1, f1, c2, t2, f2)
-          case (v1, BoolConditional (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
-          case (BoolConditional (c1, t1, f1), v2) => fBothR (c1, t1, f1, v2)
+          case (v1, BoolFacet (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
+          case (BoolFacet (c1, t1, f1), v2) => fBothR (c1, t1, f1, v2)
           case _ => fOther (sa, sb)
         }
       }
@@ -115,9 +115,9 @@ object Partial {
 
   def eval (f: Formula) (implicit env: Environment): Formula = 
     {f match {
-      case BoolConditional(a, b, c) => 
+      case BoolFacet(a, b, c) => 
         val sa = eval(a); 
-        BoolConditional(sa, eval(b), eval(c))
+        BoolFacet(sa, eval(b), eval(c))
       case BoolEq(a, b) =>
         BoolEq(eval(a), eval(b))
       case And(a, b) =>
@@ -128,8 +128,8 @@ object Partial {
           a, b, (sa: Boolean, sb: Boolean) => sa || sb, Or)
       case Not(f) => {
         eval(f) match {
-          case BoolConditional(c, t, f) =>
-            BoolConditional(c, eval(Not(t)), eval(Not(f)))
+          case BoolFacet(c, t, f) =>
+            BoolFacet(c, eval(Not(t)), eval(Not(f)))
           case f => Not(eval(f))
         }
       }
@@ -158,9 +158,9 @@ object Partial {
       case BoolVal(false) => BoolVal(false)
     }} match {
       case f if env.hasAll(f.vars) => f.eval
-      case BoolConditional(BoolVal(true), thn, _) => thn
-      case BoolConditional(BoolVal(false), _, els) => els
-      case BoolConditional(_, a, b) if a == b => a
+      case BoolFacet(BoolVal(true), thn, _) => thn
+      case BoolFacet(BoolVal(false), _, els) => els
+      case BoolFacet(_, a, b) if a == b => a
       case And(BoolVal(false), _) => false
       case And(_, BoolVal(false)) => false
       case And(BoolVal(true), x) => x
