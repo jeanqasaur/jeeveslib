@@ -19,9 +19,11 @@ trait JeevesLib extends Sceeves {
   type LevelVar = BoolVar;
   type IntegrityVar = BoolVar;
 
-  type Policy = Sensitive => Formula;
   type Sensitive = ObjectExpr[Atom];
-  
+
+  type ConfPolicy = Sensitive => Formula;
+  type IntegrityPolicy = Atom => Sensitive => Formula;
+
   sealed trait Level extends Serializable
   object HIGH extends Level
   object LOW extends Level
@@ -34,10 +36,10 @@ trait JeevesLib extends Sceeves {
    * Confidentiality state.
    */
   // The entire policy store.
-  private val _policies: WeakHashMap[LevelVar, (Level, Policy)] =
+  private val _policies: WeakHashMap[LevelVar, (Level, ConfPolicy)] =
     new WeakHashMap()
   // The temporary policy store for "permit."
-  private val _storedPolicies: Map[LevelVar, List[Policy]] = Map()
+  private val _storedPolicies: Map[LevelVar, List[ConfPolicy]] = Map()
 
   sealed trait PathCondition
   case class PathVar (id: String) extends PathCondition
@@ -62,7 +64,7 @@ trait JeevesLib extends Sceeves {
       Some(_pc.foldLeft((BoolVal(true): Formula))(mkAnd))
     }
   }
-  private def mkGuardedPolicy (p: Sensitive => Formula)
+  private def mkGuardedConfPolicy (p: Sensitive => Formula)
   : (Sensitive => Formula) = {
     getPCFormula () match {
       case Some(f) => (CONTEXT: Sensitive) => (f ==> p (CONTEXT))
@@ -94,9 +96,9 @@ trait JeevesLib extends Sceeves {
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-  def restrict(lvar: LevelVar, f: Policy) = {
+  def restrict(lvar: LevelVar, f: ConfPolicy) = {
     _policies += (lvar ->
-      (LOW, mkGuardedPolicy ((ctxt: Sensitive) => Not (f (ctxt)))))
+      (LOW, mkGuardedConfPolicy ((ctxt: Sensitive) => Not (f (ctxt)))))
   }
 
   /**
@@ -104,11 +106,11 @@ trait JeevesLib extends Sceeves {
    * "permit" policies on things.
    */
   def permit(lvar: LevelVar, p: Sensitive => Formula) = {
-    val guardedPolicy = mkGuardedPolicy (p);
+    val guardedConfPolicy = mkGuardedConfPolicy (p);
     _storedPolicies.get(lvar) match {
       case Some(policies: List[Sensitive => Formula]) =>
-       _storedPolicies += (lvar -> (guardedPolicy :: policies))
-      case None => _storedPolicies += (lvar -> List(guardedPolicy))
+       _storedPolicies += (lvar -> (guardedConfPolicy :: policies))
+      case None => _storedPolicies += (lvar -> List(guardedConfPolicy))
     }
   }
   // This function restricts everything except for what has been permitted.
@@ -126,7 +128,7 @@ trait JeevesLib extends Sceeves {
         _policies +=
           (lvar ->
             ( LOW
-            , mkGuardedPolicy ((ctxt: Sensitive) => Not (policyFormula (ctxt)))))
+            , mkGuardedConfPolicy ((ctxt: Sensitive) => Not (policyFormula (ctxt)))))
         _storedPolicies.remove(lvar)
       case None => ()
     }
@@ -188,43 +190,120 @@ b) For integrity facet of the form <ilv_i ? u | v>, you will turn it into a conf
 c) Once you have replaced all the integrity facets in a with confidentiality facets according to b), update x to be equal to <ilv_x ? a | old_x> , and set the context associated with ilv_x to be the primary context.
    * TODO: What do we want to do with the current path condition.
    */
-  sealed trait IntegrityEval[TS] {
-    def integrityEval (ctxt: Sensitive, facet: TS): TS
+  private val _primaryContexts: WeakHashMap[LevelVar, Atom] =
+    new WeakHashMap()
+  private def mapPrimaryContext (lvar: LevelVar, ctxt: Atom): Unit = {
+    _primaryContexts += (lvar -> ctxt)
   }
-  object IntegrityEval {
-    implicit object BoolIntegrityEval
-    extends IntegrityEval[Formula] {
-      def integrityEval (ctxt: Sensitive, facet: Formula): Formula = {
-        facet
-      }
+  // Add integrity policies only to integrity level variables.
+  private def addIntegrityPolicy (lvar: LevelVar, iPolicy: IntegrityPolicy)
+  : LevelVar = {
+    _primaryContexts.get(lvar) match {
+      // If there is a context associated, create a fresh level variable and
+      // attached the new integrity policy to it.
+      case Some(ictxt) =>
+        val newLvar = mkLevel ()
+        restrict (newLvar, (octxt: Sensitive) => lvar && iPolicy (ictxt) (octxt))
+        newLvar
+      // Otherwise return the old level variable.
+      case None => lvar
     }
   }
 
-/*
-  def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: Environment)
-    : ObjectExpr[Atom] =
-    {e match {
-      case ObjectFacet(a, b, c) =>
-        val sa = eval(a)
-        ObjectFacet(sa, eval(b), eval(c))
+  /**
+   * These functions assume full simplification already.
+   */
+  private def addPolicy(f: Formula) (implicit iPolicy: IntegrityPolicy)
+  : Formula = {
+    f match {
+      case BoolFacet(cond, t, f) =>
+        val newCond =
+          cond match {
+            case c: BoolVar => addIntegrityPolicy(c, iPolicy)
+            case _ => throw Impossible
+          }
+        BoolFacet(newCond, addPolicy (t), addPolicy (f))
+      case BoolEq(a, b) => BoolEq(addPolicy(a), addPolicy(b))
+      case And(a, b) => And(addPolicy(a), addPolicy(b))
+      case Or(a, b) => Or(addPolicy(a), addPolicy(b))
+      case Not(f) => Not(addPolicy(f))
+      case GT(a, b) => GT(addPolicy(a), addPolicy(b))
+      case LT(a, b) => LT(addPolicy(a), addPolicy(b))
+      case Geq(a, b) => Geq(addPolicy(a), addPolicy(b))
+      case Leq(a, b) => Leq(addPolicy(a), addPolicy(b))
+      case IntEq(a, b) => IntEq(addPolicy(a), addPolicy(b))
+      case f: RelFormula => f // TODO??
+      case ObjectEq(a, b) => ObjectEq (addPolicy(a), addPolicy(b))
+      case b: BoolVar => f
+      case BoolVal(_) => f
+    }
+  }
+  private def addPolicy(e: IntExpr) (implicit iPolicy: IntegrityPolicy)
+  : IntExpr = {
+    e match {
+      case IntFacet (cond, t, f) =>
+        val newCond =
+          cond match {
+            case c: BoolVar => addIntegrityPolicy(c, iPolicy)
+            case _ => throw Impossible
+          }
+        IntFacet (newCond, addPolicy(t), addPolicy(f))
+      case Plus (a, b) => Plus (addPolicy(a), addPolicy(b))
+      case Minus (a, b) => Minus (addPolicy(a), addPolicy(b))
+      case Times (a, b) => Times (addPolicy(a), addPolicy(b))
+      case ObjectIntField (root, f) => ObjectIntField (addPolicy (root), f)
+      case IntVal (_) => e
+    }
+  }
+  private def addPolicy[T >: Null <: Atom](e: ObjectExpr[T])
+    (implicit iPolicy: IntegrityPolicy): ObjectExpr[T] =
+    e match {
+      case ObjectFacet(cond, t, f) =>
+        val newCond =
+          cond match {
+            case c: BoolVar => addIntegrityPolicy(c, iPolicy)
+            case _ => throw Impossible
+          }
+        ObjectFacet(newCond, addPolicy(t), addPolicy (f))
       case ObjectField (root, f) =>
-        evalDeref[Atom, ObjectExpr[Atom]] (root, f, ObjectFacet[Atom])
+        ObjectField (addPolicy (root), f).asInstanceOf[ObjectExpr[T]]
       case Object(_) => e
-    }} match {
-      case e if env.hasAll(e.vars) => Object(e.eval)
-      case ObjectFacet(BoolVal(true), thn, _) => thn
-      case ObjectFacet(BoolVal(false), _, els) => els
-      case ObjectFacet(_, a, b) if a == b => a
-      case e => e
     }
-*/
 
-  
-  def writeAs[T] (ctxt: Sensitive, policy: Policy, oldVal: T, newVal: T
-    , facetCons: (Formula, T, T) => T): T = {
-    // Walk over the facet tree and choose facets.
+  private def mkFacetTree[T](guardSet: List[PathCondition]
+    , high: T, low: T) (implicit facetCons: (Formula, T, T) => T): T = {
+    guardSet match {
+      case Nil => high
+      case g::gs =>
+        g match {
+          case PathVar (id) =>
+            facetCons (BoolVar(id), mkFacetTree[T](gs, high, low), low)
+          case NegPathVar (id) =>
+            facetCons (BoolVar(id), low, mkFacetTree[T](gs, high, low))
+        }
+    }
+  }
+  private def genericWriteAs[T] (ctxt: Atom // Primary context is concrete
+    , trusted: T, untrusted: T
+    , policyFun: T => T, facetCons: (Formula, T, T) => T): T = {
+    // Make a new level variable based on this policy.
     val ivar = mkLevel ()
-    facetCons(ivar, oldVal, newVal)
+    mapPrimaryContext (ivar, ctxt)
+
+    // Walk over the facets and apply the integrity policy to existing integrity
+    // facets as well.
+    val pUntrusted = policyFun(untrusted)
+
+    // Return a result that takes the path condition into account.
+    pushPC(ivar.id)
+    val r: T = mkFacetTree[T](_pc.toList, trusted, pUntrusted)(facetCons)
+    popPC()
+    r
+  }
+  def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
+    , trusted: IntExpr, untrusted: IntExpr): IntExpr = {
+    genericWriteAs(ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
+      , (e: IntExpr) => addPolicy(e)(iPolicy), IntFacet)
   }
 
   /**
@@ -233,43 +312,6 @@ c) Once you have replaced all the integrity facets in a with confidentiality fac
   def jprint[T] (ctxt: Sensitive, e: Expr[T]): Unit = {
     conditionOnPC (ctxt
       , (_: Unit) => println (concretize(ctxt, e)), (_: Unit) => ())
-  }
-
-  /**
-   * Produces a value for assignment.
-   * TODO:
-   * - Do we want to concretize under the primary context?
-   *     NOTE: It seems like we should...
-   * - Do we want to prevent assignments under conditionals?
-   */
-  def jassign(v: IntExpr, v_old: IntExpr): IntExpr = {
-    getPCFormula () match {
-      case Some (f) => IntFacet (f, v, v_old)
-      case None => v
-    }
-  }
-  def jassign(v: Formula, v_old: Formula): Formula = {
-    getPCFormula () match {
-      case Some (f) => BoolFacet (f, v, v_old)
-      case None => v
-    }
-  }
-  def jassign[T >: Null <: Atom](v: ObjectExpr[T], v_old: ObjectExpr[T])
-    : ObjectExpr[T] = {
-    getPCFormula () match {
-      case Some (f) => ObjectFacet (f, v, v_old)
-      case None => v
-    }
-  }
-
-  /**
-   * Guarded assignment--integrity.
-   */
-  def guardedAssign[T](ctxt: Sensitive, k: LevelVar, v: T, v_old: T): T = {
-    if (_pc.isEmpty) {
-      val kc: Boolean = unsafeConcretize(ctxt, k);
-      if (kc) { v } else { v_old }
-    } else { v_old }
   }
 
   /**
@@ -346,7 +388,9 @@ c) Once you have replaced all the integrity facets in a with confidentiality fac
           val fr = jfun (els, arg)
           popPC ();
 
+          // Produce a faceted result and partially evaluate it.
           val r = vf.facetCons(BoolVar (v), tr, fr)
+          // TODO: Partial.eval(r)(EmptyEnv)
           r
         }
       case _ => throw Impossible

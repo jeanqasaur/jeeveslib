@@ -38,9 +38,10 @@ class PatientRecord(
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
     val canSet = mkLevel ()
     restrict (canSet, (ctxt: Sensitive) => ctxt.user.status === Admin)
-    doctor = guardedAssign (
+/*    doctor = guardedAssign (
       ctxt.asInstanceOf[Sensitive], canSet
       , mkSensitive(dp, newDoctor, defaultUser), doctor).asInstanceOf[Sensitive]
+    */
   }
 
   // Medication list.
@@ -52,12 +53,14 @@ class PatientRecord(
   def addMed (newMed: MedicationRecord) (implicit ctxt: HealthContext): Unit = {
     val canSet = mkLevel ()
     restrict (canSet, (ctxt: Sensitive) => ctxt.user.status === Admin)
+  /*
     _actualMeds = guardedAssign (
       ctxt.asInstanceOf[Sensitive], canSet
       , newMed :: _actualMeds, _actualMeds ) 
     meds = guardedAssign (
       ctxt.asInstanceOf[Sensitive], canSet
       , (mkSensitive(mp, newMed, NULL)) :: meds, meds )
+    */
   }
   // TODO
   def removeMed () (implicit ctxt: HealthContext): Unit = {
