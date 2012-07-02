@@ -55,7 +55,7 @@ extends JeevesRecord {
   def location() = (X, Y);
 
   /** Helpers */
-  private def level (ul: UserLevel): LevelVar = {
+  private def level (ul: UserLevel): ConfVar = {
     val l = mkLevel();
     def me (implicit CONTEXT: Sensitive) = CONTEXT === this;
     ul match {

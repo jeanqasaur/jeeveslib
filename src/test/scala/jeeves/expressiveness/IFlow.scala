@@ -36,7 +36,7 @@ class IFlow extends FunSuite with JeevesLib {
    *   (Same.)
    *   
    */
-  private def canFlow (l1: LevelVar, l2: LevelVar): Unit = {
+  private def canFlow (l1: ConfVar, l2: ConfVar): Unit = {
     permit(l2, (ctxt: Sensitive) => (l1 === HIGH))
   }
 

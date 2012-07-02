@@ -15,7 +15,8 @@ import Debug.debug
 trait JeevesLib extends Sceeves {
   trait JeevesRecord extends Atom with Serializable
 
-  type LevelVar = BoolVar;
+  type ConfVar = BoolVar;
+  type Policy = Sensitive => Formula;
   type Sensitive = ObjectExpr[Atom];
   
   sealed trait Level extends Serializable
@@ -26,11 +27,20 @@ trait JeevesLib extends Sceeves {
     case LOW => false
   }
 
+  /** 
+   * Confidentiality state.
+   */
   // The entire policy store.
-  private var _policies: WeakHashMap[LevelVar, (Level, Sensitive => Formula)] =
+  private val _cPolicies: WeakHashMap[ConfVar, (Level, Policy)] =
     new WeakHashMap()
   // The temporary policy store for "permit."
-  private val _storedPolicies: Map[LevelVar, List[Sensitive => Formula]] = Map()
+  private val _storedCPolicies: Map[ConfVar, List[Policy]] = Map()
+
+  /**
+   * Integrity state.
+   */
+  // TODO: Do we need a different kind of ConfVar?
+  private val _iPolicies: WeakHashMap[ConfVar, Sensitive] = new WeakHashMap ()
 
   sealed trait PathCondition
   case class PathVar (id: String) extends PathCondition
@@ -63,64 +73,71 @@ trait JeevesLib extends Sceeves {
     }
   }
 
-  def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
+  def mkLevel(): ConfVar = pickBool(_ => true, HIGH)
 
-  def mkSensitiveInt(lvar: LevelVar, high: IntExpr, low: IntExpr = -1)
+  def mkSensitiveInt(lvar: ConfVar, high: IntExpr, low: IntExpr = -1)
     : IntExpr = 
     lvar ? high ! low
-  def mkSensitive(lvar: LevelVar, high: Sensitive, low: Sensitive = NULL)
+  def mkSensitive(lvar: ConfVar, high: Sensitive, low: Sensitive = NULL)
     : Sensitive = 
     lvar ? high ! low
-  def mkSensitiveIntFunction(lvar: LevelVar
+  def mkSensitiveIntFunction(lvar: ConfVar
     , high: FunctionExpr[IntExpr, IntExpr], low: FunctionExpr[IntExpr, IntExpr])
   : FunctionExpr[IntExpr, IntExpr] = lvar ? high ! low
-  def mkSensitiveFunction(lvar: LevelVar
+  def mkSensitiveFunction(lvar: ConfVar
     , high: FunctionExpr[Atom, Atom], low: FunctionExpr[Atom, Atom])
   : FunctionExpr[Atom, Atom] = lvar ? high ! low
 
   /**
-   * Policies take the form restrict(a, f), where a is the level variable and f
-   * is a formula that sets a to LOW if f is true.
+   * Confidentiality policies take the form restrict(a, f), where a is the level
+   * variable and f is a formula that sets a to LOW if f is true.
    * 
    * We store policies as a weak hash map between the level variable and a pair
    * of the value (LOW/HIGH) and the policy.  If the system has no more pointers
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-  def restrict(lvar: LevelVar, f: Sensitive => Formula) = {
-    _policies += (lvar ->
+  def restrict(lvar: ConfVar, f: Policy) = {
+    _cPolicies += (lvar ->
       (LOW, mkGuardedPolicy ((ctxt: Sensitive) => Not (f (ctxt)))))
+  }
+
+  /**
+   * Integrity policies.
+   */
+  def endorse(lvar: ConfVar, ctxt: Sensitive) = {
+    _iPolicies += (lvar -> ctxt)
   }
 
   /**
    * Programming with only "restrict" is a pain, so we allow people to collect
    * "permit" policies on things.
    */
-  def permit(lvar: LevelVar, p: Sensitive => Formula) = {
+  def permit(lvar: ConfVar, p: Sensitive => Formula) = {
     val guardedPolicy = mkGuardedPolicy (p);
-    _storedPolicies.get(lvar) match {
+    _storedCPolicies.get(lvar) match {
       case Some(policies: List[Sensitive => Formula]) =>
-       _storedPolicies += (lvar -> (guardedPolicy :: policies))
-      case None => _storedPolicies += (lvar -> List(guardedPolicy))
+       _storedCPolicies += (lvar -> (guardedPolicy :: policies))
+      case None => _storedCPolicies += (lvar -> List(guardedPolicy))
     }
   }
   // This function restricts everything except for what has been permitted.
-  def commitPolicies(lvar: LevelVar) = {
+  def commitPolicies(lvar: ConfVar) = {
     def mkSingleFormula (f_acc: Sensitive => Formula, f: Sensitive => Formula)
       : Sensitive => Formula = {
       (ctxt : Sensitive) => Or (f_acc (ctxt), f (ctxt))
     }
 
-    _storedPolicies.get(lvar) match {
+    _storedCPolicies.get(lvar) match {
       case Some(policies) =>
         val policyFormula: Sensitive => Formula =
           policies.foldLeft(
             (ctxt: Sensitive) => BoolVal(true): Formula)(mkSingleFormula)
-        _policies +=
+        _cPolicies +=
           (lvar ->
             ( LOW
             , mkGuardedPolicy ((ctxt: Sensitive) => Not (policyFormula (ctxt)))))
-        _storedPolicies.remove(lvar)
+        _storedCPolicies.remove(lvar)
       case None => ()
     }
   }
@@ -141,9 +158,9 @@ trait JeevesLib extends Sceeves {
    * Unsafe concretization (does not take PC into account).
    */ 
   private def unsafeConcretize[T](ctx: Sensitive, e: Expr[T]) = {
-    debug(" *** # _policies: " + _policies.size)
+    debug(" *** # _cPolicies: " + _cPolicies.size)
     val context =
-      AND(_policies.map{
+      AND(_cPolicies.map{
         case (lvar, (level, f)) => f (ctx) ==> (lvar === level)
       })
     super.concretize(context, e);
@@ -205,7 +222,7 @@ trait JeevesLib extends Sceeves {
   /**
    * Guarded assignment--integrity.
    */
-  def guardedAssign[T](ctxt: Sensitive, k: LevelVar, v: T, v_old: T): T = {
+  def guardedAssign[T](ctxt: Sensitive, k: ConfVar, v: T, v_old: T): T = {
     if (_pc.isEmpty) {
       val kc: Boolean = unsafeConcretize(ctxt, k);
       if (kc) { v } else { v_old }
