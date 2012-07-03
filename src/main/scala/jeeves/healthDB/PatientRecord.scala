@@ -35,14 +35,13 @@ class PatientRecord(
   private val dp = mkLevel ()
   restrict (dp, (ctxt: Sensitive) => isPatientOrDoctor(ctxt))
   var doctor: Sensitive = mkSensitive(dp, _doctor, defaultUser)
-  // TODO: Figure out why we need these explicit conversions...
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
-    val canSet = mkLevel ()
-    restrict (canSet, (ctxt: Sensitive) => ctxt.user.status === Admin)
-/*    doctor = guardedAssign (
-      ctxt.asInstanceOf[Sensitive], canSet
-      , mkSensitive(dp, newDoctor, defaultUser), doctor).asInstanceOf[Sensitive]
-    */
+    doctor = writeAs (
+        ctxt
+        , (ictxt, octxt) => ictxt.user.status === Admin
+        , doctor // old value
+        , mkSensitive(dp, newDoctor, defaultUser) // new value
+      )
   }
 
   // Medication list.
@@ -54,13 +53,18 @@ class PatientRecord(
   def addMed (newMed: MedicationRecord) (implicit ctxt: HealthContext): Unit = {
     val canSet = mkLevel ()
     restrict (canSet, (ctxt: Sensitive) => ctxt.user.status === Admin)
+   
   /*
-    _actualMeds = guardedAssign (
-      ctxt.asInstanceOf[Sensitive], canSet
-      , newMed :: _actualMeds, _actualMeds ) 
-    meds = guardedAssign (
-      ctxt.asInstanceOf[Sensitive], canSet
-      , (mkSensitive(mp, newMed, NULL)) :: meds, meds )
+    _actualMeds = writeAs (
+      ctxt
+      , (ictxt: Sensitive, octxt: Sensitive) => ictxt.user.status === Admin
+      , _actualMeds.asInstanceOf[Atom]
+      , (newMed :: _actualMeds).asInstanceOf[Atom] )
+    meds = writeAs (
+      ctxt
+      , (ictxt: Sensitive, octxt: Sensitive) => ictxt.user.status === Admin
+      , meds
+      , (mkSensitive(mp, newMed, NULL)) :: meds )
     */
   }
   // TODO
