@@ -5,6 +5,7 @@ import cap.jeeves._
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
 import scala.collection.immutable.Map
+import cap.jeeves.JeevesTypes._
 
 class ExampleJeevesLib extends FunSuite with JeevesLib {
   test ("sensitive int") {
@@ -26,7 +27,14 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
   }
 
   case class Test(id: Int) extends JeevesRecord
-  
+  test ("test restrict") {
+    val x = Test(1)
+    val a = mkLevel ()
+    restrict (a, (ctxt: Sensitive) => ctxt === x)
+    val xS = mkSensitive (a, x, Test(-1))
+    expect (x) { concretize (x, xS) }
+  }
+
   /*
   test ("concretizeList non-null") {
     val x = pickObject[Test];

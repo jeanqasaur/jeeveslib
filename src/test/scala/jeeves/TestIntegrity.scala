@@ -8,6 +8,7 @@ import cap.jeeves.JeevesTypes._
 
 class TestIntegrity extends FunSuite with JeevesLib {
   case class DummyUser(id: BigInt) extends JeevesRecord
+  val nobody = DummyUser(-1);
   val alice = DummyUser(0);
   val bob = DummyUser(1);
   val carol = DummyUser(2);
@@ -95,6 +96,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (85) { concretize(carol, z) }
   }
 
+  // Only bob can see the special value alice wrote to him...
   test ("finer-grained policy layering...") {
     val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
@@ -106,10 +108,16 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (44) { concretize(carol, z) }
   }
 
+  // Since only bob knows that he can write, only he can see his value...
   test ("capturing confidentiality policies") {
-    // May not be allowed to see if the viewer is bob...
     val a = mkLevel ()
     restrict (a, (ctxt: Sensitive) => ctxt === bob)
-//    val secretWriter: Sensitive = mkSensitive(a, 
+    val secretWriter: Sensitive = mkSensitive(a, bob, nobody)
+    val x: IntExpr = writeAs(bob, (ictxt: Atom, octxt: Sensitive) =>
+      (Object(ictxt) === secretWriter), 0, 42)
+    expect (bob) { concretize(bob, secretWriter) }
+    expect (0) { concretize(alice, x) }
+    expect (42) { concretize(bob, x) }
+    expect (0) { concretize(carol, x) }
   }
 }
