@@ -1,9 +1,8 @@
 package cap.jeeves
 
 /*
- * A library for using ScalaSMT for privacy, using symbolic varaibles to
- * represent sensitive values.
- * @author jeanyang, kuat
+ * An abstraction that supports "
+ * @author jeanyang
  */
 
 import cap.scalasmt._
@@ -17,7 +16,8 @@ trait PermitPolicies {
    * Programming with only "restrict" is a pain, so we allow people to collect
    * "permit" policies on things.
    */
-  def permit(lvar: LevelVar, p: Sensitive => Formula) (lvars: LevelVars) = {
+  def permit(lvar: LevelVar, p: Sensitive => Formula)
+    (implicit lvars: LevelVars) = {
     val guardedConfPolicy = lvars.mkGuardedConfPolicy (p);
     _storedPolicies.get(lvar) match {
       case Some(policies: List[Sensitive => Formula]) =>

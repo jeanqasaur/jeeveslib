@@ -7,10 +7,6 @@ package cap.jeeves
  */
 
 import cap.scalasmt._
-import scala.collection.mutable.Map;
-import scala.collection.mutable.WeakHashMap;
-import scala.collection.mutable.Stack;
-import Debug.debug
 import JeevesTypes._
 
 trait JeevesLib extends LevelVars with Integrity {
@@ -23,7 +19,7 @@ trait JeevesLib extends LevelVars with Integrity {
     , f1: Unit => T, f2: Unit => T): T = {
     getPCFormula ()  match {
       case Some(f) =>
-        val path: Boolean = unsafeConcretize(ctxt, f)
+        val path: Boolean = concretizeExp(ctxt, f)
         if (path) { f1 () } else { f2 () }
       case None => f1 ()
     }
@@ -35,7 +31,7 @@ trait JeevesLib extends LevelVars with Integrity {
    */
   def concretize[T] (ctxt: Sensitive, e: Expr[T]): T = {
     conditionOnPC (ctxt
-      , (_: Unit) => unsafeConcretize(ctxt, e), (_: Unit) => e.default)
+      , (_: Unit) => concretizeExp(ctxt, e), (_: Unit) => e.default)
   }
   def concretize[T] (ctx: Sensitive, e: (Expr[T], Expr[T])): (T, T) =
     (concretize(ctx, e._1), concretize(ctx, e._2))
@@ -50,11 +46,11 @@ trait JeevesLib extends LevelVars with Integrity {
   /**
    * Integrity.
    */
-  private def genericWriteAs[T] (ctxt: Atom // Primary context is concrete
+  private def writeAs[T] (ctxt: Atom // Primary context is concrete
     , trusted: T, untrusted: T
+    , policyFun: T => T
     , iPolicy: IntegrityPolicy
-    , facetCons: (Formula, T, T) => T)
-    (implicit policyFun: T => T) : T = {
+    , facetCons: (Formula, T, T) => T): T = {
     // Make a new level variable based on this policy.
     val ivar = mkLevel ()
     mapPrimaryContext (ivar, ctxt)
@@ -72,8 +68,27 @@ trait JeevesLib extends LevelVars with Integrity {
   }
   def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
     , trusted: IntExpr, untrusted: IntExpr): IntExpr = {
-    genericWriteAs(ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
+    writeAs(
+      ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
+      , (e: IntExpr) => addPolicy(e)(this, iPolicy)
       , iPolicy, IntFacet)
+  }
+  def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
+    , trusted: Formula, untrusted: Formula): Formula = {
+    writeAs(
+      ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
+      , (e: Formula) => addPolicy(e)(this, iPolicy)
+      , iPolicy, BoolFacet)
+  }
+  def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
+    , trusted: ObjectExpr[Atom], untrusted: ObjectExpr[Atom])
+  : ObjectExpr[Atom] = {
+    writeAs(
+      ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
+      , (e: ObjectExpr[Atom]) => addPolicy(e)(this, iPolicy)
+      , iPolicy
+      , (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom]) =>
+        ObjectFacet (c, t, f))
   }
 
   /**

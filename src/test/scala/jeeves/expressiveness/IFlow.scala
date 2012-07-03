@@ -18,7 +18,7 @@ import scala.collection.immutable.Map
  *
  * @author jeanyang
  */
-class IFlow extends FunSuite with JeevesLib {
+class IFlow extends FunSuite with JeevesLib with PermitPolicies {
   /**
    * If l1 is high, l2 can be high as well.  This function is equivalent to the
    * following:
@@ -38,7 +38,7 @@ class IFlow extends FunSuite with JeevesLib {
    *   
    */
   private def canFlow (l1: LevelVar, l2: LevelVar): Unit = {
-    permit(l2, (ctxt: Sensitive) => (l1 === HIGH))
+//    permit(l2, (ctxt: Sensitive) => (l1 === HIGH))
   }
 
   /**

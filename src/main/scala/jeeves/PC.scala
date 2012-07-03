@@ -3,14 +3,11 @@ package cap.jeeves
 /*
  * A library for using ScalaSMT for privacy, using symbolic varaibles to
  * represent sensitive values.
- * @author jeanyang, kuat
+ * @author jeanyang
  */
 
 import cap.scalasmt._
-import scala.collection.mutable.Map;
-import scala.collection.mutable.WeakHashMap;
 import scala.collection.mutable.Stack;
-import Debug.debug
 import JeevesTypes._
 
 trait PC {

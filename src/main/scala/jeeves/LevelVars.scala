@@ -60,7 +60,7 @@ trait LevelVars extends Sceeves with PC {
 
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   
-  def unsafeConcretize[T](ctx: Sensitive, e: Expr[T]) = {
+  def concretizeExp[T](ctx: Sensitive, e: Expr[T]) = {
     debug(" *** # _policies: " + _policies.size)
     val context =
       AND(_policies.map{
