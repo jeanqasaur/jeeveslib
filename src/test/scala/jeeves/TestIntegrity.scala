@@ -11,77 +11,30 @@ class TestIntegrity extends FunSuite with JeevesLib {
   val bob = DummyUser(1);
   val carol = DummyUser(2);
 
+  def allowUserWrite (user: DummyUser): (Atom, Sensitive) => Formula =
+    (ictxt, otxt) => ictxt == user
+  
+
   test ("write allowed for all viewers") {
-    val x: IntExpr = writeAs(alice, (ictxt, octxt) => (ictxt == alice), 0, 42)
+    val x: IntExpr = writeAs(alice, allowUserWrite (alice), 0, 42)
     expect (42) { concretize(alice, x) }
     expect (42) { concretize(bob, x) }
     expect (42) { concretize(carol, x) }
   }
 
-  /*
-  test ("jif with IntExpr") {
-    val a = mkLevel();
-    val x = mkSensitiveInt(a, 0, 1)
-    // If ctxt != 0, then a is LOW.
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
-    val r = jif (x === 0, (_: Unit) => IntVal(3), (_: Unit) => IntVal(4))
-    expect (IntFacet(a, IntVal(3), IntVal(4))) { r }
-    expect (3) { concretize(Dummy(0), r) }
-    expect (4) { concretize(Dummy(1), r) }
+  test ("write disallowed for all viewers") {
+    val x: IntExpr = writeAs(alice, allowUserWrite (bob), 0, 42)
+    expect (0) { concretize(alice, x) }
+    expect (0) { concretize(bob, x) }
+    expect (0) { concretize(carol, x) }
   }
 
-  test ("jif with ObjectExpr") {
-    val a = mkLevel();
-    val x = mkSensitive(a, Dummy(0), Dummy(1))
-    // If ctxt != 0, then a is LOW.
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
-    val r =
-      jif (x === Dummy(0)
-        , (_: Unit) => Object(Dummy(3)), (_: Unit) => Object(Dummy(4)))
-    expect (ObjectFacet(a, Dummy(3), Dummy(4))) { r }
-    expect (Dummy(3)) { concretize(Dummy(0), r) }
-    expect (Dummy(4)) { concretize(Dummy(1), r) }
+  test ("write selectively allowed for some viewers") {
+    val x: IntExpr =
+      writeAs(alice, (ictxt, octxt) =>
+        ((ictxt == alice) && (octxt === bob)), 0, 42)
+    expect (0) { concretize(alice, x) }
+    expect (42) { concretize(bob, x) }
+    expect (0) { concretize(carol, x) }
   }
-
-  test ("restrict under conditional") {
-    // TODO: Do we want this?
-  }
-
-  test ("nested conditionals with shared path condition") {
-    val a = mkLevel();
-    val x = mkSensitiveInt(a, 0, 1)
-    val y = mkSensitiveInt(a, 2, 3)
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
-    val r =
-      jif ( x === 0
-        , ((_: Unit) =>
-            jif (y === 2, (_: Unit) => IntVal (7), (_: Unit) => IntVal (8)))
-        , ((_: Unit) =>
-            IntVal (9)) )
-    expect (IntFacet(a, IntVal(7), IntVal(9))) { r }
-    expect (7) { concretize(Dummy(0), r) }
-    expect (9) { concretize(Dummy(1), r) }
-  }
-
-  test ("nested conditionals with no shared path condition") {
-    val a = mkLevel();
-    val b = mkLevel();
-
-    val x = mkSensitiveInt(a, 0, 1)
-    val y = mkSensitiveInt(b, 2, 3)
-
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
-    restrict (b, (ctxt: Sensitive) => ctxt === Dummy(1))
-
-    val r =
-      jif ( x === 0
-        , ((_: Unit) =>
-            jif (y === 2, (_: Unit) => IntVal (7), (_: Unit) => IntVal (8)))
-        , ((_: Unit) =>
-            IntVal (9)) )
-    expect (IntFacet(a, IntFacet(b, IntVal(7), IntVal(8)), IntVal(9))) { r }
-    expect (8) { concretize(Dummy(0), r) }
-    expect (9) { concretize(Dummy(1), r) }
-  }
-  */
 }
