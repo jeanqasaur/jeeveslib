@@ -13,10 +13,9 @@ class TestIntegrity extends FunSuite with JeevesLib {
   val bob = DummyUser(1);
   val carol = DummyUser(2);
 
-  def allowUserWrite (user: DummyUser): (Atom, Sensitive) => Formula =
-    (ictxt, otxt) => ictxt == user
+  def allowUserWrite (user: DummyUser): (Sensitive, Sensitive) => Formula =
+    (ictxt, otxt) => ictxt === user
   
-
   test ("write allowed for all viewers") {
     val x: IntExpr = writeAs(alice, allowUserWrite (alice), 0, 42)
     expect (42) { concretize(alice, x) }
@@ -34,7 +33,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
   test ("write selectively allowed for some viewers") {
     val x: IntExpr =
       writeAs(alice, (ictxt, octxt) =>
-        ((ictxt == alice) && (octxt === bob)), 0, 42)
+        ((ictxt === alice) && (octxt === bob)), 0, 42)
     expect (0) { concretize(alice, x) }
     expect (42) { concretize(bob, x) }
     expect (0) { concretize(carol, x) }
@@ -59,7 +58,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
   test ("output varies depending on who is viewing") {
     var x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     x = writeAs(alice, (ictxt, octxt) =>
-        ((ictxt == alice) && (octxt === bob)), x, 43)
+        ((ictxt === alice) && (octxt === bob)), x, 43)
     expect (42) { concretize(alice, x) }
     expect (43) { concretize(bob, x) }
     expect (42) { concretize(carol, x) }
@@ -68,7 +67,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
   test ("combining integrity policies in an operation") {
     val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
-        ((ictxt == alice) && (octxt === bob)), 2, 43)
+        ((ictxt === alice) && (octxt === bob)), 2, 43)
     expect (44) { concretize(alice, x + y) }
     expect (85) { concretize(bob, x + y) }
     expect (44) { concretize(carol, x + y) }
@@ -90,7 +89,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
     val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     val y: IntExpr = writeAs(alice, allowUserWrite (alice), 1, 43)
     val z: IntExpr = writeAs(carol, (ictxt, octxt) =>
-      (ictxt == alice) || (ictxt == bob) || (ictxt == carol), x + y, x + y)
+      (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
     expect (85) { concretize(alice, z) }
     expect (85) { concretize(bob, z) }
     expect (85) { concretize(carol, z) }
@@ -100,9 +99,9 @@ class TestIntegrity extends FunSuite with JeevesLib {
   test ("finer-grained policy layering...") {
     val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
-        ((ictxt == alice) && (octxt === bob)), 2, 43)
+        ((ictxt === alice) && (octxt === bob)), 2, 43)
     val z: IntExpr = writeAs(carol, (ictxt, octxt) =>
-      (ictxt == alice) || (ictxt == bob) || (ictxt == carol), x + y, x + y)
+      (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
     expect (44) { concretize(alice, z) }
     expect (85) { concretize(bob, z) }
     expect (44) { concretize(carol, z) }
@@ -113,9 +112,11 @@ class TestIntegrity extends FunSuite with JeevesLib {
     val a = mkLevel ()
     restrict (a, (ctxt: Sensitive) => ctxt === bob)
     val secretWriter: Sensitive = mkSensitive(a, bob, nobody)
-    val x: IntExpr = writeAs(bob, (ictxt: Atom, octxt: Sensitive) =>
-      (Object(ictxt) === secretWriter), 0, 42)
+    val x: IntExpr = writeAs(bob, ((ictxt: Sensitive, octxt: Sensitive) =>
+      ictxt === secretWriter), 0, 42)
     expect (bob) { concretize(bob, secretWriter) }
+    expect (nobody) { concretize(alice, secretWriter) }
+    expect (nobody) { concretize(carol, secretWriter) }
     expect (0) { concretize(alice, x) }
     expect (42) { concretize(bob, x) }
     expect (0) { concretize(carol, x) }

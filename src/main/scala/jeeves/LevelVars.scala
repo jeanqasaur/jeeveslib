@@ -54,9 +54,6 @@ trait LevelVars extends Sceeves with PC {
     _policies += (lvar ->
       (LOW, mkGuardedConfPolicy ((ctxt: Sensitive) => Not (f (ctxt)))))
   }
-  def allowWrite(lvar: LevelVar, f: ConfPolicy) = {
-    _policies += (lvar -> (LOW, mkGuardedConfPolicy (f)))
-  }
 
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   

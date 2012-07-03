@@ -17,5 +17,5 @@ object JeevesTypes {
   type Sensitive = ObjectExpr[Atom];
 
   type ConfPolicy = Sensitive => Formula;
-  type IntegrityPolicy = (Atom, Sensitive) => Formula;
+  type IntegrityPolicy = (Sensitive, Sensitive) => Formula;
 }

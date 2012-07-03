@@ -54,15 +54,14 @@ trait JeevesLib extends LevelVars with Integrity {
     // Make a new level variable based on this policy.
     val ivar = mkLevel ()
     mapPrimaryContext (ivar, ctxt)
-    allowWrite (ivar, (octxt: Sensitive) => iPolicy (ctxt, octxt))
+    restrict (ivar, (octxt: Sensitive) => iPolicy (ctxt, octxt))
 
-    // Walk over the facets and apply the integrity policy to existing integrity
-    // facets as well.
+    // Apply the integrity policy to the untrusted facet.
     val pUntrusted = policyFun(untrusted)
 
     // Return a result that takes the path condition into account.
     pushPC(ivar.id)
-    val r: T = mkFacetTree[T](getPCList(), trusted, pUntrusted)(facetCons)
+    val r: T = mkFacetTree[T](getPCList(), pUntrusted, trusted)(facetCons)
     popPC()
     r
   }
