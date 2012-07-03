@@ -29,7 +29,7 @@ trait Integrity {
       case Some(ictxt) =>
         val newLvar = lvars.mkLevel ()
         lvars.allowWrite (newLvar
-          , (octxt: Sensitive) => iPolicy (ictxt, octxt))
+          , (octxt: Sensitive) => (!lvar) && iPolicy (ictxt, octxt))
         newLvar
       // Otherwise return the old level variable.
       case None => lvar
