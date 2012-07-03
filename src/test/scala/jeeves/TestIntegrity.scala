@@ -11,11 +11,11 @@ class TestIntegrity extends FunSuite with JeevesLib {
   val bob = DummyUser(1);
   val carol = DummyUser(2);
 
-  test ("basic integrity") {
-    val x: IntExpr = writeAs[IntExpr](alice
-      , (ictxt, octxt) => (ictxt == alice)
-      , 0, 42
-      , IntFacet)
+  test ("write allowed for all viewers") {
+    val x: IntExpr = writeAs(alice, (ictxt, octxt) => (ictxt == alice), 0, 42)
+    expect (42) { concretize(alice, x) }
+    expect (42) { concretize(bob, x) }
+    expect (42) { concretize(carol, x) }
   }
 
   /*

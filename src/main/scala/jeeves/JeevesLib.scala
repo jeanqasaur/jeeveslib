@@ -22,7 +22,7 @@ trait JeevesLib extends Sceeves {
   type Sensitive = ObjectExpr[Atom];
 
   type ConfPolicy = Sensitive => Formula;
-  type IntegrityPolicy = Atom => Sensitive => Formula;
+  type IntegrityPolicy = (Atom, Sensitive) => Formula;
 
   sealed trait Level extends Serializable
   object HIGH extends Level
@@ -99,6 +99,9 @@ trait JeevesLib extends Sceeves {
   def restrict(lvar: LevelVar, f: ConfPolicy) = {
     _policies += (lvar ->
       (LOW, mkGuardedConfPolicy ((ctxt: Sensitive) => Not (f (ctxt)))))
+  }
+  def allowWrite(lvar: LevelVar, f: ConfPolicy) = {
+    _policies += (lvar -> (LOW, mkGuardedConfPolicy (f)))
   }
 
   /**
@@ -177,18 +180,7 @@ trait JeevesLib extends Sceeves {
   }
   
   /**
-   * When we write something as a principal, we walk down the facet tree and
-   * select a facet based on
-a) Create a fresh integrity level variable ilv_x.
-b) For integrity facet of the form <ilv_i ? u | v>, you will turn it into a confidentiality facet as follows:
-    Create a new confidentiality level variable clv_x.
-    let c = ctx(ilv_i) (the context associated with integrity level variable ilv_i).
-    Replace the integrity facet with a confidentiality facet <clv_x ? u | v>.
-    Add a confidentiality policy of the form restrict clv_x , P(c).
-    Notice that if P does not depend on sensitive values, P(c) will evaluate to a concrete value, which means the facet can be trivially replaced with a or b. But, if P does depend on sensitive values, then the new facet will reflect that confidential information.
-
-c) Once you have replaced all the integrity facets in a with confidentiality facets according to b), update x to be equal to <ilv_x ? a | old_x> , and set the context associated with ilv_x to be the primary context.
-   * TODO: What do we want to do with the current path condition.
+   * Integrity.
    */
   private val _primaryContexts: WeakHashMap[LevelVar, Atom] =
     new WeakHashMap()
@@ -198,12 +190,14 @@ c) Once you have replaced all the integrity facets in a with confidentiality fac
   // Add integrity policies only to integrity level variables.
   private def addIntegrityPolicy (lvar: LevelVar, iPolicy: IntegrityPolicy)
   : LevelVar = {
+    println ("adding integrity policy");
     _primaryContexts.get(lvar) match {
       // If there is a context associated, create a fresh level variable and
       // attached the new integrity policy to it.
       case Some(ictxt) =>
         val newLvar = mkLevel ()
-        restrict (newLvar, (octxt: Sensitive) => lvar && iPolicy (ictxt) (octxt))
+        allowWrite (newLvar
+          , (octxt: Sensitive) => lvar && iPolicy (ictxt, octxt))
         newLvar
       // Otherwise return the old level variable.
       case None => lvar
@@ -285,10 +279,12 @@ c) Once you have replaced all the integrity facets in a with confidentiality fac
   }
   private def genericWriteAs[T] (ctxt: Atom // Primary context is concrete
     , trusted: T, untrusted: T
+    , iPolicy: IntegrityPolicy
     , policyFun: T => T, facetCons: (Formula, T, T) => T): T = {
     // Make a new level variable based on this policy.
     val ivar = mkLevel ()
     mapPrimaryContext (ivar, ctxt)
+    allowWrite (ivar, (octxt: Sensitive) => iPolicy (ctxt, octxt))
 
     // Walk over the facets and apply the integrity policy to existing integrity
     // facets as well.
@@ -303,6 +299,7 @@ c) Once you have replaced all the integrity facets in a with confidentiality fac
   def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
     , trusted: IntExpr, untrusted: IntExpr): IntExpr = {
     genericWriteAs(ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
+      , iPolicy
       , (e: IntExpr) => addPolicy(e)(iPolicy), IntFacet)
   }
 
