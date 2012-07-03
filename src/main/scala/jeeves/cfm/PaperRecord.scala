@@ -11,6 +11,7 @@ import scala.collection.mutable.Map;
 
 import Expr._
 import CfmBackend._
+import cap.jeeves.JeevesTypes._
 
 sealed trait PaperStage extends JeevesRecord
 object Submission extends PaperStage

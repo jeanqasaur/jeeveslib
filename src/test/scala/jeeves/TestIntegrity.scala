@@ -4,6 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.Assertions
 import cap.scalasmt._
 import cap.jeeves._
+import cap.jeeves.JeevesTypes._
 
 class TestIntegrity extends FunSuite with JeevesLib {
   case class DummyUser(id: BigInt) extends JeevesRecord

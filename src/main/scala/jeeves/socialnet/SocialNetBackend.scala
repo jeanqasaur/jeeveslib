@@ -7,6 +7,7 @@ import cap.scalasmt._
 import cap.jeeves._
 
 import Expr._
+import cap.jeeves.JeevesTypes._
 
 /**
  * External interface to social network.

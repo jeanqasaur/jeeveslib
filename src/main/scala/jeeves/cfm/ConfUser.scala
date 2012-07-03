@@ -6,6 +6,7 @@ package cap.jeeves.cfm
  */
 
 import cap.scalasmt._
+import cap.jeeves.JeevesTypes._
 
 import CfmBackend._
 

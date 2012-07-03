@@ -7,6 +7,7 @@ package cap.jeeves.healthDB
 
 import cap.scalasmt._
 import HealthDBBackend._
+import cap.jeeves.JeevesTypes._
 
 case class MedicationRecord(name: String) extends JeevesRecord
 
