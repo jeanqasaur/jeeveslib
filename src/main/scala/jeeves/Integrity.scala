@@ -28,6 +28,7 @@ trait Integrity {
       // attached the new integrity policy to it.
       case Some(ictxt) =>
         val newLvar = lvars.mkLevel ()
+        mapPrimaryContext (newLvar, ictxt)
         lvars.restrict (newLvar
           , (octxt: Sensitive) => lvar && iPolicy (ictxt, octxt))
         newLvar

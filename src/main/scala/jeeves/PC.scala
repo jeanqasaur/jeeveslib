@@ -49,16 +49,21 @@ trait PC {
     }
   }
 
-  def mkFacetTree[T](guardSet: List[PathCondition]
+  def mkFacetTree[T](lvfun: LevelVar => Unit
+    , guardSet: List[PathCondition]
     , high: T, low: T) (implicit facetCons: (Formula, T, T) => T): T = {
     guardSet match {
       case Nil => high
       case g::gs =>
         g match {
           case PathVar (id) =>
-            facetCons (BoolVar(id), mkFacetTree[T](gs, high, low), low)
+            val lv = BoolVar(id);
+            lvfun (lv);
+            facetCons (lv, mkFacetTree[T](lvfun, gs, high, low), low)
           case NegPathVar (id) =>
-            facetCons (BoolVar(id), low, mkFacetTree[T](gs, high, low))
+            val lv = BoolVar (id);
+            lvfun (lv);
+            facetCons (lv, low, mkFacetTree[T](lvfun, gs, high, low))
         }
     }
   }

@@ -61,7 +61,9 @@ trait JeevesLib extends LevelVars with Integrity {
 
     // Return a result that takes the path condition into account.
     pushPC(ivar.id)
-    val r: T = mkFacetTree[T](getPCList(), pUntrusted, trusted)(facetCons)
+    val r: T = mkFacetTree[T](
+      (lv: LevelVar) => addIntegrityPolicy (lv, iPolicy) (this)
+      , getPCList(), pUntrusted, trusted)(facetCons)
     popPC()
     r
   }
