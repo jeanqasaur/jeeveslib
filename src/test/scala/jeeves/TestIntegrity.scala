@@ -73,7 +73,16 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (44) { concretize(carol, x + y) }
   }
 
-  test ("combining values into restrictive write") {
+  test ("combining values into restrictive write 0") {
+    val x: IntExpr = writeAs(bob, allowUserWrite(bob), 0, 42)
+    val y: IntExpr = writeAs(alice, allowUserWrite(alice), 1, x)
+    expect (42) { concretize(alice, x) }
+    expect (42) { concretize(bob, x) }
+    expect (0) { concretize(alice, y) }
+    expect (0) { concretize(bob, y) }
+  }
+
+  test ("combining values into restrictive write 1") {
     val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     val y: IntExpr = writeAs(alice, allowUserWrite (alice), 1, 43)
     val z: IntExpr = writeAs(carol, allowUserWrite (carol), x + y, x + y)
@@ -82,9 +91,9 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (1) { concretize(carol, z) }
   }
 
-  // If Alice and Bob are allowed to write to x and y respectively, then x + y
-  // should be allowed to be written to a value where they are both allowed to
-  // write.
+  /* If Alice and Bob are allowed to write to x and y respectively, then
+     x + y should be allowed to be written to a value where they are both
+     allowed to write. */
   test ("combining values into permissive write") {
     val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
     val y: IntExpr = writeAs(alice, allowUserWrite (alice), 1, 43)
@@ -121,4 +130,15 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (42) { concretize(bob, x) }
     expect (0) { concretize(carol, x) }
   }
+
+  test ("flow to different values") {
+    val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
+      val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
+      ((ictxt === alice) && (octxt === bob)), 2, 43)
+    val z: IntExpr = writeAs(carol, (ictxt, octxt) =>
+      (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
+
+  }
+
+  // TODO: Something involving the pc...
 }
