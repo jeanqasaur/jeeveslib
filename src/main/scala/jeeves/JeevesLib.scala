@@ -51,6 +51,9 @@ trait JeevesLib extends LevelVars with Integrity {
     , policyFun: T => T
     , iPolicy: IntegrityPolicy
     , facetCons: (Formula, T, T) => T): T = {
+    print("writing")
+    print(facetCons)
+
     // Make a new level variable based on this policy.
     val ivar = mkLevel ()
     mapPrimaryContext (ivar, ctxt)
