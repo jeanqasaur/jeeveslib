@@ -127,8 +127,7 @@ trait JeevesLib extends LevelVars with Integrity {
           val fr: T = jifEval (fc, t, f, evalFun, facetCons);
           popPC ();
 
-          val r: T = facetCons(BoolVar (v), evalFun (tr), evalFun (fr))
-          r
+          facetCons(BoolVar (v), evalFun (tr), evalFun (fr))
         }
       }
       case _ => throw Impossible

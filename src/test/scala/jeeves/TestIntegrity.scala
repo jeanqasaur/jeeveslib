@@ -15,7 +15,49 @@ class TestIntegrity extends FunSuite with JeevesLib {
 
   def allowUserWrite (user: DummyUser): (Sensitive, Sensitive) => Formula =
     (ictxt, otxt) => ictxt === user
-  
+
+  /* Alice is allowed to write to x and only Bob is allowed to write to y.
+     Our write policies disallow Bob from accidentally writing a value from
+     Alice into y. (That is, without an explicit endorsement...) */
+  test ("Prevent flow of untrusted writes") {
+    val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
+    val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob, 1, x)
+    expect (42) { concretize(alice, x) }
+    expect (42) { concretize(bob, x) }
+    expect (0) { concretize(alice, y) }
+    expect (0) { concretize(bob, y) }
+  }
+
+  test ("Prevent flow of operations on untrusted writes") {
+    val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
+    val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob, 1, 43)
+    val z: IntExpr = writeAs(carol, (ictxt, octxt) => ictxt === carol
+                      , 0, x + y)
+    expect (1) { concretize(alice, z) }
+    expect (1) { concretize(bob, z) }
+    expect (1) { concretize(carol, z) }
+  }
+
+  // TODO: This seems like a bug...
+  test ("Writes that depend on untrusted values") {
+    val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
+    val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob
+                      , 1, jif((x === 42), _ => 2, _ => 3))
+    expect (3) { concretize(alice, y) }
+    expect (3) { concretize(bob, y) }
+  }
+
+  test ("Prevent implicit flows of confidential values") {
+    val x: IntExpr = writeAs(alice
+                      , (ictxt, octxt) => ictxt === alice && octxt === alice
+                      , 0, 42)
+    val y: IntExpr = writeAs(bob
+                      , (ictxt, octxt) => ictxt === bob || ictxt === alice
+                      , 1, jif((x === 42), _ => 2, _ => 3))
+    expect (2) { concretize(alice, y) }
+    expect (3) { concretize(bob, y) }
+  }
+
   test ("write allowed for all viewers") {
     val x: IntExpr = writeAs(alice, allowUserWrite (alice), 0, 42)
     expect (42) { concretize(alice, x) }
@@ -73,24 +115,6 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (44) { concretize(carol, x + y) }
   }
 
-  test ("combining values into restrictive write 0") {
-    val x: IntExpr = writeAs(bob, allowUserWrite(bob), 0, 42)
-    val y: IntExpr = writeAs(alice, allowUserWrite(alice), 1, x)
-    expect (42) { concretize(alice, x) }
-    expect (42) { concretize(bob, x) }
-    expect (0) { concretize(alice, y) }
-    expect (0) { concretize(bob, y) }
-  }
-
-  test ("combining values into restrictive write 1") {
-    val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-    val y: IntExpr = writeAs(alice, allowUserWrite (alice), 1, 43)
-    val z: IntExpr = writeAs(carol, allowUserWrite (carol), x + y, x + y)
-    expect (1) { concretize(alice, z) }
-    expect (1) { concretize(bob, z) }
-    expect (1) { concretize(carol, z) }
-  }
-
   /* If Alice and Bob are allowed to write to x and y respectively, then
      x + y should be allowed to be written to a value where they are both
      allowed to write. */
@@ -139,6 +163,4 @@ class TestIntegrity extends FunSuite with JeevesLib {
       (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
 
   }
-
-  // TODO: Something involving the pc...
 }
