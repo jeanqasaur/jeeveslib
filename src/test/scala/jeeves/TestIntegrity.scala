@@ -38,8 +38,10 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (1) { concretize(carol, z) }
   }
 
-  // TODO: This seems like a bug...
-  test ("Writes that depend on untrusted values") {
+  /* Alice is allowed to write to x and only Bob is allowed to write to y.
+     Our policy enforcement prevents Alice from influencing values that Bob
+     writes. */
+  test ("Prevent untrusted writes through implicit flows.") {
     val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
     val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob
                       , 1, jif((x === 42), _ => 2, _ => 3))
@@ -153,14 +155,5 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (0) { concretize(alice, x) }
     expect (42) { concretize(bob, x) }
     expect (0) { concretize(carol, x) }
-  }
-
-  test ("flow to different values") {
-    val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-      val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
-      ((ictxt === alice) && (octxt === bob)), 2, 43)
-    val z: IntExpr = writeAs(carol, (ictxt, octxt) =>
-      (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
-
   }
 }
