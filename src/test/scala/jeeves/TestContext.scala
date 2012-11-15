@@ -8,8 +8,8 @@ import cap.jeeves.JeevesTypes._
 
 class TestContext extends FunSuite with JeevesLib {
 
-  case class Dummy(ID: BigInt) extends JeevesRecord
-  case class DummyContext(id: BigInt, viewer: Dummy) extends JeevesRecord
+  case class Dummy(ID: BigInt) extends Atom
+  case class DummyContext(id: BigInt, viewer: Dummy) extends Atom
 
   val defaultVal = Dummy(-1)
 

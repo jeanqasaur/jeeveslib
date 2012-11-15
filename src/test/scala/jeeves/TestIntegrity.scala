@@ -7,7 +7,7 @@ import cap.jeeves._
 import cap.jeeves.JeevesTypes._
 
 class TestIntegrity extends FunSuite with JeevesLib {
-  case class DummyUser(id: BigInt) extends JeevesRecord
+  case class DummyUser(id: BigInt) extends Atom
   val nobody = DummyUser(-1);
   val alice = DummyUser(0);
   val bob = DummyUser(1);

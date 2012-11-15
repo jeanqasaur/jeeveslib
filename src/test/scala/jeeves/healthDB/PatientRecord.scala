@@ -9,12 +9,12 @@ import cap.scalasmt._
 import HealthDBBackend._
 import cap.jeeves.JeevesTypes._
 
-case class MedicationRecord(name: String) extends JeevesRecord
+case class MedicationRecord(name: String) extends Atom
 
 class PatientRecord(
     private val _identity: UserRecord
   , private val _doctor: UserRecord
-  , private val _meds: List[MedicationRecord]) extends JeevesRecord {
+  , private val _meds: List[MedicationRecord]) extends Atom {
   private val defaultUser = UserRecord(-1, S(""), Other)
   private def isPatientOrDoctor (ctxt: Sensitive): Formula = {
     (ctxt.identity === this) || (ctxt.identity === doctor)

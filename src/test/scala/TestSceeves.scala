@@ -6,7 +6,7 @@ import org.scalatest.Assertions.{expect}
 
 import Expr._
 
-class ExampleSceeves extends FunSuite with Sceeves {
+class ExampleConstraintEnv extends FunSuite with ConstraintEnv {
   test ("bool var") {
     val x = pickBool();
     assume (! x);

@@ -9,7 +9,7 @@ package cap.jeeves
 import cap.scalasmt._
 import JeevesTypes._
 
-trait JeevesLib extends LevelVars with Integrity {
+trait JeevesLib extends PolicyEnv with WritePolicyEnv {
   /**
    * Given a context ctxt, applies f1 if the path condition is true under ctxt
    * and applies f2 otherwise.

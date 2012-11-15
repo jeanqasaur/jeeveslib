@@ -7,7 +7,7 @@ import cap.jeeves._
 import cap.jeeves.JeevesTypes._
 
 class TestJif extends FunSuite with JeevesLib {
-  case class Dummy(id: BigInt) extends JeevesRecord
+  case class Dummy(id: BigInt) extends Atom
 
   test ("jif with IntExpr") {
     val a = mkLevel();

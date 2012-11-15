@@ -6,7 +6,7 @@ import org.scalatest.Assertions.{expect}
 
 import Persistence.{serialize, deserialize, writeToFile, readFromFile}
 
-class ExampleSerialize extends FunSuite with Sceeves {
+class ExampleSerialize extends FunSuite with ConstraintEnv {
   /*
   test ("pick") {
     val x = pick (_ === 1);

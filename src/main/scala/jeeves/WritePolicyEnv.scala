@@ -13,15 +13,15 @@ import scala.collection.mutable.Stack;
 import Debug.debug
 import JeevesTypes._
 
-trait Integrity {
+trait WritePolicyEnv {
   private val _primaryContexts: WeakHashMap[LevelVar, Atom] =
     new WeakHashMap()
   def mapPrimaryContext (lvar: LevelVar, ctxt: Atom): Unit = {
     _primaryContexts += (lvar -> ctxt)
   }
 
-  def addIntegrityPolicy (lvar: LevelVar, iPolicy: IntegrityPolicy)
-    (implicit lvars: LevelVars)
+  def addWritePolicy (lvar: LevelVar, iPolicy: WritePolicy)
+    (implicit lvars: PolicyEnv)
   : LevelVar = {
     _primaryContexts.get(lvar) match {
       // If there is a context associated, create a fresh level variable and
@@ -38,13 +38,13 @@ trait Integrity {
   }
 
   def addPolicy(f: Formula)
-    (implicit lvars: LevelVars, iPolicy: IntegrityPolicy)
+    (implicit lvars: PolicyEnv, iPolicy: WritePolicy)
   : Formula = {
     f match {
       case BoolFacet(cond, t, f) =>
       val newCond =
         cond match {
-        case c: BoolVar => addIntegrityPolicy(c, iPolicy)
+        case c: BoolVar => addWritePolicy(c, iPolicy)
         case _ => throw Impossible
       }
       BoolFacet(newCond, addPolicy (t), addPolicy (f))
@@ -64,13 +64,13 @@ trait Integrity {
     }
   }
   def addPolicy(e: IntExpr)
-    (implicit lvars: LevelVars, iPolicy: IntegrityPolicy)
+    (implicit lvars: PolicyEnv, iPolicy: WritePolicy)
   : IntExpr = {
     e match {
       case IntFacet (cond, t, f) =>
       val newCond =
         cond match {
-        case c: BoolVar => addIntegrityPolicy(c, iPolicy)
+        case c: BoolVar => addWritePolicy(c, iPolicy)
         case _ => throw Impossible
       }
       IntFacet (newCond, addPolicy(t), addPolicy(f))
@@ -82,12 +82,12 @@ trait Integrity {
     }
   }
   def addPolicy[T >: Null <: Atom](e: ObjectExpr[T])
-    (implicit lvars: LevelVars, iPolicy: IntegrityPolicy): ObjectExpr[T] =
+    (implicit lvars: PolicyEnv, iPolicy: WritePolicy): ObjectExpr[T] =
   e match {
     case ObjectFacet(cond, t, f) =>
     val newCond =
       cond match {
-      case c: BoolVar => addIntegrityPolicy(c, iPolicy)
+      case c: BoolVar => addWritePolicy(c, iPolicy)
       case _ => throw Impossible
     }
     ObjectFacet(newCond, addPolicy(t), addPolicy (f))

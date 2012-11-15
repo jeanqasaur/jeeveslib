@@ -12,7 +12,7 @@ import scala.collection.immutable.Map
  * @author jeanyang
  */
 class Circular extends FunSuite with JeevesLib {
-  case class Node(v: Int) extends JeevesRecord
+  case class Node(v: Int) extends Atom
 
   test("circular dependency") {
     val a = mkLevel()

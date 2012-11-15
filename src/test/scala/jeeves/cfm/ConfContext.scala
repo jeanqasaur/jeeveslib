@@ -11,4 +11,4 @@ import scala.collection.mutable.Map;
 import CfmBackend._
 
 case class ConfContext( viewer : ConfUser
-                      , stage  : PaperStage ) extends JeevesRecord
+                      , stage  : PaperStage ) extends Atom

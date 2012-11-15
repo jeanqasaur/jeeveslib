@@ -11,9 +11,7 @@ import scala.collection.mutable.WeakHashMap;
 import Debug.debug
 import JeevesTypes._
 
-trait LevelVars extends Sceeves with PC {
-  trait JeevesRecord extends Atom with Serializable
-
+trait PolicyEnv extends ConstraintEnv with PC {
   // Level variables for confidentiality and integrity
   sealed trait Level extends Serializable
   object HIGH extends Level

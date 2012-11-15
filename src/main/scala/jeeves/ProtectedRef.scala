@@ -10,7 +10,7 @@ import JeevesTypes._
 
 sealed trait ProtectedRef[T <: Expr[_]] {
   var v: T
-  val iPolicy: IntegrityPolicy
+  val iPolicy: WritePolicy
 
   protected def writeAs
     (ctxt: Atom, newVal: T, policyFun: T => T, facetCons: (Formula, T, T) => T)
@@ -27,7 +27,7 @@ sealed trait ProtectedRef[T <: Expr[_]] {
     jeevesEnv.pushPC(ivar.id)
     val r: T = jeevesEnv.mkFacetTree[T](
       (lv: LevelVar) =>
-        jeevesEnv.addIntegrityPolicy (lv, iPolicy) (jeevesEnv)
+        jeevesEnv.addWritePolicy (lv, iPolicy) (jeevesEnv)
       , jeevesEnv.getPCList(), pUntrusted, v)(facetCons)
     jeevesEnv.popPC()
     r
@@ -35,7 +35,7 @@ sealed trait ProtectedRef[T <: Expr[_]] {
   def update(ctxt: Atom, vNew: T): Unit
 }
 
-case class ProtectedIntRef(var v: IntExpr, val iPolicy: IntegrityPolicy)
+case class ProtectedIntRef(var v: IntExpr, val iPolicy: WritePolicy)
   (implicit val jeevesEnv: JeevesLib) extends ProtectedRef[IntExpr] {
   def update(ctxt: Atom, vNew: IntExpr): Unit = {
     v = writeAs(ctxt, Partial.eval(vNew)(EmptyEnv)
@@ -45,7 +45,7 @@ case class ProtectedIntRef(var v: IntExpr, val iPolicy: IntegrityPolicy)
   }
 }
   
-case class ProtectedBoolRef(var v: Formula, val iPolicy: IntegrityPolicy)
+case class ProtectedBoolRef(var v: Formula, val iPolicy: WritePolicy)
   (implicit val jeevesEnv: JeevesLib) extends ProtectedRef[Formula] {
   def update(ctxt: Atom, vNew: Formula): Unit = {
     v = writeAs(ctxt, Partial.eval(vNew)(EmptyEnv)
@@ -55,7 +55,7 @@ case class ProtectedBoolRef(var v: Formula, val iPolicy: IntegrityPolicy)
 }
   
 case class ProtectedObjectRef(var v: ObjectExpr[Atom]
-  , val iPolicy: IntegrityPolicy)
+  , val iPolicy: WritePolicy)
   (implicit val jeevesEnv: JeevesLib) extends ProtectedRef[ObjectExpr[Atom]] {
   def update(ctxt: Atom, vNew: ObjectExpr[Atom]): Unit = {
     writeAs(

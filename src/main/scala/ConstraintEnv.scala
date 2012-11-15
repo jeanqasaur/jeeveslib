@@ -1,12 +1,12 @@
 package cap.scalasmt
 
 /** 
- * Constraint environment for Sceeves.
+ * Constraint environment for ConstraintEnv.
  * @author kuat
  */
 
 object Inconsistency extends RuntimeException
-trait Sceeves {
+trait ConstraintEnv {
   type Defaults = List[Formula]
   type Constraints = List[Formula]
 

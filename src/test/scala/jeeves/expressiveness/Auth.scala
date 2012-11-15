@@ -16,12 +16,12 @@ class Authentication extends FunSuite with JeevesLib {
    * Principals, users, and credentials.
    */
    object Authentication {
-     class Principal extends JeevesRecord
+     class Principal extends Atom
      case class User(name: String) extends Principal
      object Admin extends Principal
 
-     case class Cred(p: Principal) extends JeevesRecord
-     case class AuthContext(prin: Principal, cred: Cred) extends JeevesRecord
+     case class Cred(p: Principal) extends Atom
+     case class AuthContext(prin: Principal, cred: Cred) extends Atom
 
      val aliceUser = User("Alice")
 
@@ -38,7 +38,7 @@ class Authentication extends FunSuite with JeevesLib {
    * File authentication.
    */
   object FileAC {
-    class File(private val _loc: String) extends JeevesRecord {
+    class File(private val _loc: String) extends Atom {
       // File read location.
       val canWrite = mkLevel ()
       restrict (canWrite

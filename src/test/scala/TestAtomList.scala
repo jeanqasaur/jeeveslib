@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.Assertions
 import cap.scalasmt._
 
-class ExampleAtomList extends FunSuite with Sceeves {
+class ExampleAtomList extends FunSuite with ConstraintEnv {
 
   case class Dummy(ID: BigInt) extends Atom
 

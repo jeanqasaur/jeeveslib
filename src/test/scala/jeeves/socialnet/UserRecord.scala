@@ -12,9 +12,9 @@ import cap.jeeves.JeevesTypes._
 
 import Expr._
 
-case class Name(s: String) extends JeevesRecord
-case class Email(s: String) extends JeevesRecord
-case class Network(s: String) extends JeevesRecord
+case class Name(s: String) extends Atom
+case class Email(s: String) extends Atom
+case class Network(s: String) extends Atom
 
 sealed trait UserLevel 
 object Anyone extends UserLevel
@@ -29,7 +29,7 @@ class UserRecord(
   networkV: Network, 
   networkL: UserLevel, 
   friendsL: UserLevel) 
-extends JeevesRecord {
+extends Atom {
   private var friends: Set[UserRecord] = Set()
   var X: IntExpr = 1000
   var Y: IntExpr = 1000

@@ -13,23 +13,23 @@ import Expr._
 import CfmBackend._
 import cap.jeeves.JeevesTypes._
 
-sealed trait PaperStage extends JeevesRecord
+sealed trait PaperStage extends Atom
 object Submission extends PaperStage
 object Review extends PaperStage
 object Rebuttal extends PaperStage
 object Decision extends PaperStage
 object Public extends PaperStage
 
-sealed trait PaperTag extends JeevesRecord
+sealed trait PaperTag extends Atom
 object NeedsReview extends PaperTag
 case class ReviewedBy (reviewer: ConfUser) extends PaperTag
 object Accepted extends PaperTag
 
-case class Title (name : String) extends JeevesRecord
+case class Title (name : String) extends Atom
 
 class PaperRecord( val id : Int
                  , _name : Title, _authors : List[ConfUser]
-                 , _papertags : List[PaperTag] ) extends JeevesRecord {
+                 , _papertags : List[PaperTag] ) extends Atom {
   private def isPublic (curtags : List[Sensitive]) (implicit CONTEXT: Sensitive)
   : Formula =
     (CONTEXT.stage === Public) && curtags.has(Accepted)

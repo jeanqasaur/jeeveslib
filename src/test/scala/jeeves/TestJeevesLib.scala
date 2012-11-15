@@ -26,7 +26,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     expect(null) {concretize(l === LOW, x)};
   }
 
-  case class Test(id: Int) extends JeevesRecord
+  case class Test(id: Int) extends Atom
   test ("test restrict") {
     val x = Test(1)
     val a = mkLevel ()

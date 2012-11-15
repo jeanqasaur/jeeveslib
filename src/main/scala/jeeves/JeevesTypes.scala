@@ -13,10 +13,10 @@ import Debug.debug
 
 object JeevesTypes {
   type LevelVar = BoolVar;
-  type IntegrityVar = BoolVar;
+  type WriteVar = BoolVar;
 
   type Sensitive = ObjectExpr[Atom];
 
   type ConfPolicy = Sensitive => Formula;
-  type IntegrityPolicy = (Sensitive, Sensitive) => Formula;
+  type WritePolicy = (Sensitive, Sensitive) => Formula;
 }
