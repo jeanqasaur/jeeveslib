@@ -6,8 +6,7 @@ package cap.scalasmt
  */
 
 /**
- * Partial evaluation with  
- * constant and equality propagation.
+ * Faceted evaluation.
  */
 object Partial {
   sealed trait TransformEval[T] {

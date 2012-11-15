@@ -16,130 +16,153 @@ class TestIntegrity extends FunSuite with JeevesLib {
   def allowUserWrite (user: DummyUser): (Sensitive, Sensitive) => Formula =
     (ictxt, otxt) => ictxt === user
 
-  /* Alice is allowed to write to x and only Bob is allowed to write to y.
+  /**
+   * More basic tests.
+   */
+  test ("write allowed for all viewers") {
+    val x = ProtectedIntRef(0, allowUserWrite (alice))(this)
+    x.update(alice, 42)
+    expect (42) { concretize(alice, x.v) }
+    expect (42) { concretize(bob, x.v) }
+    expect (42) { concretize(carol, x.v) }
+  }
+
+  test ("write disallowed for all viewers") {
+    val x = ProtectedIntRef(0, allowUserWrite (alice))(this)
+    x.update(bob, 42)
+    expect (0) { concretize(alice, x.v) }
+    expect (0) { concretize(bob, x.v) }
+    expect (0) { concretize(carol, x.v) }
+  }
+
+  test ("write selectively allowed for some viewers") {
+    val x = ProtectedIntRef(0
+              , (ictxt, octxt) => (ictxt === alice) && (octxt === bob))(this)
+    x.update(alice, 42)
+    expect (0) { concretize(alice, x.v) }
+    expect (42) { concretize(bob, x.v) }
+    expect (0) { concretize(carol, x.v) }
+  }
+
+  test ("permitted writer overwite") {
+    val x = ProtectedIntRef(0, allowUserWrite (bob))(this)
+    x.update(alice, 42)
+    x.update(bob, 43)
+    expect (43) { concretize(alice, x.v) }
+    expect (43) { concretize(bob, x.v) }
+    expect (43) { concretize(carol, x.v) }
+  }
+
+  test ("restricted writer overwrite") {
+    var x = ProtectedIntRef(0, allowUserWrite (bob))(this)
+    x.update(bob, 43)
+    x.update(alice, 42)
+    expect (43) { concretize(alice, x.v) }
+    expect (43) { concretize(bob, x.v) }
+    expect (43) { concretize(carol, x.v) }
+  }
+
+  test ("output varies depending on who is viewing") {
+    val x = ProtectedIntRef(0
+            , (ictxt, octxt) => ((ictxt === alice) && (octxt === bob)))(this)
+    x.update(alice, 42)
+    expect (0) { concretize(alice, x.v) }
+    expect (42) { concretize(bob, x.v) }
+    expect (0) { concretize(carol, x.v) }
+  }
+
+  test ("combining integrity policies in an operation") {
+    val x = ProtectedIntRef(0, allowUserWrite (bob))(this)
+    x.update(bob, 42)
+    val y = ProtectedIntRef(2
+            , (ictxt, octxt) => (ictxt === alice) && (octxt === bob))(this)
+    y.update(alice, 43)
+    expect (44) { concretize(alice, x.v + y.v) }
+    expect (85) { concretize(bob, x.v + y.v) }
+    expect (44) { concretize(carol, x.v + y.v) }
+  }
+
+   /* Alice is allowed to write to x and only Bob is allowed to write to y.
      Our write policies disallow Bob from accidentally writing a value from
      Alice into y. (That is, without an explicit endorsement...) */
   test ("Prevent flow of untrusted writes") {
-    val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
-    val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob, 1, x)
-    expect (42) { concretize(alice, x) }
-    expect (42) { concretize(bob, x) }
-    expect (0) { concretize(alice, y) }
-    expect (0) { concretize(bob, y) }
+    val x = ProtectedIntRef(0, allowUserWrite(alice))(this)
+    x.update(alice, 42) 
+    val y = ProtectedIntRef(1, allowUserWrite(bob))(this)
+    y.update(bob, x.v)
+    expect (42) { concretize(alice, x.v) }
+    expect (42) { concretize(bob, x.v) }
+    expect (0) { concretize(alice, y.v) }
+    expect (0) { concretize(bob, y.v) }
   }
 
   test ("Prevent flow of operations on untrusted writes") {
-    val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
-    val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob, 1, 43)
-    val z: IntExpr = writeAs(carol, (ictxt, octxt) => ictxt === carol
-                      , 0, x + y)
-    expect (1) { concretize(alice, z) }
-    expect (1) { concretize(bob, z) }
-    expect (1) { concretize(carol, z) }
+    val x = ProtectedIntRef(0, allowUserWrite(alice))(this)
+    x.update(alice, 42)
+    val y = ProtectedIntRef(1, allowUserWrite(bob))(this)
+    y.update(bob, 43)
+    val z = ProtectedIntRef(0, allowUserWrite(carol))(this)
+    z.update(carol, x.v + y.v)
+    expect (1) { concretize(alice, z.v) }
+    expect (1) { concretize(bob, z.v) }
+    expect (1) { concretize(carol, z.v) }
   }
 
   /* Alice is allowed to write to x and only Bob is allowed to write to y.
      Our policy enforcement prevents Alice from influencing values that Bob
      writes. */
   test ("Prevent untrusted writes through implicit flows.") {
-    val x: IntExpr = writeAs(alice, (ictxt, octxt) => ictxt === alice, 0, 42)
-    val y: IntExpr = writeAs(bob, (ictxt, octxt) => ictxt === bob
-                      , 1, jif((x === 42), _ => 2, _ => 3))
-    expect (3) { concretize(alice, y) }
-    expect (3) { concretize(bob, y) }
+    val x = ProtectedIntRef(0, allowUserWrite(alice))(this)
+    x.update(alice, 42)
+    val y = ProtectedIntRef(1, allowUserWrite(bob))(this)
+    y.update(bob, jif (x.v === 42, _ => 2, _ => 3))
+    expect (3) { concretize(alice, y.v) }
+    expect (3) { concretize(bob, y.v) }
   }
 
   test ("Prevent implicit flows of confidential values") {
-    val x: IntExpr = writeAs(alice
-                      , (ictxt, octxt) => ictxt === alice && octxt === alice
-                      , 0, 42)
-    val y: IntExpr = writeAs(bob
-                      , (ictxt, octxt) => ictxt === bob || ictxt === alice
-                      , 1, jif((x === 42), _ => 2, _ => 3))
-    expect (2) { concretize(alice, y) }
-    expect (3) { concretize(bob, y) }
-  }
-
-  test ("write allowed for all viewers") {
-    val x: IntExpr = writeAs(alice, allowUserWrite (alice), 0, 42)
-    expect (42) { concretize(alice, x) }
-    expect (42) { concretize(bob, x) }
-    expect (42) { concretize(carol, x) }
-  }
-
-  test ("write disallowed for all viewers") {
-    val x: IntExpr = writeAs(alice, allowUserWrite (bob), 0, 42)
-    expect (0) { concretize(alice, x) }
-    expect (0) { concretize(bob, x) }
-    expect (0) { concretize(carol, x) }
-  }
-
-  test ("write selectively allowed for some viewers") {
-    val x: IntExpr =
-      writeAs(alice, (ictxt, octxt) =>
-        ((ictxt === alice) && (octxt === bob)), 0, 42)
-    expect (0) { concretize(alice, x) }
-    expect (42) { concretize(bob, x) }
-    expect (0) { concretize(carol, x) }
-  }
-
-  test ("permitted writer overwite") {
-    var x: IntExpr = writeAs(alice, allowUserWrite (bob), 0, 42)
-    x = writeAs(bob, allowUserWrite(bob), x, 43)
-    expect (43) { concretize(alice, x) }
-    expect (43) { concretize(bob, x) }
-    expect (43) { concretize(carol, x) }
-  }
-
-  test ("restricted writer overwrite") {
-    var x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-    x = writeAs(alice, allowUserWrite(bob), x, 43)
-    expect (42) { concretize(alice, x) }
-    expect (42) { concretize(bob, x) }
-    expect (42) { concretize(carol, x) }
-  }
-
-  test ("output varies depending on who is viewing") {
-    var x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-    x = writeAs(alice, (ictxt, octxt) =>
-        ((ictxt === alice) && (octxt === bob)), x, 43)
-    expect (42) { concretize(alice, x) }
-    expect (43) { concretize(bob, x) }
-    expect (42) { concretize(carol, x) }
-  }
-
-  test ("combining integrity policies in an operation") {
-    val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-    val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
-        ((ictxt === alice) && (octxt === bob)), 2, 43)
-    expect (44) { concretize(alice, x + y) }
-    expect (85) { concretize(bob, x + y) }
-    expect (44) { concretize(carol, x + y) }
+    val x = ProtectedIntRef(0
+              , (ictxt, octxt) => ictxt === alice && octxt === alice)(this)
+    x.update(alice, 42)
+    val y = ProtectedIntRef(1
+              , (ictxt, octxt) => ictxt === bob || ictxt === alice)(this)
+    y.update(bob, jif(x.v === 42, _ => 2, _ => 3))
+    expect (2) { concretize(alice, y.v) }
+    expect (3) { concretize(bob, y.v) }
   }
 
   /* If Alice and Bob are allowed to write to x and y respectively, then
      x + y should be allowed to be written to a value where they are both
      allowed to write. */
   test ("combining values into permissive write") {
-    val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-    val y: IntExpr = writeAs(alice, allowUserWrite (alice), 1, 43)
-    val z: IntExpr = writeAs(carol, (ictxt, octxt) =>
-      (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
-    expect (85) { concretize(alice, z) }
-    expect (85) { concretize(bob, z) }
-    expect (85) { concretize(carol, z) }
+    val x = ProtectedIntRef(0, allowUserWrite (bob))(this)
+    x.update(bob, 42)
+    val y = ProtectedIntRef(1, allowUserWrite (alice))(this)
+    y.update(alice, 43)
+    val z =
+      ProtectedIntRef(0
+        , (ictxt, octxt) =>
+            (ictxt === alice) || (ictxt === bob) || (ictxt === carol))(this)
+    z.update(carol, x.v + y.v)
+    expect (85) { concretize(alice, z.v) }
+    expect (85) { concretize(bob, z.v) }
+    expect (85) { concretize(carol, z.v) }
   }
 
   // Only bob can see the special value alice wrote to him...
   test ("finer-grained policy layering...") {
-    val x: IntExpr = writeAs(bob, allowUserWrite (bob), 0, 42)
-    val y: IntExpr = writeAs(alice, (ictxt, octxt) =>
-        ((ictxt === alice) && (octxt === bob)), 2, 43)
-    val z: IntExpr = writeAs(carol, (ictxt, octxt) =>
-      (ictxt === alice) || (ictxt === bob) || (ictxt === carol), x + y, x + y)
-    expect (44) { concretize(alice, z) }
-    expect (85) { concretize(bob, z) }
-    expect (44) { concretize(carol, z) }
+    val x = ProtectedIntRef(0, allowUserWrite (bob))(this)
+    x.update(bob, 42)
+    val y = ProtectedIntRef(2
+            , (ictxt, octxt) => (ictxt === alice) && (octxt === bob))(this)
+    y.update(alice, 43)
+    val z = ProtectedIntRef(0
+            , (ictxt, octxt) =>
+              (ictxt === alice) || (ictxt === bob) || (ictxt === carol))(this)
+    z.update(carol, x.v + y.v)
+    expect (44) { concretize(alice, z.v) }
+    expect (85) { concretize(bob, z.v) }
+    expect (44) { concretize(carol, z.v) }
   }
 
   // Since only bob knows that he can write, only he can see his value...
@@ -147,13 +170,14 @@ class TestIntegrity extends FunSuite with JeevesLib {
     val a = mkLevel ()
     restrict (a, (ctxt: Sensitive) => ctxt === bob)
     val secretWriter: Sensitive = mkSensitive(a, bob, nobody)
-    val x: IntExpr = writeAs(bob, ((ictxt: Sensitive, octxt: Sensitive) =>
-      ictxt === secretWriter), 0, 42)
+    val x = ProtectedIntRef(0
+            , (ictxt, octxt) => ictxt === secretWriter)(this)
+    x.update(bob, 42)
     expect (bob) { concretize(bob, secretWriter) }
     expect (nobody) { concretize(alice, secretWriter) }
     expect (nobody) { concretize(carol, secretWriter) }
-    expect (0) { concretize(alice, x) }
-    expect (42) { concretize(bob, x) }
-    expect (0) { concretize(carol, x) }
+    expect (0) { concretize(alice, x.v) }
+    expect (42) { concretize(bob, x.v) }
+    expect (0) { concretize(carol, x.v) }
   }
 }

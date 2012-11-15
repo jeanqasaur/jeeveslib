@@ -1,6 +1,7 @@
 package cap.jeeves
 
 /*
+ * Jeeves type synonym definitions.
  * @author jeanyang
  */
 

@@ -1,8 +1,7 @@
 package cap.jeeves
 
 /*
- * A library for using ScalaSMT for privacy, using symbolic varaibles to
- * represent sensitive values.
+ * Manipulating the path condition.
  * @author jeanyang
  */
 
