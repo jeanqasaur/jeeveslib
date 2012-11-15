@@ -1,4 +1,6 @@
-package cap.scalasmt
+package cap.jeeveslib.env
+
+import cap.jeeveslib.ast.{Atom, BoolVar, Expr, Formula, Var}
 
 /** 
  * Constraint environment for ConstraintEnv.
@@ -16,7 +18,7 @@ trait ConstraintEnv {
   private var ENV: VarEnv = DefaultEnv
 
   private def solve(fs: List[Formula]) =  
-    SMT.solve(fs, DEFAULTS, SCOPE)(ENV) match {
+    cap.jeeveslib.smt.SMT.solve(fs, DEFAULTS, SCOPE)(ENV) match {
       case Some(e) => e
       case None => throw Inconsistency
     }

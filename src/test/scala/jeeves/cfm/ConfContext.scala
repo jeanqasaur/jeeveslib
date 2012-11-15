@@ -5,7 +5,7 @@ package cap.jeeves.cfm
  * @author jeanyang
  */
 
-import cap.scalasmt._
+import cap.jeeveslib.ast._
 import scala.collection.mutable.Map;
 
 import CfmBackend._

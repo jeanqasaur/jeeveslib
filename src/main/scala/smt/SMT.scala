@@ -1,7 +1,9 @@
-package cap.scalasmt
+package cap.jeeveslib.smt
 
-import Zeros._
-import Debug._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.Zeros._
+import cap.jeeveslib.env.{DefaultEnv, VarEnv}
+import cap.jeeveslib.util.Debug._
 
 /* 
  * Translator to SMT-LIB2.

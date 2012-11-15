@@ -1,4 +1,4 @@
-package cap.scalasmt
+package cap.jeeveslib.util
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

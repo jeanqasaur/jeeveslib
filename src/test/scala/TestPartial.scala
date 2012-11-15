@@ -1,10 +1,12 @@
-package test.cap.scalasmt
+package test.cap.jeeveslib
 
-import cap.scalasmt._
 import org.scalatest.FunSuite
 import org.scalatest.Assertions
-import Partial.eval
+
+import cap.jeeveslib.ast._
 import Expr._
+import cap.jeeveslib.env.EmptyEnv
+import cap.jeeveslib.eval.Partial._
 
 class ExamplePartial extends FunSuite {
   implicit val env = EmptyEnv

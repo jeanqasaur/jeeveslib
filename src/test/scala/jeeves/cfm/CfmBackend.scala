@@ -1,12 +1,11 @@
 package cap.jeeves.cfm
 
-import cap.scalasmt._
-import cap.jeeves._
-
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set
 
+import cap.jeeveslib.ast._
 import Expr._
+import cap.jeeveslib.jeeves._
 
 object CfmBackend extends JeevesLib {
   // We do not delegate integrity checking to Jeeves.

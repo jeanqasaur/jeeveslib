@@ -1,15 +1,11 @@
-package cap.jeeves
+package cap.jeeveslib.ast
 
 /*
  * Jeeves type synonym definitions.
  * @author jeanyang
  */
 
-import cap.scalasmt._
-import scala.collection.mutable.Map;
-import scala.collection.mutable.WeakHashMap;
-import scala.collection.mutable.Stack;
-import Debug.debug
+import cap.jeeveslib._
 
 object JeevesTypes {
   type LevelVar = BoolVar;

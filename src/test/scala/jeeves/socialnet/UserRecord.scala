@@ -5,12 +5,12 @@ package cap.jeeves.socialnet
  * @author jeanyang, kuat
  */
 
-import cap.scalasmt._
 import collection.immutable.ListSet;
-import SocialNetBackend._
-import cap.jeeves.JeevesTypes._
 
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
 import Expr._
+import SocialNetBackend._
 
 case class Name(s: String) extends Atom
 case class Email(s: String) extends Atom

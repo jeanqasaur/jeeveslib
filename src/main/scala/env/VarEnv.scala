@@ -1,4 +1,6 @@
-package cap.scalasmt
+package cap.jeeveslib.env
+
+import cap.jeeveslib.ast.{Formula, Var}
 
 /** 
  * VarEnv.

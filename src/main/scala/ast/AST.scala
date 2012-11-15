@@ -1,6 +1,7 @@
-package cap.scalasmt
+package cap.jeeveslib.ast
 
-import Zeros._
+import cap.jeeveslib.ast.Zeros._
+import cap.jeeveslib.env._
 
 /*
  * A DSL for logical constraints.

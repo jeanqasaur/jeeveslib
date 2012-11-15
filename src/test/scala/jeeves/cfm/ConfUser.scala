@@ -5,8 +5,8 @@ package cap.jeeves.cfm
  * @author jeanyang
  */
 
-import cap.scalasmt._
-import cap.jeeves.JeevesTypes._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
 
 import CfmBackend._
 

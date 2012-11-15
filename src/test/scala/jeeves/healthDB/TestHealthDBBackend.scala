@@ -1,7 +1,7 @@
 package test.cap.jeeves
 
-import cap.scalasmt._
-import cap.jeeves._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.jeeves._
 import cap.jeeves.socialnet._
 import SocialNetBackend._
 import org.scalatest.FunSuite

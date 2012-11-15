@@ -3,11 +3,10 @@ package cap.jeeves.socialnet
 import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Set;
 
-import cap.scalasmt._
-import cap.jeeves._
-
+import cap.jeeveslib.ast._
 import Expr._
-import cap.jeeves.JeevesTypes._
+import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.jeeves._
 
 /**
  * External interface to social network.

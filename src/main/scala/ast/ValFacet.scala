@@ -1,4 +1,4 @@
-package cap.scalasmt
+package cap.jeeveslib.ast
 
 sealed trait ValFacet[T, TS] {
   def valCons (v: T): TS

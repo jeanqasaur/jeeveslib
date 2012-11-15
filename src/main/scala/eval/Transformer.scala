@@ -1,4 +1,7 @@
-package cap.scalasmt
+package cap.jeeveslib.eval
+
+import cap.jeeveslib.ast._
+import cap.jeeveslib.env.VarEnv
 
 /**
  * AST transformers.

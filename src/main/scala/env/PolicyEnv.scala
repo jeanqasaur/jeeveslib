@@ -1,15 +1,15 @@
-package cap.jeeves
+package cap.jeeveslib.env
 
 /*
  * A library for using ScalaSMT for privacy, using symbolic varaibles to
  * represent sensitive values.
  * @author jeanyang
  */
-
-import cap.scalasmt._
 import scala.collection.mutable.WeakHashMap;
-import Debug.debug
-import JeevesTypes._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.eval.Partial
+import cap.jeeveslib.util.Debug
 
 trait PolicyEnv extends ConstraintEnv with PC {
   // Level variables for confidentiality and integrity
@@ -56,7 +56,7 @@ trait PolicyEnv extends ConstraintEnv with PC {
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   
   def concretizeExp[T](ctx: Sensitive, e: Expr[T]) = {
-    debug(" *** # _policies: " + _policies.size)
+    Debug.debug(" *** # _policies: " + _policies.size)
     val context =
       AND(_policies.map{
         case (lvar, (level, f)) => f (ctx) ==> (lvar === level)

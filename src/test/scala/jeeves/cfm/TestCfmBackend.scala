@@ -1,7 +1,6 @@
 package test.cap.jeeves.cfm
 
-import cap.scalasmt._
-import cap.jeeves._
+import cap.jeeveslib.jeeves._
 import cap.jeeves.cfm._
 import CfmBackend._
 

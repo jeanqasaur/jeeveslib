@@ -1,11 +1,12 @@
 package test.cap.jeeves
 
-import cap.scalasmt._
-import cap.jeeves._
-import cap.jeeves.JeevesTypes._
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
 import scala.collection.immutable.Map
+
+import cap.jeeveslib.ast.{Atom, S}
+import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.jeeves._
 
 /**
  * Based on the Fine benchmarks from PLDI '10.

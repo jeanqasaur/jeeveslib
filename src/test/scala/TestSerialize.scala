@@ -1,10 +1,10 @@
-package test.cap.scalasmt
+package test.cap.jeeveslib
 
-import cap.scalasmt._
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
 
-import Persistence.{serialize, deserialize, writeToFile, readFromFile}
+import cap.jeeveslib.env.ConstraintEnv
+import cap.jeeveslib.util.Persistence.{serialize, deserialize, writeToFile, readFromFile}
 
 class ExampleSerialize extends FunSuite with ConstraintEnv {
   /*

@@ -3,8 +3,8 @@ package cap.jeeves.healthDB
 import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Set;
 
-import cap.scalasmt._
-import cap.jeeves._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.jeeves._
 
 import Expr._
 

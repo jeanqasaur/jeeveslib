@@ -1,4 +1,4 @@
-package cap.scalasmt
+package cap.jeeveslib.ast
 
 /** 
  * Zero values for types.

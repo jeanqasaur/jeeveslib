@@ -5,8 +5,6 @@ package cap.jeeves.cfm
  * @author jeanyang
  */
 
-import cap.scalasmt._
-
 import CfmBackend._
 
 class PaperReview(id: Int, reviewerV: ConfUser, var body: String, var score: Int) {

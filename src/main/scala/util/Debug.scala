@@ -1,4 +1,4 @@
-package cap.scalasmt
+package cap.jeeveslib.util
 
 /**
  * Diagnostic output.

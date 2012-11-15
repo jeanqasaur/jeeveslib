@@ -5,13 +5,13 @@ package cap.jeeves.cfm
  * @author jeanyang
  */
 
-import cap.scalasmt._
 import scala.collection.immutable.List;
 import scala.collection.mutable.Map;
 
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
 import Expr._
 import CfmBackend._
-import cap.jeeves.JeevesTypes._
 
 sealed trait PaperStage extends Atom
 object Submission extends PaperStage

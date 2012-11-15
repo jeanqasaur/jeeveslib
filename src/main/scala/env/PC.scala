@@ -1,13 +1,14 @@
-package cap.jeeves
+package cap.jeeveslib.env
 
 /*
  * Manipulating the path condition.
  * @author jeanyang
  */
 
-import cap.scalasmt._
 import scala.collection.mutable.Stack;
-import JeevesTypes._
+
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
 
 trait PC {
   sealed trait PathCondition

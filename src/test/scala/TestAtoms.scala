@@ -1,8 +1,9 @@
-package test.cap.scalasmt
+package test.cap.jeeveslib
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions
-import cap.scalasmt._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.smt._
 
 class ExampleAtoms extends FunSuite {
 

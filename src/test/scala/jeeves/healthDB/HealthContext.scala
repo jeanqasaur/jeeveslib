@@ -5,7 +5,7 @@ package cap.jeeves.healthDB
  * @author jeanyang
  */
 
-import cap.scalasmt._
+import cap.jeeveslib.ast._
 import HealthDBBackend._
 
 import java.util.{Calendar, Date, GregorianCalendar, Locale, TimeZone}

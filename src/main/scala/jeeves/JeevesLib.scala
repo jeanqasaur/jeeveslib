@@ -1,4 +1,4 @@
-package cap.jeeves
+package cap.jeeveslib.jeeves
 
 /*
  * A library for using ScalaSMT for privacy, using symbolic varaibles to
@@ -6,7 +6,9 @@ package cap.jeeves
  * @author jeanyang, kuat
  */
 
-import cap.scalasmt._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.env.{EmptyEnv, PolicyEnv, WritePolicyEnv}
+import cap.jeeveslib.eval._
 import JeevesTypes._
 
 trait JeevesLib extends PolicyEnv with WritePolicyEnv {

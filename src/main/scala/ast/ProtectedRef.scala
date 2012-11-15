@@ -1,12 +1,14 @@
-package cap.jeeves
+package cap.jeeveslib.ast
 
 /*
  * Definition of references protected by write policies.
  * @author jeanyang
  */
-
-import cap.scalasmt._
-import JeevesTypes._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.env.EmptyEnv
+import cap.jeeveslib.eval.Partial
+import cap.jeeveslib.jeeves._
 
 sealed trait ProtectedRef[T <: Expr[_]] {
   var v: T

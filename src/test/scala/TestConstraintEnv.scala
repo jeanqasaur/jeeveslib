@@ -1,10 +1,10 @@
-package test.cap.scalasmt
+package test.cap.jeeveslib
 
-import cap.scalasmt._
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
 
-import Expr._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.env.ConstraintEnv
 
 class ExampleConstraintEnv extends FunSuite with ConstraintEnv {
   test ("bool var") {

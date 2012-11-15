@@ -2,9 +2,9 @@ package test.cap.jeeves
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions
-import cap.scalasmt._
-import cap.jeeves._
-import cap.jeeves.JeevesTypes._
+import cap.jeeveslib.ast._
+import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.jeeves._
 
 class TestIntegrity extends FunSuite with JeevesLib {
   case class DummyUser(id: BigInt) extends Atom
