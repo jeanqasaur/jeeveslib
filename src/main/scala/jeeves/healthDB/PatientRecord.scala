@@ -36,12 +36,14 @@ class PatientRecord(
   restrict (dp, (ctxt: Sensitive) => isPatientOrDoctor(ctxt))
   var doctor: Sensitive = mkSensitive(dp, _doctor, defaultUser)
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
+  /*
     doctor = writeAs (
         ctxt
         , (ictxt, octxt) => ictxt.user.status === Admin
         , doctor // old value
         , mkSensitive(dp, newDoctor, defaultUser) // new value
       )
+    */
   }
 
   // Medication list.

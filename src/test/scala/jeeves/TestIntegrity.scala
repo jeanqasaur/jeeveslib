@@ -16,9 +16,6 @@ class TestIntegrity extends FunSuite with JeevesLib {
   def allowUserWrite (user: DummyUser): (Sensitive, Sensitive) => Formula =
     (ictxt, otxt) => ictxt === user
 
-  /**
-   * More basic tests.
-   */
   test ("write allowed for all viewers") {
     val x = ProtectedIntRef(0, allowUserWrite (alice))(this)
     x.update(alice, 42)
@@ -150,7 +147,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
   }
 
   // Only bob can see the special value alice wrote to him...
-  test ("finer-grained policy layering...") {
+  test ("Combining confidentiality with operations") {
     val x = ProtectedIntRef(0, allowUserWrite (bob))(this)
     x.update(bob, 42)
     val y = ProtectedIntRef(2
@@ -166,7 +163,7 @@ class TestIntegrity extends FunSuite with JeevesLib {
   }
 
   // Since only bob knows that he can write, only he can see his value...
-  test ("capturing confidentiality policies") {
+  test ("Integrity policies that involve confidentiality policies") {
     val a = mkLevel ()
     restrict (a, (ctxt: Sensitive) => ctxt === bob)
     val secretWriter: Sensitive = mkSensitive(a, bob, nobody)
@@ -179,5 +176,11 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (0) { concretize(alice, x.v) }
     expect (42) { concretize(bob, x.v) }
     expect (0) { concretize(carol, x.v) }
+  }
+
+    /* If Alice does something bad, then we will reject all of her influences. */
+  test ("Determine whether a writer is trusted later") {
+    val x = ProtectedIntRef(0, allowUserWrite(alice))(this)
+    x.update(alice, 42)
   }
 }

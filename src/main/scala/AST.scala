@@ -7,8 +7,9 @@ import Zeros._
  * @author kuat
  */
 
-object Impossible extends RuntimeException
-object Unimplemented extends RuntimeException
+case object Impossible extends RuntimeException
+case object Unimplemented extends RuntimeException
+case class Unexpected(msg: String) extends RuntimeException
 
 /**
  * Expressions.
@@ -18,6 +19,7 @@ sealed trait Expr[T] {
   def eval(implicit env: Environment = EmptyEnv): T
   def ===(that: Expr[T]): Expr[Boolean]
   def default: T
+  def show: T = throw Unexpected("show: " ++ this.toString)
 }
 sealed trait Ite[T] extends Expr[T] {
   def cond: Expr[Boolean]
@@ -166,7 +168,6 @@ extends IntExpr with Ite[BigInt]
 case class IntVal(v: BigInt) extends IntExpr with Constant[BigInt]
 case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
   extends IntExpr {
-  // TODO: We don't need a var here...
   def vars = root.vars // + IntVar("global" + f)
   def eval(implicit env: Environment) = f(root.eval).eval
 }
@@ -283,33 +284,6 @@ case class Diff(left: RelExpr, right: RelExpr) extends BinaryRelExpr {
 }
 case class Intersect(left: RelExpr, right: RelExpr) extends BinaryRelExpr {
   def eval(implicit inv: Environment) = left.eval & right.eval
-}
-
-/** 
- * Environment.
- */
-sealed trait Environment {
-  def vars: Set[Var[_]]
-  def +[T](b: (Var[T], T)): Environment = Binding(b._1, b._2, this)
-  def has[T](i: Var[T]): Boolean
-  def apply[T](i: Var[T]): T
-  def hasAll(vs: Traversable[Var[_]]) = vs.forall(has(_))
-}
-class UnboundVarException(i: Var[_]) extends RuntimeException("unbound variable: " + i) 
-object EmptyEnv extends Environment {
-  def vars = Set()
-  def has[T](i: Var[T]) = false
-  def apply[T](i: Var[T]) = throw new UnboundVarException(i)
-}
-object DefaultEnv extends Environment {
-  def vars = Set()
-  def has[T](i: Var[T]) = false
-  def apply[T](i: Var[T]) = i.default
-}
-case class Binding[U](bi: Var[U], bv: U, parent: Environment) extends Environment {
-  def vars = parent.vars + bi
-  def has[T](i: Var[T]) = (i == bi) || parent.has(i)
-  def apply[T](i: Var[T]) = if (i == bi) bv.asInstanceOf[T] else parent(i)
 }
 
 /**

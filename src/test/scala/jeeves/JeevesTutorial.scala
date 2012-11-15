@@ -14,11 +14,5 @@ class JeevesTutorial extends FunSuite with JeevesLib {
   val bob = DummyUser(1);
   val carol = DummyUser(2);
 
-  /* If Alice does something bad, then we will reject all of her influences. */
-  test ("Determine whether a writer is trusted later") {
-    val x: IntExpr = writeAs(alice
-                      , (ictxt, octxt) => ictxt === alice, 0, 42)
-  }
-
   // TODO: Faceted function depends on permissions...
 }

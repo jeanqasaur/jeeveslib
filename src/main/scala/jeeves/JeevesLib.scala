@@ -44,55 +44,6 @@ trait JeevesLib extends LevelVars with Integrity {
   }
   
   /**
-   * Integrity.
-   */
-  private def writeAs[T] (ctxt: Atom // Primary context is concrete
-    , trusted: T, untrusted: T
-    , policyFun: T => T
-    , iPolicy: IntegrityPolicy
-    , facetCons: (Formula, T, T) => T): T = {
-    // Make a new level variable based on this policy.
-    val ivar = mkLevel ()
-    mapPrimaryContext (ivar, ctxt)
-    restrict (ivar, (octxt: Sensitive) => iPolicy (ctxt, octxt))
-
-    // Apply the integrity policy to the untrusted facet.
-    val pUntrusted = policyFun(untrusted)
-
-    // Return a result that takes the path condition into account.
-    pushPC(ivar.id)
-    val r: T = mkFacetTree[T](
-      (lv: LevelVar) => addIntegrityPolicy (lv, iPolicy) (this)
-      , getPCList(), pUntrusted, trusted)(facetCons)
-    popPC()
-    r
-  }
-  def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
-    , trusted: IntExpr, untrusted: IntExpr): IntExpr = {
-    writeAs(
-      ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
-      , (e: IntExpr) => addPolicy(e)(this, iPolicy)
-      , iPolicy, IntFacet)
-  }
-  def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
-    , trusted: Formula, untrusted: Formula): Formula = {
-    writeAs(
-      ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
-      , (e: Formula) => addPolicy(e)(this, iPolicy)
-      , iPolicy, BoolFacet)
-  }
-  def writeAs (ctxt: Atom, iPolicy: IntegrityPolicy
-    , trusted: ObjectExpr[Atom], untrusted: ObjectExpr[Atom])
-  : ObjectExpr[Atom] = {
-    writeAs(
-      ctxt, trusted, Partial.eval(untrusted)(EmptyEnv)
-      , (e: ObjectExpr[Atom]) => addPolicy(e)(this, iPolicy)
-      , iPolicy
-      , (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom]) =>
-        ObjectFacet (c, t, f))
-  }
-
-  /**
    * Printing: only happens if the path condition allows it.
    */
   def jprint[T] (ctxt: Sensitive, e: Expr[T]): Unit = {
