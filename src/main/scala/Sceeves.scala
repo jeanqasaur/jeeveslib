@@ -1,7 +1,5 @@
 package cap.scalasmt
 
-import cap.scalasmt.{Environment => Env}
-
 /** 
  * Constraint environment for Sceeves.
  * @author kuat
@@ -15,7 +13,7 @@ trait Sceeves {
   private var CONSTRAINTS: Constraints = Nil
   private var DEFAULTS: Defaults = Nil
   private var SCOPE: Set[Atom] = Set()
-  private var ENV: Env = DefaultEnv
+  private var ENV: VarEnv = DefaultEnv
 
   private def solve(fs: List[Formula]) =  
     SMT.solve(fs, DEFAULTS, SCOPE)(ENV) match {

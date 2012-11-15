@@ -118,13 +118,13 @@ class Z3 extends Solver {
 
 /** Expression translators to SMT-LIB2. */ 
 object SMT {
-  private def variable(v: Var[_])(implicit env: Environment) =
+  private def variable(v: Var[_])(implicit env: VarEnv) =
     if (env.has(v))
       env(v).toString
     else
       v.toString
 
-  private def formula(f: Expr[Boolean])(implicit env: Environment, sc: Scope): String = f match {
+  private def formula(f: Expr[Boolean])(implicit env: VarEnv, sc: Scope): String = f match {
     case And(a,b) => "(and " + formula(a) + " " + formula(b) + ")"
     case Or(a,b) => "(or " + formula(a) + " " + formula(b) + ")"
     case Not(a) => "(not " + formula(a) + ")"
@@ -145,7 +145,7 @@ object SMT {
     case v: BoolVar => variable(v)
   }
 
-  private def integer(e: Expr[BigInt])(implicit env: Environment, sc: Scope): String = e match {
+  private def integer(e: Expr[BigInt])(implicit env: VarEnv, sc: Scope): String = e match {
     case Plus(a,b) => "(+ " + integer(a) + " " + integer(b) + ")"
     case Minus(a,b) => "(- " + integer(a) + " " + integer(b) + ")"
     case Times(a,b) => "(* " + integer(a) + " " + integer(b) + ")"
@@ -154,7 +154,7 @@ object SMT {
     case ObjectIntField(root, f) => "(" + f + " " + atom(root) + ")"
   }
 
-  private def atom(e: Expr[Atom])(implicit env: Environment, sc: Scope): String = e match {
+  private def atom(e: Expr[Atom])(implicit env: VarEnv, sc: Scope): String = e match {
     case ObjectFacet(cond, thn, els) => "(if " + formula(cond) + " " + atom(thn) + " " + atom(els) + ")"
     case Object(o) => sc.encode(o)
     case ObjectField(root, f) => "(" + f + " " + atom(root) + ")"
@@ -166,7 +166,7 @@ object SMT {
 */
   }
 
-  private def set(e: Expr[Set[Atom]])(implicit q: String, env: Environment, sc: Scope): String = e match {
+  private def set(e: Expr[Set[Atom]])(implicit q: String, env: VarEnv, sc: Scope): String = e match {
     case Union(a,b) => "(or " + set(a) + " " + set(b) + ")"
     case Diff(a,b) => "(and " + set(a) + " (not " + set(b) + "))"
     case Intersect(a,b) => "(and " + set(a) + " " + set(b) + ")"
@@ -239,7 +239,7 @@ object SMT {
    * This computation is necessary because we need to capture all objects relevant
    * to the objects involved in our constraints.
    */
-  private def univ(f: Expr[_])(implicit env: Environment): Scope = {
+  private def univ(f: Expr[_])(implicit env: VarEnv): Scope = {
     (f: @unchecked) match {
       case f: BinaryExpr[_] => univ(f.left) ++ univ(f.right)
       case f: Ite[_] => univ(f.cond) ++ univ(f.thn) ++ univ(f.els)
@@ -258,7 +258,7 @@ object SMT {
    * Iterate over variables we need until we get to a fixed point.
    */
   @annotation.tailrec 
-  private def closure(cur: Scope)(implicit env: Environment): Scope = {
+  private def closure(cur: Scope)(implicit env: VarEnv): Scope = {
     // Gets the fields of each object.
     val fields = for (o <- cur.objects; f <- cur.fields) yield f(o)
 
@@ -279,7 +279,7 @@ object SMT {
   }
   
   /** Encoding of the universe as a prelude. */
-  private def prelude(implicit env: Environment, sc: Scope): List[String] = {
+  private def prelude(implicit env: VarEnv, sc: Scope): List[String] = {
     val Scope(objects, fields, vars) = sc;
 
     // declare all objects
@@ -320,7 +320,7 @@ object SMT {
    * Initial scope of objects is used to make sound equality theory for objects.
    */
   def solve(f: Formula, defaults: List[Formula] = Nil, initial: Set[Atom] = Set())
-    (implicit env: Environment = DefaultEnv): Option[Environment] = {
+    (implicit env: VarEnv = DefaultEnv): Option[VarEnv] = {
     // Compute the scope of our current objects that is the transitive closure of the
     // objects mentioned in our current set of values.
     implicit val scope = closure(univ(f :: defaults) ++ initial)

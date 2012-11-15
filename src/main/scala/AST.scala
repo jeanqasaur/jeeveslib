@@ -16,7 +16,7 @@ case class Unexpected(msg: String) extends RuntimeException
  */
 sealed trait Expr[T] {
   def vars: Set[Var[_]]
-  def eval(implicit env: Environment = EmptyEnv): T
+  def eval(implicit env: VarEnv = EmptyEnv): T
   def ===(that: Expr[T]): Expr[Boolean]
   def default: T
   def show: T = throw Unexpected("show: " ++ this.toString)
@@ -26,12 +26,12 @@ sealed trait Ite[T] extends Expr[T] {
   def thn: Expr[T]
   def els: Expr[T]
   def vars = cond.vars ++ thn.vars ++ els.vars
-  def eval(implicit env: Environment)= if (cond.eval) thn.eval else els.eval
+  def eval(implicit env: VarEnv)= if (cond.eval) thn.eval else els.eval
 }
 sealed trait Var[T] extends Expr[T] {
   def id: String
   def vars: Set[Var[_]] = Set(this)
-  def eval(implicit env: Environment) = env(this)
+  def eval(implicit env: VarEnv) = env(this)
 }
 object Var {
   private var COUNTER = 0
@@ -51,12 +51,12 @@ sealed trait UnaryExpr[T <: Expr[_]] {
   def vars = sub.vars
 }
 sealed trait Eq[T <: Expr[_]] extends Expr[Boolean] with BinaryExpr[T] {
-  def eval(implicit env: Environment) = left.eval == right.eval 
+  def eval(implicit env: VarEnv) = left.eval == right.eval 
 }
 sealed trait Constant[T] extends Expr[T] {
   protected def v: T
   def vars = Set()
-  def eval(implicit env: Environment) = v
+  def eval(implicit env: VarEnv) = v
 } 
 
 /** 
@@ -93,14 +93,14 @@ sealed abstract class Formula extends Expr[Boolean] {
 }
 sealed abstract class BinaryFormula extends Formula with BinaryExpr[Formula] 
 case class And(left: Formula, right: Formula) extends BinaryFormula {
-  def eval(implicit env: Environment) = left.eval && right.eval
+  def eval(implicit env: VarEnv) = left.eval && right.eval
 }
 case class Or(left: Formula, right: Formula) extends BinaryFormula {
-  def eval(implicit env: Environment) = left.eval || right.eval
+  def eval(implicit env: VarEnv) = left.eval || right.eval
 }
 case class BoolFacet(cond: Formula, thn: Formula, els: Formula) extends Formula with Ite[Boolean]
 case class Not(sub: Formula) extends Formula with UnaryExpr[Formula] {
-  def eval(implicit env: Environment) = ! sub.eval
+  def eval(implicit env: VarEnv) = ! sub.eval
 }
 
 /**
@@ -108,20 +108,20 @@ case class Not(sub: Formula) extends Formula with UnaryExpr[Formula] {
  */
 sealed abstract class IntFormula extends Formula with BinaryExpr[IntExpr] 
 case class Leq(left: IntExpr, right: IntExpr) extends IntFormula {
-  def eval(implicit env: Environment) = left.eval <= right.eval
+  def eval(implicit env: VarEnv) = left.eval <= right.eval
 }
 case class Geq(left: IntExpr, right: IntExpr) extends IntFormula {
-  def eval(implicit env: Environment) = left.eval >= right.eval
+  def eval(implicit env: VarEnv) = left.eval >= right.eval
 }
 case class LT(left: IntExpr, right: IntExpr) extends IntFormula {
-  def eval(implicit env: Environment) = left.eval < right.eval
+  def eval(implicit env: VarEnv) = left.eval < right.eval
 }
 case class GT(left: IntExpr, right: IntExpr) extends IntFormula {
-  def eval(implicit env: Environment) = left.eval > right.eval
+  def eval(implicit env: VarEnv) = left.eval > right.eval
 }
 sealed abstract class RelFormula extends Formula with BinaryExpr[RelExpr]
 case class RelSub(left: RelExpr, right: RelExpr) extends RelFormula {
-  def eval(implicit env: Environment) = left.eval.subsetOf(right.eval)
+  def eval(implicit env: VarEnv) = left.eval.subsetOf(right.eval)
 }
 case class BoolVal(v: Boolean) extends Formula with Constant[Boolean]
 case class BoolVar(id: String) extends Formula with Var[Boolean] {
@@ -155,13 +155,13 @@ sealed abstract class IntExpr extends Expr[BigInt] {
 }
 sealed abstract class BinaryIntExpr extends IntExpr with BinaryExpr[IntExpr]
 case class Plus(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
-  def eval(implicit env: Environment) = left.eval + right.eval
+  def eval(implicit env: VarEnv) = left.eval + right.eval
 }
 case class Minus(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
-  def eval(implicit env: Environment) = left.eval - right.eval
+  def eval(implicit env: VarEnv) = left.eval - right.eval
 }
 case class Times(left: IntExpr, right: IntExpr) extends BinaryIntExpr {
-  def eval(implicit env: Environment) = left.eval * right.eval
+  def eval(implicit env: VarEnv) = left.eval * right.eval
 }
 case class IntFacet(cond: Formula, thn: IntExpr, els: IntExpr)
 extends IntExpr with Ite[BigInt]
@@ -169,7 +169,7 @@ case class IntVal(v: BigInt) extends IntExpr with Constant[BigInt]
 case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
   extends IntExpr {
   def vars = root.vars // + IntVar("global" + f)
-  def eval(implicit env: Environment) = f(root.eval).eval
+  def eval(implicit env: VarEnv) = f(root.eval).eval
 }
 
 sealed abstract class FunctionExpr[A, B] extends Expr[A => B] {
@@ -209,7 +209,7 @@ case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[
 case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
   extends ObjectExpr[Atom] {
   def vars = root.vars // + ObjectVar[Atom]("global" + f)
-  def eval(implicit env: Environment) = f(root.eval).eval
+  def eval(implicit env: VarEnv) = f(root.eval).eval
 }
 
 /**
@@ -268,22 +268,22 @@ sealed abstract class RelExpr extends Expr[Set[Atom]] with Dynamic {
 }
 case class Singleton(sub: ObjectExpr[Atom])
   extends RelExpr with UnaryExpr[ObjectExpr[Atom]] {
-  def eval(implicit env: Environment) = Set(sub.eval)
+  def eval(implicit env: VarEnv) = Set(sub.eval)
 }
 case class ObjectSet(v: Set[Atom]) extends RelExpr with Constant[Set[Atom]] 
 case class RelJoin(root: RelExpr, f: FieldDesc[Atom]) extends RelExpr {
   def vars = root.vars
-  def eval(implicit env: Environment) = (for (o <- root.eval) yield f(o).eval)
+  def eval(implicit env: VarEnv) = (for (o <- root.eval) yield f(o).eval)
 }
 sealed abstract class BinaryRelExpr extends RelExpr with BinaryExpr[RelExpr]
 case class Union(left: RelExpr, right: RelExpr) extends BinaryRelExpr {
-  def eval(implicit inv: Environment) = left.eval ++ right.eval
+  def eval(implicit inv: VarEnv) = left.eval ++ right.eval
 }
 case class Diff(left: RelExpr, right: RelExpr) extends BinaryRelExpr {
-  def eval(implicit inv: Environment) = left.eval -- right.eval
+  def eval(implicit inv: VarEnv) = left.eval -- right.eval
 }
 case class Intersect(left: RelExpr, right: RelExpr) extends BinaryRelExpr {
-  def eval(implicit inv: Environment) = left.eval & right.eval
+  def eval(implicit inv: VarEnv) = left.eval & right.eval
 }
 
 /**

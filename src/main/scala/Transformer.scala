@@ -10,17 +10,17 @@ package cap.scalasmt
  */
 object Partial {
   sealed trait TransformEval[T] {
-    def teval (e: T) (implicit env: Environment) : T
+    def teval (e: T) (implicit env: VarEnv) : T
   }
   object TransformEval {
     implicit object TransformEvalFormula extends TransformEval[Formula] {
-      def teval (f: Formula) (implicit env: Environment) = eval(f)
+      def teval (f: Formula) (implicit env: VarEnv) = eval(f)
     }
     implicit object TransformEvalIntExpr extends TransformEval[IntExpr] {
-      def teval (e: IntExpr) (implicit env: Environment) = eval(e)
+      def teval (e: IntExpr) (implicit env: VarEnv) = eval(e)
     }
     implicit object TransformEvalObject extends TransformEval[ObjectExpr[Atom]] {
-      def teval (e: ObjectExpr[Atom]) (implicit env: Environment) = eval(e)
+      def teval (e: ObjectExpr[Atom]) (implicit env: VarEnv) = eval(e)
     }
   }
 
@@ -89,7 +89,7 @@ object Partial {
 
   def eval[T1, T1S, T2, T2S] (a: T1S, b: T1S
     , op: (T1, T1) => T2, exprCons: (T1S, T1S) => T2S)
-    (implicit env: Environment
+    (implicit env: VarEnv
       , m: FacetJoin[T1, T1S, T2S]
       , v: ValFacet[T2, T2S]
       , te1: TransformEval[T1S], te2: TransformEval[T2S]): T2S = {
@@ -112,7 +112,7 @@ object Partial {
       , (sa, sb) => exprCons (sa, sb) )
   }
 
-  def eval (f: Formula) (implicit env: Environment): Formula = 
+  def eval (f: Formula) (implicit env: VarEnv): Formula = 
     {f match {
       case BoolFacet(a, b, c) => 
         val sa = eval(a); 
@@ -180,7 +180,7 @@ object Partial {
 
   def evalDeref[T, R] (root: ObjectExpr[Atom], f: FieldDesc[T]
     , facetCons: (Formula, R, R) => R)
-    (implicit env: Environment, te: TransformEval[R]): R = {
+    (implicit env: VarEnv, te: TransformEval[R]): R = {
     val sroot: ObjectExpr[Atom] = eval (root);
     sroot match {
       case Object (v) => te.teval ((f (v)).asInstanceOf[R])
@@ -193,7 +193,7 @@ object Partial {
     }
   }
 
-  def eval(e: IntExpr)(implicit env: Environment): IntExpr = {
+  def eval(e: IntExpr)(implicit env: VarEnv): IntExpr = {
     def evalIntIntFacet = eval[BigInt, IntExpr, BigInt, IntExpr]_;
     {e match {
       case IntFacet (a, b, c) => IntFacet(eval(a), eval(b), eval(c))
@@ -216,7 +216,7 @@ object Partial {
     } 
   }
 
-  def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: Environment)
+  def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: VarEnv)
     : ObjectExpr[Atom] =
     {e match {
       case ObjectFacet(a, b, c) => 
