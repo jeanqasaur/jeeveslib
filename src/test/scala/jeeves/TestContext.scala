@@ -66,4 +66,13 @@ class TestContext extends FunSuite with JeevesLib {
   test ("high confidentiality context - list") {
     expect(true) { concretize(highCtxt, s.has(Dummy(1))) }
   }
+
+  test("circular dependency") {
+    val a = mkLevel()
+    val v = mkSensitive(a, Dummy(1), Dummy(0))
+    restrict(a, (CONTEXT: Sensitive) => CONTEXT === Dummy(1))
+    expect(Dummy(1)) {
+      concretize(v, v)
+    }
+  }
 }
