@@ -1,4 +1,4 @@
-package cap.jeeves.socialnet
+package test.cap.jeeveslib.jeeves.socialnet
 
 /*
  * User records for jeeves social net case study.

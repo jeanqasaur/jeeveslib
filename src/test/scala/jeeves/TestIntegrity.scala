@@ -1,4 +1,4 @@
-package test.cap.jeeves
+package test.cap.jeeveslib.jeeves
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions

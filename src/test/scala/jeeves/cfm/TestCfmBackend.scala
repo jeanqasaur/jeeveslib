@@ -1,4 +1,4 @@
-package test.cap.jeeves.cfm
+package test.cap.jeeveslib.jeeves.cfm
 
 import cap.jeeveslib.jeeves._
 import cap.jeeves.cfm._

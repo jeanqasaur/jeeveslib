@@ -1,4 +1,4 @@
-package cap.jeeves.healthDB
+package test.cap.jeeveslib.jeeves.healthDB
 
 /*
  * Patient records.

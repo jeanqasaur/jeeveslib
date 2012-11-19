@@ -1,4 +1,4 @@
-package test.cap.jeeves
+package test.cap.jeeveslib.jeeves
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
@@ -9,6 +9,8 @@ import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
 
 class ExampleJeevesLib extends FunSuite with JeevesLib {
+  case class Dummy(id: BigInt) extends Atom
+
   test ("sensitive int") {
     val l = mkLevel();
     val x = mkSensitiveInt(l, 42, -1);
@@ -27,31 +29,76 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     expect(null) {concretize(l === LOW, x)};
   }
 
-  case class Test(id: Int) extends Atom
   test ("test restrict") {
-    val x = Test(1)
+    val x = Dummy(1)
     val a = mkLevel ()
     restrict (a, (ctxt: Sensitive) => ctxt === x)
-    val xS = mkSensitive (a, x, Test(-1))
+    val xS = mkSensitive (a, x, Dummy(-1))
     expect (x) { concretize (x, xS) }
   }
 
-  /*
-  test ("concretizeList non-null") {
-    val x = pickObject[Test];
-    assume(x === Test(0));
-    val symList = List(x);
-    val cList : List[Test] = concretize(NULL, symList);
-    expect(List(Test(0))) {cList};
+  test ("jif with IntExpr") {
+    val a = mkLevel();
+    val x = mkSensitiveInt(a, 0, 1)
+    // If ctxt != 0, then a is LOW.
+    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    val r = jif (x === 0, (_: Unit) => IntVal(3), (_: Unit) => IntVal(4))
+    expect (IntFacet(a, IntVal(3), IntVal(4))) { r }
+    expect (3) { concretize(Dummy(0), r) }
+    expect (4) { concretize(Dummy(1), r) }
   }
-  */
 
-  /*
-  test ("concretizeList null") {
-    val x = pickObject[Test](NULL);
-    val symList = List(x);
-    val cList : List[Test] = concretize(NULL, symList);
-    expect(Nil) {cList};
+  test ("jif with ObjectExpr") {
+    val a = mkLevel();
+    val x = mkSensitive(a, Dummy(0), Dummy(1))
+    // If ctxt != 0, then a is LOW.
+    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    val r =
+      jif (x === Dummy(0)
+        , (_: Unit) => Object(Dummy(3)), (_: Unit) => Object(Dummy(4)))
+    expect (ObjectFacet(a, Dummy(3), Dummy(4))) { r }
+    expect (Dummy(3)) { concretize(Dummy(0), r) }
+    expect (Dummy(4)) { concretize(Dummy(1), r) }
   }
-  */
+
+  test ("restrict under conditional") {
+    // TODO: Do we want this?
+  }
+
+  test ("nested conditionals with shared path condition") {
+    val a = mkLevel();
+    val x = mkSensitiveInt(a, 0, 1)
+    val y = mkSensitiveInt(a, 2, 3)
+    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    val r =
+      jif ( x === 0
+        , ((_: Unit) =>
+            jif (y === 2, (_: Unit) => IntVal (7), (_: Unit) => IntVal (8)))
+        , ((_: Unit) =>
+            IntVal (9)) )
+    expect (IntFacet(a, IntVal(7), IntVal(9))) { r }
+    expect (7) { concretize(Dummy(0), r) }
+    expect (9) { concretize(Dummy(1), r) }
+  }
+
+  test ("nested conditionals with no shared path condition") {
+    val a = mkLevel();
+    val b = mkLevel();
+
+    val x = mkSensitiveInt(a, 0, 1)
+    val y = mkSensitiveInt(b, 2, 3)
+
+    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    restrict (b, (ctxt: Sensitive) => ctxt === Dummy(1))
+
+    val r =
+      jif ( x === 0
+        , ((_: Unit) =>
+            jif (y === 2, (_: Unit) => IntVal (7), (_: Unit) => IntVal (8)))
+        , ((_: Unit) =>
+            IntVal (9)) )
+    expect (IntFacet(a, IntFacet(b, IntVal(7), IntVal(8)), IntVal(9))) { r }
+    expect (8) { concretize(Dummy(0), r) }
+    expect (9) { concretize(Dummy(1), r) }
+  }
 }

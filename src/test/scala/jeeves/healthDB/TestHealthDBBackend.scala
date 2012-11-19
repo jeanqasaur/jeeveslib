@@ -1,9 +1,7 @@
-package test.cap.jeeves
+package test.cap.jeeveslib.jeeves.HealthDB
 
 import cap.jeeveslib.ast._
 import cap.jeeveslib.jeeves._
-import cap.jeeves.socialnet._
-import SocialNetBackend._
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
 import scala.collection.immutable.Map

@@ -1,4 +1,4 @@
-package cap.jeeves.healthDB
+package test.cap.jeeveslib.jeeves.healthDB
 
 import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Set;

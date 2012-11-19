@@ -1,4 +1,4 @@
-package cap.jeeves.socialnet
+package test.cap.jeeveslib.jeeves.socialnet
 
 import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Set;

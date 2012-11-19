@@ -1,4 +1,4 @@
-package cap.jeeves.cfm
+package test.cap.jeeveslib.jeeves.cfm
 
 import scala.collection.mutable.Map
 import scala.collection.mutable.Set

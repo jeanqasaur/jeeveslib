@@ -1,4 +1,4 @@
-package cap.jeeves.cfm
+package test.cap.jeeveslib.jeeves.cfm
 
 /*
  * User records for jconf case study.
