@@ -60,10 +60,23 @@ case class ProtectedObjectRef(var v: ObjectExpr[Atom]
   , val iPolicy: WritePolicy)
   (implicit val jeevesEnv: JeevesLib) extends ProtectedRef[ObjectExpr[Atom]] {
   def update(ctxt: Atom, vNew: ObjectExpr[Atom]): Unit = {
-    writeAs(
-      ctxt, Partial.eval(vNew)(EmptyEnv)
-      , (e: ObjectExpr[Atom]) => jeevesEnv.addPolicy(e)(jeevesEnv, iPolicy)
-      , (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom]) =>
-        ObjectFacet (c, t, f))
+    v = writeAs(
+          ctxt, Partial.eval(vNew)(EmptyEnv)
+          , (e: ObjectExpr[Atom]) => jeevesEnv.addPolicy(e)(jeevesEnv, iPolicy)
+          , (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom]) =>
+            ObjectFacet (c, t, f))
   }
 }
+
+case class ProtectedFunctionRef[A, B](
+  var v: FunctionExpr[A, B], val iPolicy: WritePolicy)
+  (implicit val jeevesEnv: JeevesLib) extends ProtectedRef[FunctionExpr[A, B]] {
+  def update(ctxt: Atom, vNew: FunctionExpr[A, B]): Unit ={
+    v = writeAs(ctxt, Partial.eval(vNew)(EmptyEnv)
+        , (e: FunctionExpr[A, B]) => jeevesEnv.addPolicy(e)(jeevesEnv, iPolicy)
+        , (c: Formula, t: FunctionExpr[A, B], f: FunctionExpr[A, B]) =>
+            FunctionFacet (c, t, f))
+  }
+}
+
+

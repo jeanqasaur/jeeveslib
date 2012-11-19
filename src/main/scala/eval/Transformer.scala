@@ -222,9 +222,7 @@ object Partial {
   def eval[T >: Null <: Atom](e: ObjectExpr[T])(implicit env: VarEnv)
     : ObjectExpr[Atom] =
     {e match {
-      case ObjectFacet(a, b, c) => 
-        val sa = eval(a)
-        ObjectFacet(sa, eval(b), eval(c))
+      case ObjectFacet(a, b, c) => ObjectFacet(eval(a), eval(b), eval(c))
       case ObjectField (root, f) =>
         evalDeref[Atom, ObjectExpr[Atom]] (root, f, ObjectFacet[Atom])
       case Object(_) => e
@@ -236,6 +234,11 @@ object Partial {
       case e => e
     }
 
-    // TODO: Field dereference
+   def eval[A, B](e: FunctionExpr[A, B])(implicit env: VarEnv)
+     : FunctionExpr[A, B] =
+      e match {
+        case FunctionVal(_) => e
+        case FunctionFacet(c, t, f) => FunctionFacet(eval(c), eval(t), eval(f))
+      }
 }
 

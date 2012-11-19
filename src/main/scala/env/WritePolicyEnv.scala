@@ -83,16 +83,28 @@ trait WritePolicyEnv {
   }
   def addPolicy[T >: Null <: Atom](e: ObjectExpr[T])
     (implicit lvars: PolicyEnv, iPolicy: WritePolicy): ObjectExpr[T] =
-  e match {
-    case ObjectFacet(cond, t, f) =>
-    val newCond =
-      cond match {
-      case c: BoolVar => addWritePolicy(c, iPolicy)
-      case _ => throw Impossible
-    }
-    ObjectFacet(newCond, addPolicy(t), addPolicy (f))
-    case ObjectField (root, f) =>
-    ObjectField (addPolicy (root), f).asInstanceOf[ObjectExpr[T]]
-    case Object(_) => e
+    e match {
+      case ObjectFacet(cond, t, f) =>
+        val newCond =
+          cond match {
+            case c: BoolVar => addWritePolicy(c, iPolicy)
+            case _ => throw Impossible
+          }
+        ObjectFacet(newCond, addPolicy(t), addPolicy (f))
+      case ObjectField (root, f) =>
+        ObjectField (addPolicy (root), f).asInstanceOf[ObjectExpr[T]]
+      case Object(_) => e
   }
+  def addPolicy[A, B](e: FunctionExpr[A, B])
+    (implicit lvars: PolicyEnv, iPolicy: WritePolicy): FunctionExpr[A, B] =
+    e match {
+      case FunctionVal(_) => e
+      case FunctionFacet(cond, t, f) =>
+        val newCond =
+            cond match {
+              case c: BoolVar => addWritePolicy(c, iPolicy)
+              case _ => throw Impossible
+            }
+        FunctionFacet(newCond, addPolicy(t), addPolicy(f))
+    }
 }

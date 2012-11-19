@@ -178,9 +178,31 @@ class TestIntegrity extends FunSuite with JeevesLib {
     expect (0) { concretize(carol, x.v) }
   }
 
-    /* If Alice does something bad, then we will reject all of her influences. */
+  /* If Alice does something bad, then we will reject all of her influences.
+   */
   test ("Determine whether a writer is trusted later") {
     val x = ProtectedIntRef(0, allowUserWrite(alice))(this)
     x.update(alice, 42)
+  }
+
+  def id[T](x: T): T = x
+  def inc(x: IntExpr): IntExpr = x + 1
+
+  test ("Function facets--allowed to write.") {
+    val x =
+      ProtectedFunctionRef(FunctionVal(id[IntExpr]_)
+        , allowUserWrite(bob))(this)
+    expect (1) { concretize(alice, jfun[IntExpr, IntExpr](x.v, 1)) }
+    x.update(bob, FunctionVal(inc))
+    expect (2) { concretize(alice, jfun[IntExpr, IntExpr](x.v, 1)) }
+  }
+
+  test ("Function facets--not allowed to write.") {
+    val x =
+      ProtectedFunctionRef(FunctionVal(id[IntExpr]_)
+        , allowUserWrite(bob))(this)
+    expect (1) { concretize(alice, jfun[IntExpr, IntExpr](x.v, 1)) }
+    x.update(alice, FunctionVal(inc))
+    expect (1) { concretize(alice, jfun[IntExpr, IntExpr](x.v, 1)) }
   }
 }
