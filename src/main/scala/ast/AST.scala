@@ -198,7 +198,10 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom]
   def !==(that: Expr[Atom]) = ! (this === that)
   def constant(t: Atom) = Object(t)
   def default = zero[Atom]
+
+  def applyFunction(f: T => Formula): Formula
   def applyFunction[T2 >: Null <: Atom](f: T => T2): ObjectExpr[T2]
+
   def ~(name: Symbol) = ObjectIntField(this, IntFieldDesc(name.name))
   def applyDynamic(name: String)(args: Any*) = {
     assert(args.length == 0)
@@ -208,11 +211,14 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom]
 case class ObjectFacet[+T >: Null <: Atom](
   cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T])
   extends ObjectExpr[T] with Ite[Atom]  {
+    def applyFunction(f: T => Formula): Formula =
+      BoolFacet(cond, thn.applyFunction(f), els.applyFunction(f))
     def applyFunction[T2 >: Null <: Atom](f: T => T2):ObjectExpr[T2] = {
       ObjectFacet(cond, thn.applyFunction[T2](f), els.applyFunction(f))
     }
 }
 case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[Atom]  {
+  def applyFunction(f: T => Formula): Formula = f(v)
   def applyFunction[T2 >: Null <: Atom](f: T => T2): ObjectExpr[T2] =
     Object(f(v))
 }
@@ -220,6 +226,9 @@ case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
   extends ObjectExpr[Atom] {
   def vars = root.vars // + ObjectVar[Atom]("global" + f)
   def eval(implicit env: VarEnv) = f(root.eval).eval
+
+  def applyFunction(f: Atom => Formula): Formula =
+    throw Unexpected ("applyFunction for ObjectField")
   def applyFunction[T2 >: Null <: Atom](f: Atom => T2): ObjectExpr[T2] =
     throw Unexpected ("applyFunction for ObjectField")
 }
@@ -337,7 +346,7 @@ case class IntExprs[T >: Null <: IntExpr](vs: Traversable[T]) {
   def hasFormula(f: IntExpr => Formula): Formula =
     OR(for (v <- vs) yield f(v))
 }
-case class Atoms[T >: Null <: Atom](vs: Traversable[T]) {
+case class Atoms[T >: Null <: Atom](vs: Traversable[T]) extends Atom {
   def has(i: ObjectExpr[Atom]): Formula = OR(for (v <- vs) yield i === v)
   def hasFormula(f: ObjectExpr[Atom] => Formula): Formula =
     OR(for (v <- vs) yield f(v))
