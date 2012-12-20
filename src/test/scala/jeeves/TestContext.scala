@@ -14,18 +14,19 @@ class TestContext extends FunSuite with JeevesLib {
 
   val defaultVal = Dummy(-1)
 
-  def mkElt(x: Dummy): Sensitive = {
+  def mkElt(x: Dummy): ObjectExpr[Dummy] = {
     val l = mkLevel();
-    restrict(l, (CONTEXT: Sensitive) => CONTEXT.viewer.ID === IntVal(1));
+    restrict(l
+      , (ctxt: ObjectExpr[DummyContext]) => ctxt.viewer.ID === IntVal(1));
     mkSensitive(l, x, defaultVal)
   }
 
   val x: Dummy = Dummy(1);
   val highCtxt: DummyContext = DummyContext(1, Dummy(1))
   val lowCtxt: DummyContext = DummyContext(0, Dummy(0))
-  val x_s: Sensitive = mkElt(x);
+  val x_s: ObjectExpr[Dummy] = mkElt(x);
   val y: Dummy = Dummy(2);
-  val y_s: Sensitive = mkElt(y); 
+  val y_s: ObjectExpr[Dummy] = mkElt(y); 
  
   val c = (1 to 3).toList.map(Dummy(_))
   val s = c.map(mkElt)
@@ -70,7 +71,7 @@ class TestContext extends FunSuite with JeevesLib {
   test("circular dependency") {
     val a = mkLevel()
     val v = mkSensitive(a, Dummy(1), Dummy(0))
-    restrict(a, (CONTEXT: Sensitive) => CONTEXT === Dummy(1))
+    restrict(a, (ctxt: ObjectExpr[DummyContext]) => ctxt === Dummy(1))
     expect(Dummy(1)) {
       concretize(v, v)
     }

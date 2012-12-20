@@ -30,65 +30,66 @@ case class Title (name : String) extends Atom
 class PaperRecord( val id : Int
                  , _name : Title, _authors : List[ConfUser]
                  , _papertags : List[PaperTag] ) extends Atom {
-  private def isPublic (curtags : List[Sensitive]) (implicit CONTEXT: Sensitive)
+  private def isPublic (curtags : List[ObjectExpr[PaperTag]])
+    (implicit ctxt: ObjectExpr[ConfContext])
   : Formula =
-    (CONTEXT.stage === Public) && curtags.has(Accepted)
+    (ctxt.stage === Public) && curtags.has(Accepted)
 
   // Some predicates...
-  private def isAuthor (implicit CONTEXT: Sensitive): Formula =
-    _authors.has(CONTEXT.viewer);
-  private def isInternal (implicit CONTEXT: Sensitive): Formula =
-    (CONTEXT.viewer.role === ReviewerStatus) ||
-    (CONTEXT.viewer.role === PCStatus)
+  private def isAuthor (implicit ctxt: ObjectExpr[ConfContext]): Formula =
+    _authors.has(ctxt.viewer);
+  private def isInternal (implicit ctxt: ObjectExpr[ConfContext]): Formula =
+    (ctxt.viewer.role === ReviewerStatus) || (ctxt.viewer.role === PCStatus)
 
   // The name of the paper is always visible to the authors.
-  def updateName(_name: Title): Sensitive = {
+  def updateName(_name: Title): ObjectExpr[Title] = {
     val level = mkLevel ();
     restrict (level
-      , (CONTEXT: Sensitive) =>
-        (isAuthor (CONTEXT) || isInternal (CONTEXT)
-          || isPublic (getTags ()) (CONTEXT)));
+      , (ctxt: ObjectExpr[ConfContext]) =>
+        (isAuthor(ctxt) || isInternal(ctxt)
+          || isPublic(getTags())(ctxt)));
     mkSensitive(level, _name, Title(""))
   }
   var name = updateName(_name);
 
-  val authors: List[Sensitive] = {
+  val authors: List[ObjectExpr[ConfUser]] = {
     val level = mkLevel ();
     restrict ( level
-           , (CONTEXT: Sensitive) =>
-              (isAuthor (CONTEXT)
-                || (isInternal (CONTEXT) && (CONTEXT.stage === Decision)) ||
-                isPublic (getTags ()) (CONTEXT)) );
+           , (ctxt: ObjectExpr[ConfContext]) =>
+              (isAuthor(ctxt)
+                || (isInternal(ctxt) && (ctxt.stage === Decision)) ||
+                isPublic(getTags ())(ctxt)) );
     _authors.map(a => mkSensitive(level, a, NULL))
   }
 
   /* Managing tags. */
-  private def addTagPermission (tag : PaperTag) : Sensitive = {
+  private def addTagPermission (tag : PaperTag) : ObjectExpr[PaperTag] = {
     val level = mkLevel ();
     tag match {
       case NeedsReview =>
         restrict (level,
-          (CONTEXT: Sensitive) =>
-            (isInternal (CONTEXT) && (CONTEXT.stage === Review)));
+          (ctxt: ObjectExpr[ConfContext]) =>
+            (isInternal(ctxt) && (ctxt.stage === Review)));
       case ReviewedBy (reviewer) =>
-        restrict (level, (CONTEXT: Sensitive) => isInternal (CONTEXT))
+        restrict (level
+          , (ctxt: ObjectExpr[ConfContext]) => isInternal(ctxt))
       // Can see the "Accepted" tag if is an internal user at the decision
       // stage or if all information is visible.
       case Accepted =>
         restrict (level
-          , (CONTEXT: Sensitive) =>
-            ((isInternal (CONTEXT) && (CONTEXT.stage === Decision))
-              || (CONTEXT.stage === Public)));
+          , (ctxt: ObjectExpr[ConfContext]) =>
+            ((isInternal(ctxt) && (ctxt.stage === Decision))
+              || (ctxt.stage === Public)));
     }
     mkSensitive(level, tag, NULL)
   }
 
-  private var actualTags : Map[PaperTag, Sensitive] = {
-    val m = Map[PaperTag, Sensitive]();
+  private var actualTags : Map[PaperTag, ObjectExpr[PaperTag]] = {
+    val m = Map[PaperTag, ObjectExpr[PaperTag]]();
     _papertags foreach { tag => m += (tag -> addTagPermission(tag)) };
     m
   }
-  def getTags () : List[Sensitive] =
+  def getTags () : List[ObjectExpr[PaperTag]] =
     (actualTags.toList).map(x => x._2)
   def addTag (newtag : PaperTag) : Unit = {
     actualTags += (newtag -> addTagPermission(newtag))

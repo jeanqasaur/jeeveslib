@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expect}
 import scala.collection.immutable.Map
 
-import cap.jeeveslib.ast.{Atom, S}
+import cap.jeeveslib.ast.{Atom, ObjectExpr, S}
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
 
@@ -43,9 +43,9 @@ class Authentication extends FunSuite with JeevesLib {
       // File read location.
       val canWrite = mkLevel ()
       restrict (canWrite
-      , (CONTEXT: Sensitive) =>
-        ((CONTEXT.prin === Authentication.Admin)
-              && (CONTEXT.cred.p === CONTEXT.prin)))
+      , (ctxt: ObjectExpr[Authentication.Principal]) =>
+        ((ctxt.prin === Authentication.Admin)
+              && (ctxt.cred.p === ctxt.prin)))
       def getWriteLoc () = mkSensitive(canWrite, _loc, "")
       def showWriteLoc (ctxt: Authentication.AuthContext): String =
         concretize(ctxt, getWriteLoc ()).asInstanceOf[S].s

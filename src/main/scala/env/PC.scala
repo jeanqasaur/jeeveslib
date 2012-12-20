@@ -41,10 +41,10 @@ trait PC {
       Some(_pc.foldLeft((BoolVal(true): Formula))(mkAnd))
     }
   }
-  def mkGuardedConfPolicy (p: Sensitive => Formula)
-  : (Sensitive => Formula) = {
+  def mkGuardedConfPolicy[C >: Null <: Atom](p: ObjectExpr[C] => Formula)
+  : (ObjectExpr[C] => Formula) = {
     getPCFormula () match {
-      case Some(f) => (CONTEXT: Sensitive) => (f ==> p (CONTEXT))
+      case Some(f) => (context: ObjectExpr[C]) => (f ==> p(context))
       case None => p
     }
   }

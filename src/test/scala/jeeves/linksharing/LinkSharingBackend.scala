@@ -1,4 +1,4 @@
-package test.cap.jeeveslib.jeeves.socialnet
+package test.cap.jeeveslib.jeeves.linksharing
 
 import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Set;
@@ -10,9 +10,9 @@ import cap.jeeveslib.jeeves._
 
 /**
  * External interface to social network.
- * @author kuat
+ * @author jeanyang
  */
-object SocialNetBackend extends JeevesLib {
+object LinkSharingBackend extends JeevesLib {
   private var users: List[UserRecord] = Nil;
 
   /* Database functions. */
@@ -31,14 +31,19 @@ object SocialNetBackend extends JeevesLib {
   }
 
   def getFriendNetworks(user: UserRecord) =
-    user.getFriends().map(_.network)
+    user.getFriends().map(_.getNetwork())
 
   def getUsersByNetwork(network : Network) = 
-    users.filter(_.network === network)
+    users.filter(_.getNetwork() === network)
 
+  // TODO: Redo this so that we are not calling methods on something in a
+  // symbolic list...  Or change our implementation so that this doesn't
+  // matter...
   def announceName(u: UserRecord) = 
     for (f <- u.getFriends())
-      yield email(f, u.name)
+    // TODO: Problem here: we are calling getName on a symbolic thing...  Need
+    // to evaluate this to a faceted thing...
+      yield email(f, u.getName())
 
   def email(f: ObjectExpr[UserRecord], b: ObjectExpr[Name]) = 
     Receipt(concretize(f, f.email), concretize(f, b))

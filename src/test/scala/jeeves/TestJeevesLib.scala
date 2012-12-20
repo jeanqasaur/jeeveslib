@@ -32,7 +32,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
   test ("test restrict") {
     val x = Dummy(1)
     val a = mkLevel ()
-    restrict (a, (ctxt: Sensitive) => ctxt === x)
+    restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === x)
     val xS = mkSensitive (a, x, Dummy(-1))
     expect (x) { concretize (x, xS) }
   }
@@ -41,7 +41,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val a = mkLevel();
     val x = mkSensitiveInt(a, 0, 1)
     // If ctxt != 0, then a is LOW.
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val r = jif (x === 0, (_: Unit) => IntVal(3), (_: Unit) => IntVal(4))
     expect (IntFacet(a, IntVal(3), IntVal(4))) { r }
     expect (3) { concretize(Dummy(0), r) }
@@ -52,7 +52,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val a = mkLevel();
     val x = mkSensitive(a, Dummy(0), Dummy(1))
     // If ctxt != 0, then a is LOW.
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val r =
       jif (x === Dummy(0)
         , (_: Unit) => Object(Dummy(3)), (_: Unit) => Object(Dummy(4)))
@@ -69,7 +69,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val a = mkLevel();
     val x = mkSensitiveInt(a, 0, 1)
     val y = mkSensitiveInt(a, 2, 3)
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val r =
       jif ( x === 0
         , ((_: Unit) =>
@@ -88,8 +88,8 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val x = mkSensitiveInt(a, 0, 1)
     val y = mkSensitiveInt(b, 2, 3)
 
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
-    restrict (b, (ctxt: Sensitive) => ctxt === Dummy(1))
+    restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
+    restrict (b, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(1))
 
     val r =
       jif ( x === 0
@@ -108,7 +108,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     def inc(x: IntExpr): IntExpr = x + 1
 
     val a = mkLevel ()
-    restrict (a, (ctxt: Sensitive) => ctxt === Dummy(0))
+    restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val f: FunctionExpr[IntExpr, IntExpr] =
       mkSensitiveIntFunction (a, FunctionVal(id[IntExpr]_), FunctionVal(inc))
     expect (IntFacet(a, IntVal(1), Plus(IntVal(1), IntVal(1)))) {

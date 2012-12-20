@@ -1,8 +1,8 @@
-package test.cap.jeeveslib.jeeves.socialnet
+package test.cap.jeeveslib.jeeves.linksharing
 
 /*
  * User records for jeeves social net case study.
- * @author jeanyang, kuat
+ * @author jeanyang
  */
 
 import collection.immutable.ListSet;
@@ -10,11 +10,12 @@ import collection.immutable.ListSet;
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import Expr._
-import SocialNetBackend._
+import LinkSharingBackend._
 
 case class Name(s: String) extends Atom
 case class Email(s: String) extends Atom
 case class Network(s: String) extends Atom
+// TODO: Links
 
 sealed trait UserLevel 
 object Anyone extends UserLevel
@@ -22,14 +23,13 @@ object Self extends UserLevel
 object Friends extends UserLevel
 
 class UserRecord(
-  nameV: Name, 
-  nameL: UserLevel,
-  emailV: Email,
-  emailL: UserLevel, 
-  networkV: Network, 
-  networkL: UserLevel, 
-  friendsL: UserLevel) 
-extends Atom {
+  private val nameV: Name, 
+  private val nameL: UserLevel,
+  private val emailV: Email,
+  private val emailL: UserLevel, 
+  private val networkV: Network, 
+  private val networkL: UserLevel, 
+  private val friendsL: UserLevel) extends Atom {
   private var friends: Set[UserRecord] = Set()
   var X: IntExpr = 1000
   var Y: IntExpr = 1000
@@ -45,9 +45,11 @@ extends Atom {
   }
 
   /** Observers */
-  val name = mkSensitive(level (nameL), nameV)
-  val email = mkSensitive(level (emailL), emailV)
-  val network = mkSensitive(level (networkL), networkV);
+  // Change to have getters and setters and all that...
+  def getName(): ObjectExpr[Name] = mkSensitive(level (nameL), nameV)
+  def getEmail(): ObjectExpr[Email] = mkSensitive(level (emailL), emailV)
+  def getNetwork(): ObjectExpr[Network] =
+    mkSensitive(level (networkL), networkV);
   def getFriends () = {
     val l = level(friendsL);
     friends.map(mkSensitive(l, _))
@@ -71,6 +73,6 @@ extends Atom {
   private def ABS(x: IntExpr): IntExpr = {
     jif (x >= 0, _ => x, _ => -x)
   }
-  private def DISTANCE(a: ObjectExpr[Atom], b: ObjectExpr[Atom]) = 
+  private def DISTANCE(a: ObjectExpr[Atom], b: ObjectExpr[Atom]) =
     ABS(a.X - b.X) + ABS(a.Y - b.Y) 
 }

@@ -16,13 +16,13 @@ class PatientRecord(
   , private val _doctor: UserRecord
   , private val _meds: List[MedicationRecord]) extends Atom {
   private val defaultUser = UserRecord(-1, S(""), Other)
-  private def isPatientOrDoctor (ctxt: Sensitive): Formula = {
+  private def isPatientOrDoctor (ctxt: ObjectExpr[HealthContext]): Formula = {
     (ctxt.identity === this) || (ctxt.identity === doctor)
   }
 
   // Patient identity.
   private val np = mkLevel ()
-  restrict (np, (ctxt: Sensitive) => isPatientOrDoctor(ctxt))
+  restrict (np, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
   var identity = mkSensitive(np, _identity, defaultUser)
   def getIdentity = {
     mkSensitive(np, _identity, defaultUser)
@@ -33,8 +33,8 @@ class PatientRecord(
 
   // Doctor identity.
   private val dp = mkLevel ()
-  restrict (dp, (ctxt: Sensitive) => isPatientOrDoctor(ctxt))
-  var doctor: Sensitive = mkSensitive(dp, _doctor, defaultUser)
+  restrict (dp, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
+  var doctor: ObjectExpr[UserRecord] = mkSensitive(dp, _doctor, defaultUser)
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
   /*
     doctor = writeAs (
@@ -48,13 +48,13 @@ class PatientRecord(
 
   // Medication list.
   private val mp = mkLevel ()
-  restrict (dp, (ctxt: Sensitive) => isPatientOrDoctor(ctxt))
+  restrict (dp, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
 
   var _actualMeds = _meds // Keep this in order to remove.
   var meds = _meds.map(m => mkSensitive(mp, m, NULL))
   def addMed (newMed: MedicationRecord) (implicit ctxt: HealthContext): Unit = {
     val canSet = mkLevel ()
-    restrict (canSet, (ctxt: Sensitive) => ctxt.user.status === Admin)
+    restrict (canSet, (ctxt: ObjectExpr[UserRecord]) => ctxt.user.status === Admin)
    
   /*
     _actualMeds = writeAs (

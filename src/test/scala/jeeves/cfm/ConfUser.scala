@@ -23,7 +23,8 @@ case class ConfUser( val name: Name, _password: String, val role: UserStatus )
   extends Atom {
     val password = {
       val level = mkLevel ();
-      restrict (level, (CONTEXT: Sensitive) => (CONTEXT.viewer === this));
+      restrict (level
+        , (ctxt: ObjectExpr[ConfContext]) => (ctxt.viewer === this));
       mkSensitive(level, Password(_password), Password(""))
     }
   }

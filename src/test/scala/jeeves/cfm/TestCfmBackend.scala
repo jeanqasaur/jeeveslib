@@ -1,7 +1,7 @@
 package test.cap.jeeveslib.jeeves.cfm
 
 import cap.jeeveslib.jeeves._
-import cap.jeeves.cfm._
+import test.cap.jeeveslib.jeeves.cfm._
 import CfmBackend._
 
 import org.scalatest.FunSuite

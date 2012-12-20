@@ -79,8 +79,8 @@ sealed abstract class Formula extends Expr[Boolean] {
     new {def !(els: Formula) = BoolFacet(Formula.this, thn, els)}
   def ?(thn: IntExpr) = new {def !(els: IntExpr) =
     IntFacet(Formula.this, thn, els)}
-  def ?(thn: ObjectExpr[Atom]) =
-    new {def !(els: ObjectExpr[Atom]) =
+  def ?[T >: Null <: Atom](thn: ObjectExpr[T]) =
+    new {def !(els: ObjectExpr[T]) =
       ObjectFacet(Formula.this, thn, els)}
   // TODO: Define more function expressions...
   def ?[A, B](thn: FunctionExpr[A, B]) =
@@ -191,12 +191,14 @@ extends FunctionExpr[A, B] with Ite[A => B]
 
 /* Atom is uniquely identified by its string representation.*/
 trait Atom extends AnyRef
-sealed abstract class ObjectExpr[+T >: Null <: Atom] extends Expr[Atom] with Dynamic { 
+sealed abstract class ObjectExpr[+T >: Null <: Atom]
+  extends Expr[Atom] with Dynamic { 
   def ===(that: Expr[Atom]): Formula = 
     that match {case that: ObjectExpr[_] => ObjectEq(this, that)}
   def !==(that: Expr[Atom]) = ! (this === that)
   def constant(t: Atom) = Object(t)
   def default = zero[Atom]
+  def applyFunction[T2 >: Null <: Atom](f: T => T2): ObjectExpr[T2]
   def ~(name: Symbol) = ObjectIntField(this, IntFieldDesc(name.name))
   def applyDynamic(name: String)(args: Any*) = {
     assert(args.length == 0)
@@ -205,12 +207,21 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom] extends Expr[Atom] with Dyn
 }
 case class ObjectFacet[+T >: Null <: Atom](
   cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T])
-  extends ObjectExpr[T] with Ite[Atom] 
-case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[Atom] 
+  extends ObjectExpr[T] with Ite[Atom]  {
+    def applyFunction[T2 >: Null <: Atom](f: T => T2):ObjectExpr[T2] = {
+      ObjectFacet(cond, thn.applyFunction[T2](f), els.applyFunction(f))
+    }
+}
+case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[Atom]  {
+  def applyFunction[T2 >: Null <: Atom](f: T => T2): ObjectExpr[T2] =
+    Object(f(v))
+}
 case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
   extends ObjectExpr[Atom] {
   def vars = root.vars // + ObjectVar[Atom]("global" + f)
   def eval(implicit env: VarEnv) = f(root.eval).eval
+  def applyFunction[T2 >: Null <: Atom](f: Atom => T2): ObjectExpr[T2] =
+    throw Unexpected ("applyFunction for ObjectField")
 }
 
 /**
@@ -318,8 +329,6 @@ object `package` {
   def OR(vs: Traversable[Formula]) = vs.foldLeft(false: Formula)(_ || _)
   def AND(vs: Traversable[Formula]) = vs.foldLeft(true: Formula)(_ && _)
 }
-
-
 
 
 /** Lists of symbolic values. */
