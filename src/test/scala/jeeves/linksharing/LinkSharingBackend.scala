@@ -41,12 +41,11 @@ object LinkSharingBackend extends JeevesLib {
   // matter...
   def announceName(u: UserRecord) = 
     for (f <- u.getFriends())
-    // TODO: Problem here: we are calling getName on a symbolic thing...  Need
-    // to evaluate this to a faceted thing...
       yield email(f, u.getName())
 
   def email(f: ObjectExpr[UserRecord], b: ObjectExpr[Name]) = 
-    Receipt(concretize(f, f.email), concretize(f, b))
+    Receipt(concretize(f, f.applyFunction[Email](
+      f => f.getEmail())), concretize(f, b))
 
   case class Receipt(email: Atom, body: Atom)
 

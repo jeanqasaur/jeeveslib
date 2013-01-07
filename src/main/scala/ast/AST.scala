@@ -200,7 +200,8 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom]
   def default = zero[Atom]
 
   def applyFunction(f: T => Formula): Formula
-  def applyFunction[T2 >: Null <: Atom](f: T => T2): ObjectExpr[T2]
+  def applyFunction(f: T => IntExpr): IntExpr
+  def applyFunction[T2 >: Null <: Atom](f: T => ObjectExpr[T2]): ObjectExpr[T2]
 
   def ~(name: Symbol) = ObjectIntField(this, IntFieldDesc(name.name))
   def applyDynamic(name: String)(args: Any*) = {
@@ -208,19 +209,34 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom]
     ObjectField(this, ObjectFieldDesc(name))
   }
 }
+
 case class ObjectFacet[+T >: Null <: Atom](
   cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T])
   extends ObjectExpr[T] with Ite[Atom]  {
     def applyFunction(f: T => Formula): Formula =
       BoolFacet(cond, thn.applyFunction(f), els.applyFunction(f))
-    def applyFunction[T2 >: Null <: Atom](f: T => T2):ObjectExpr[T2] = {
-      ObjectFacet(cond, thn.applyFunction[T2](f), els.applyFunction(f))
+    def applyFunction(f: T => IntExpr): IntExpr =
+      IntFacet(cond, thn.applyFunction(f), els.applyFunction(f))
+    def applyFunction[T2 >: Null <: Atom](f: T => ObjectExpr[T2])
+      : ObjectExpr[T2] = {
+      ObjectFacet(cond
+        , if (thn == null) null else thn.applyFunction[T2](f)
+        , if (els == null) null else els.applyFunction(f))
     }
+    override def eval(implicit env: VarEnv): T =
+      if (cond.eval) {
+        if (thn == null) null else thn.eval.asInstanceOf[T]
+      } else {
+        if (els == null) null else els.eval.asInstanceOf[T]
+      }
 }
-case class Object[+T >: Null <: Atom](v: T) extends ObjectExpr[T] with Constant[Atom]  {
-  def applyFunction(f: T => Formula): Formula = f(v)
-  def applyFunction[T2 >: Null <: Atom](f: T => T2): ObjectExpr[T2] =
-    Object(f(v))
+case class Object[+T >: Null <: Atom](v: T)
+  extends ObjectExpr[T] with Constant[Atom]  {
+  def applyFunction(f: T => Formula): Formula =
+    if (v == null) null else f(v)
+  def applyFunction(f: T => IntExpr): IntExpr = if (v == null) null else f(v)
+  def applyFunction[T2 >: Null <: Atom](f: T => ObjectExpr[T2])
+  : ObjectExpr[T2] = if (v == null) null else f(v)
 }
 case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
   extends ObjectExpr[Atom] {
@@ -229,7 +245,10 @@ case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
 
   def applyFunction(f: Atom => Formula): Formula =
     throw Unexpected ("applyFunction for ObjectField")
-  def applyFunction[T2 >: Null <: Atom](f: Atom => T2): ObjectExpr[T2] =
+  def applyFunction(f: Atom => IntExpr): IntExpr =
+    throw Unexpected ("applyFunction for ObjectField")
+  def applyFunction[T2 >: Null <: Atom](f: Atom => ObjectExpr[T2])
+    : ObjectExpr[T2] =
     throw Unexpected ("applyFunction for ObjectField")
 }
 

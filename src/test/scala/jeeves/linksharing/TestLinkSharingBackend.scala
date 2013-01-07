@@ -91,8 +91,6 @@ class ExampleLinkSharingBackend extends FunSuite {
     expect((4, 4)) {concretize(kuat, kuat.location)}
   }
 
-  // TODO: Have better way of accessing fields of faceted things.
-  /*
   test("symbolic context") {
     expect(Set(Receipt(Email("kuat@mit.edu"), null))) {
       announceName(jean)
@@ -102,5 +100,4 @@ class ExampleLinkSharingBackend extends FunSuite {
       announceName(joe)
     }
   }
-  */
 }
