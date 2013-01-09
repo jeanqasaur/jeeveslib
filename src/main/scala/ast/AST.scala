@@ -5,7 +5,7 @@ import cap.jeeveslib.env._
 
 /*
  * A DSL for logical constraints.
- * @author kuat
+ * @author kuat, jeanyang
  */
 
 case object Impossible extends RuntimeException
@@ -232,8 +232,7 @@ case class ObjectFacet[+T >: Null <: Atom](
 }
 case class Object[+T >: Null <: Atom](v: T)
   extends ObjectExpr[T] with Constant[Atom]  {
-  def applyFunction(f: T => Formula): Formula =
-    if (v == null) null else f(v)
+  def applyFunction(f: T => Formula): Formula = if (v == null) null else f(v)
   def applyFunction(f: T => IntExpr): IntExpr = if (v == null) null else f(v)
   def applyFunction[T2 >: Null <: Atom](f: T => ObjectExpr[T2])
   : ObjectExpr[T2] = if (v == null) null else f(v)

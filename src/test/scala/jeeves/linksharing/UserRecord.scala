@@ -12,50 +12,34 @@ import cap.jeeveslib.ast.JeevesTypes._
 import Expr._
 import LinkSharingBackend._
 
-case class Name(s: String) extends Atom
-case class Email(s: String) extends Atom
-case class Network(s: String) extends Atom
-// TODO: Links
-
 sealed trait UserLevel 
 object Anyone extends UserLevel
 object Self extends UserLevel
 object Friends extends UserLevel
 
 class UserRecord(
-  private val nameV: Name, 
-  private val nameL: UserLevel,
-  private val emailV: Email,
-  private val emailL: UserLevel, 
-  private val networkV: Network, 
-  private val networkL: UserLevel, 
+  private val _name: S, private val nameL: UserLevel,
+  private val _email: S, private val emailL: UserLevel, 
+  private val _network: S, private val networkL: UserLevel, 
   private val friendsL: UserLevel) extends Atom {
   private var friends: Set[UserRecord] = Set()
-  var X: IntExpr = 1000
-  var Y: IntExpr = 1000
+  private var links: List[ObjectExpr[S]] = List()
 
   /** Mutators */
   def add(u: UserRecord) {friends = friends + u}
   def remove(u: UserRecord) {friends = friends - u}
-  def setLocation(x: BigInt, y: BigInt) {
-    val l = mkLevel();
-    restrict(l, (ctxt: ObjectExpr[UserRecord]) => DISTANCE(ctxt, this) < 10);
-    this.X = mkSensitiveInt(l, x, 1000);
-    this.Y = mkSensitiveInt(l, y, 1000);
-  }
 
   /** Observers */
   // Change to have getters and setters and all that...
-  def getName(): ObjectExpr[Name] = mkSensitive(level (nameL), nameV)
-  def getEmail(): ObjectExpr[Email] = mkSensitive(level (emailL), emailV)
-  def getNetwork(): ObjectExpr[Network] =
-    mkSensitive(level (networkL), networkV);
+  def getName(): ObjectExpr[S] = mkSensitive(level (nameL), _name)
+  def getEmail(): ObjectExpr[S] = mkSensitive(level (emailL), _email)
+  def getNetwork(): ObjectExpr[S] =
+    mkSensitive(level (networkL), _network);
   def getFriends () = {
     val l = level(friendsL);
     friends.map(mkSensitive(l, _))
   }
   def isFriends(u: UserRecord) = getFriends.has(u)
-  def location() = (X, Y);
 
   /** Helpers */
   private def level (ul: UserLevel): LevelVar = {
@@ -69,10 +53,4 @@ class UserRecord(
     }
     l
   }
-
-  private def ABS(x: IntExpr): IntExpr = {
-    jif (x >= 0, _ => x, _ => -x)
-  }
-  private def DISTANCE(a: ObjectExpr[Atom], b: ObjectExpr[Atom]) =
-    ABS(a.X - b.X) + ABS(a.Y - b.Y) 
 }

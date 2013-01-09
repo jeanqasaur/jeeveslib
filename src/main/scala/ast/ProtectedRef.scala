@@ -22,7 +22,7 @@ sealed trait ProtectedRef[T <: Expr[_], IC >: Null <: Atom, OC >: Null <: Atom] 
     jeevesEnv.mapPrimaryContext (ivar, ctxt)
     jeevesEnv.restrict (ivar
       , (octxt: ObjectExpr[OC]) =>
-          iPolicy (ctxt, octxt.asInstanceOf[ObjectExpr[OC]]))
+          iPolicy(ctxt, octxt.asInstanceOf[ObjectExpr[OC]]))
 
     // Apply the integrity policy to the untrusted facet.
     val pUntrusted = policyFun(newVal)
@@ -31,7 +31,7 @@ sealed trait ProtectedRef[T <: Expr[_], IC >: Null <: Atom, OC >: Null <: Atom] 
     jeevesEnv.pushPC(ivar.id)
     val r: T = jeevesEnv.mkFacetTree[T](
       (lv: LevelVar) =>
-        jeevesEnv.addWritePolicy (lv, iPolicy) (jeevesEnv)
+        jeevesEnv.addWritePolicy[IC, OC](lv, iPolicy)(jeevesEnv)
       , jeevesEnv.getPCList(), pUntrusted, v)(facetCons)
     jeevesEnv.popPC()
     r
@@ -45,7 +45,7 @@ case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
   def update(ctxt: IC, vNew: IntExpr): Unit = {
     v = writeAs(ctxt, Partial.eval(vNew)(EmptyEnv)
           , ((e: IntExpr) =>
-              jeevesEnv.addPolicy(e)(jeevesEnv, iPolicy))
+              jeevesEnv.addPolicy[IC, OC](e)(jeevesEnv, iPolicy))
           , IntFacet)(jeevesEnv)
   }
 }
@@ -59,7 +59,7 @@ case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
       , BoolFacet)(jeevesEnv)
   }
 }
-  
+ 
 case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: ObjectExpr[Atom], val iPolicy: (IC, ObjectExpr[OC]) => Formula)
   (implicit val jeevesEnv: JeevesLib)
@@ -79,7 +79,8 @@ case class ProtectedFunctionRef[A, B, IC >: Null <: Atom, OC >: Null <: Atom](
   extends ProtectedRef[FunctionExpr[A, B], IC, OC] {
   def update(ctxt: IC, vNew: FunctionExpr[A, B]): Unit ={
     v = writeAs(ctxt, Partial.eval(vNew)(EmptyEnv)
-        , (e: FunctionExpr[A, B]) => jeevesEnv.addPolicy(e)(jeevesEnv, iPolicy)
+        , (e: FunctionExpr[A, B]) =>
+            jeevesEnv.addPolicy[A, B, IC, OC](e)(jeevesEnv, iPolicy)
         , (c: Formula, t: FunctionExpr[A, B], f: FunctionExpr[A, B]) =>
             FunctionFacet (c, t, f))
   }

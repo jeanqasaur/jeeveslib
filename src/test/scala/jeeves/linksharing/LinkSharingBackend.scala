@@ -33,7 +33,7 @@ object LinkSharingBackend extends JeevesLib {
   def getFriendNetworks(user: UserRecord) =
     user.getFriends().map(_.getNetwork())
 
-  def getUsersByNetwork(network : Network) = 
+  def getUsersByNetwork(network : S) = 
     users.filter(_.getNetwork() === network)
 
   // TODO: Redo this so that we are not calling methods on something in a
@@ -43,8 +43,8 @@ object LinkSharingBackend extends JeevesLib {
     for (f <- u.getFriends())
       yield email(f, u.getName())
 
-  def email(f: ObjectExpr[UserRecord], b: ObjectExpr[Name]) = 
-    Receipt(concretize(f, f.applyFunction[Email](
+  def email(f: ObjectExpr[UserRecord], b: ObjectExpr[S]) = 
+    Receipt(concretize(f, f.applyFunction[S](
       f => f.getEmail())), concretize(f, b))
 
   case class Receipt(email: Atom, body: Atom)

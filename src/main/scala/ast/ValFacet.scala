@@ -6,18 +6,18 @@ sealed trait ValFacet[T, TS] {
 }
 object ValFacet {
   implicit object BoolValFacet extends ValFacet[Boolean, Formula] {
-  def valCons (b) = BoolVal(b)
+  def valCons (b: Boolean) = BoolVal(b)
   def facetCons (c: Formula, t: Formula, f: Formula): Formula =
     BoolFacet (c, t, f)
   }
   implicit object IntValFacet extends ValFacet[BigInt, IntExpr] {
-    def valCons (i) = IntVal(i)
+    def valCons (i: BigInt) = IntVal(i)
     def facetCons (c: Formula, t: IntExpr, f: IntExpr): IntExpr =
     IntFacet (c, t, f)
   }
   implicit object ObjectValFacet
   extends ValFacet[Atom, ObjectExpr[Atom]] {
-    def valCons (o) = Object (o)
+    def valCons (o: Atom) = Object (o)
     def facetCons (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom])
       : ObjectExpr[Atom] = ObjectFacet (c, t, f)
   }

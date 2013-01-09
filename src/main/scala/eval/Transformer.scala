@@ -38,9 +38,16 @@ object Partial {
   object FacetJoin {
     implicit object BoolBoolFacetJoin
     extends FacetJoin[Boolean, Formula, Formula] {
-      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
+      def facetJoin (sa: Formula, sb: Formula
+        , fVals: ((Boolean, Boolean) => Formula)
+        , fFacets: (Formula, Formula, Formula, Formula, Formula, Formula) =>
+                    Formula
+        , fBothL: (Formula, Formula, Formula, Formula) => Formula
+        , fBothR: (Formula, Formula, Formula, Formula) => Formula
+        , fOther: (Formula, Formula) => Formula)
+      : Formula = {
         (sa, sb) match {
-          case (BoolVal (sa), BoolVal (sb)) => fVals (sa, sb)
+          case (BoolVal (a), BoolVal (b)) => fVals (a, b)
           case (BoolFacet (c1, t1, f1), BoolFacet (c2, t2, f2)) =>
             fFacets (c1, t1, f1, c2, t2, f2)
           case (v1, BoolFacet (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
@@ -51,9 +58,15 @@ object Partial {
     }
     implicit object IntBoolFacetJoin
     extends FacetJoin[BigInt, IntExpr, Formula] {
-      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
+      def facetJoin (sa: IntExpr, sb: IntExpr
+        , fVals: (BigInt, BigInt) => Formula
+        , fFacets: (Formula, IntExpr, IntExpr, Formula, IntExpr, IntExpr) =>
+                    Formula
+        , fBothL: (IntExpr, Formula, IntExpr, IntExpr) => Formula
+        , fBothR: (Formula, IntExpr, IntExpr, IntExpr) => Formula
+        , fOther: (IntExpr, IntExpr) => Formula): Formula = {
         (sa, sb) match {
-          case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
+          case (IntVal (a), IntVal (b)) => fVals (a, b)
           case (IntFacet (c1, t1, f1), IntFacet (c2, t2, f2)) =>
             fFacets (c1, t1, f1, c2, t2, f2)
           case (v1, IntFacet (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
@@ -64,9 +77,15 @@ object Partial {
     }
     implicit object IntIntFacetJoin
     extends FacetJoin[BigInt, IntExpr, IntExpr] {
-      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): IntExpr = {
+      def facetJoin (sa: IntExpr, sb: IntExpr
+        , fVals: (BigInt, BigInt) => IntExpr
+        , fFacets: (Formula, IntExpr, IntExpr, Formula, IntExpr, IntExpr) =>
+                    IntExpr
+        , fBothL: (IntExpr, Formula, IntExpr, IntExpr) => IntExpr
+        , fBothR: (Formula, IntExpr, IntExpr, IntExpr) => IntExpr
+        , fOther: (IntExpr, IntExpr) => IntExpr): IntExpr = {
         (sa, sb) match {
-          case (IntVal (sa), IntVal (sb)) => fVals (sa, sb)
+          case (IntVal (a), IntVal (b)) => fVals (a, b)
           case (IntFacet (c1, t1, f1), IntFacet (c2, t2, f2)) =>
             fFacets (c1, t1, f1, c2, t2, f2)
           case (v1, IntFacet (c2, t2, f2)) => fBothL (v1, c2, t2, f2)
@@ -77,9 +96,17 @@ object Partial {
     }
     implicit object ObjectBoolFacetJoin
     extends FacetJoin[Atom, ObjectExpr[Atom], Formula] {
-      def facetJoin (sa, sb, fVals, fFacets, fBothL, fBothR, fOther): Formula = {
+      def facetJoin (sa: ObjectExpr[Atom], sb: ObjectExpr[Atom]
+        , fVals: (Atom, Atom) => Formula
+        , fFacets: (Formula, ObjectExpr[Atom], ObjectExpr[Atom]
+                    , Formula, ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
+        , fBothL: (ObjectExpr[Atom], Formula
+                  , ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
+        , fBothR: (Formula, ObjectExpr[Atom]
+                  , ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
+        , fOther: (ObjectExpr[Atom], ObjectExpr[Atom]) => Formula): Formula = {
         (sa, sb) match {
-          case (Object (sa), Object (sb)) => fVals (sa, sb)
+          case (Object (a), Object (b)) => fVals (a, b)
           case (ObjectFacet (c1, t1, f1), ObjectFacet (c2, t2, f2)) =>
             fFacets (c1, t1, f1, c2, t2, f2)
           case (v1, ObjectFacet (c2, t2, f2)) => fBothL (v1, c2, t2, f2)

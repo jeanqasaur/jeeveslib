@@ -190,17 +190,24 @@ class TestIntegrity extends FunSuite with JeevesLib {
 
   /* If Alice does something bad, then we will reject all of her influences.
    */
+  case class DummyContext(badUsers: List[DummyUser]) extends Atom
   test ("Determine whether a writer is trusted later") {
-    val x = ProtectedIntRef(0, allowUserWrite(alice))(this)
+    val x = ProtectedIntRef[DummyUser, DummyContext](0
+      , (ictxt, octxt) => (
+        octxt.applyFunction((oc: DummyContext) =>
+          !oc.badUsers.contains(ictxt))))(this)
     x.update(alice, 42)
+    expect(0) { concretize(DummyContext(List(alice)), x.v) }
+    expect(42) { concretize(DummyContext(List()), x.v) }
   }
-
+  
   def id[T](x: T): T = x
   def inc(x: IntExpr): IntExpr = x + 1
 
   test ("Function facets--allowed to write.") {
     val x =
-      ProtectedFunctionRef(FunctionVal(id[IntExpr]_)
+      ProtectedFunctionRef[IntExpr, IntExpr, DummyUser, DummyUser](
+        FunctionVal(id[IntExpr]_)
         , allowUserWrite(bob))(this)
     expect (1) { concretize(alice, jfun[IntExpr, IntExpr](x.v, 1)) }
     x.update(bob, FunctionVal(inc))
@@ -209,7 +216,8 @@ class TestIntegrity extends FunSuite with JeevesLib {
 
   test ("Function facets--not allowed to write.") {
     val x =
-      ProtectedFunctionRef(FunctionVal(id[IntExpr]_)
+      ProtectedFunctionRef[IntExpr, IntExpr, DummyUser, DummyUser](
+        FunctionVal(id[IntExpr]_)
         , allowUserWrite(bob))(this)
     expect (1) { concretize(alice, jfun[IntExpr, IntExpr](x.v, 1)) }
     x.update(alice, FunctionVal(inc))
