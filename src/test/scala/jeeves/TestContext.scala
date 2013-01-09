@@ -32,47 +32,47 @@ class TestContext extends FunSuite with JeevesLib {
   val s = c.map(mkElt)
 
   test ("comparing two symbolic fields") {
-    expect(true) { concretize(lowCtxt, x_s === y_s) }
-    expect(true) { concretize(lowCtxt, x_s~'ID === y_s~'ID) }
-    expect(false) { concretize(highCtxt, x_s === y_s) }
-    expect(false) { concretize(highCtxt, x_s~'ID === y_s~'ID) }
+    expectResult(true) { concretize(lowCtxt, x_s === y_s) }
+    expectResult(true) { concretize(lowCtxt, x_s~'ID === y_s~'ID) }
+    expectResult(false) { concretize(highCtxt, x_s === y_s) }
+    expectResult(false) { concretize(highCtxt, x_s~'ID === y_s~'ID) }
   }
 
   test ("formula with context id and object field - false") {
-    expect(-1) { concretize(lowCtxt, x_s~'ID) }
+    expectResult(-1) { concretize(lowCtxt, x_s~'ID) }
   }
 
   test ("formula with context viewer and object field - false") {
-    expect(-1) { concretize(lowCtxt, x_s~'ID) }
+    expectResult(-1) { concretize(lowCtxt, x_s~'ID) }
   }
 
   test ("high confidentiality context") {
-    expect (x) { concretize(highCtxt, x_s) }
+    expectResult (x) { concretize(highCtxt, x_s) }
   }
 
   test ("low confidentiality context") {
-    expect (defaultVal) { concretize(NULL, x_s) }
+    expectResult (defaultVal) { concretize(NULL, x_s) }
   } 
 
   test ("context field") {
-    expect (x.ID) { concretize(highCtxt, x_s~'ID) }
-    expect (true) { concretize(highCtxt, x_s~'ID === IntVal(x.ID)) }
+    expectResult (x.ID) { concretize(highCtxt, x_s~'ID) }
+    expectResult (true) { concretize(highCtxt, x_s~'ID === IntVal(x.ID)) }
   }
 
   /* Lists. */
   test ("low confidentiality context - list") {
-    expect(true) { concretize(NULL, s.has(defaultVal)) }
+    expectResult(true) { concretize(NULL, s.has(defaultVal)) }
   }
 
   test ("high confidentiality context - list") {
-    expect(true) { concretize(highCtxt, s.has(Dummy(1))) }
+    expectResult(true) { concretize(highCtxt, s.has(Dummy(1))) }
   }
 
   test("circular dependency") {
     val a = mkLevel()
     val v = mkSensitive(a, Dummy(1), Dummy(0))
     restrict(a, (ctxt: ObjectExpr[DummyContext]) => ctxt === Dummy(1))
-    expect(Dummy(1)) {
+    expectResult(Dummy(1)) {
       concretize(v, v)
     }
   }

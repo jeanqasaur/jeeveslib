@@ -1,7 +1,7 @@
 package test.cap.jeeveslib.jeeves
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 import scala.collection.immutable.Map
 
 import cap.jeeveslib.ast._
@@ -15,8 +15,8 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val l = mkLevel();
     val x = mkSensitiveInt(l, 42, -1);
 
-    expect(42) {concretize(l === HIGH, x)};
-    expect(-1) {concretize(l === LOW, x)};
+    expectResult(42) {concretize(l === HIGH, x)};
+    expectResult(-1) {concretize(l === LOW, x)};
   }
 
   test ("sensitive object") {
@@ -25,8 +25,8 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
 
     val x = mkSensitive(l, t, NULL);
     
-    expect(t) {concretize(l === HIGH, x)};
-    expect(null) {concretize(l === LOW, x)};
+    expectResult(t) {concretize(l === HIGH, x)};
+    expectResult(null) {concretize(l === LOW, x)};
   }
 
   test ("test restrict") {
@@ -34,7 +34,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val a = mkLevel ()
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === x)
     val xS = mkSensitive (a, x, Dummy(-1))
-    expect (x) { concretize (x, xS) }
+    expectResult (x) { concretize (x, xS) }
   }
 
   test ("jif with IntExpr") {
@@ -43,9 +43,9 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     // If ctxt != 0, then a is LOW.
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val r = jif (x === 0, (_: Unit) => IntVal(3), (_: Unit) => IntVal(4))
-    expect (IntFacet(a, IntVal(3), IntVal(4))) { r }
-    expect (3) { concretize(Dummy(0), r) }
-    expect (4) { concretize(Dummy(1), r) }
+    expectResult (IntFacet(a, IntVal(3), IntVal(4))) { r }
+    expectResult (3) { concretize(Dummy(0), r) }
+    expectResult (4) { concretize(Dummy(1), r) }
   }
 
   test ("jif with ObjectExpr") {
@@ -56,9 +56,9 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     val r =
       jif (x === Dummy(0)
         , (_: Unit) => Object(Dummy(3)), (_: Unit) => Object(Dummy(4)))
-    expect (ObjectFacet(a, Dummy(3), Dummy(4))) { r }
-    expect (Dummy(3)) { concretize(Dummy(0), r) }
-    expect (Dummy(4)) { concretize(Dummy(1), r) }
+    expectResult (ObjectFacet(a, Dummy(3), Dummy(4))) { r }
+    expectResult (Dummy(3)) { concretize(Dummy(0), r) }
+    expectResult (Dummy(4)) { concretize(Dummy(1), r) }
   }
 
   test ("restrict under conditional") {
@@ -76,9 +76,9 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
             jif (y === 2, (_: Unit) => IntVal (7), (_: Unit) => IntVal (8)))
         , ((_: Unit) =>
             IntVal (9)) )
-    expect (IntFacet(a, IntVal(7), IntVal(9))) { r }
-    expect (7) { concretize(Dummy(0), r) }
-    expect (9) { concretize(Dummy(1), r) }
+    expectResult (IntFacet(a, IntVal(7), IntVal(9))) { r }
+    expectResult (7) { concretize(Dummy(0), r) }
+    expectResult (9) { concretize(Dummy(1), r) }
   }
 
   test ("nested conditionals with no shared path condition") {
@@ -97,9 +97,9 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
             jif (y === 2, (_: Unit) => IntVal (7), (_: Unit) => IntVal (8)))
         , ((_: Unit) =>
             IntVal (9)) )
-    expect (IntFacet(a, IntFacet(b, IntVal(7), IntVal(8)), IntVal(9))) { r }
-    expect (8) { concretize(Dummy(0), r) }
-    expect (9) { concretize(Dummy(1), r) }
+    expectResult (IntFacet(a, IntFacet(b, IntVal(7), IntVal(8)), IntVal(9))) { r }
+    expectResult (8) { concretize(Dummy(0), r) }
+    expectResult (9) { concretize(Dummy(1), r) }
   }
 
   /* Function facets. */
@@ -111,10 +111,10 @@ class ExampleJeevesLib extends FunSuite with JeevesLib {
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val f: FunctionExpr[IntExpr, IntExpr] =
       mkSensitiveIntFunction (a, FunctionVal(id[IntExpr]_), FunctionVal(inc))
-    expect (IntFacet(a, IntVal(1), Plus(IntVal(1), IntVal(1)))) {
+    expectResult (IntFacet(a, IntVal(1), Plus(IntVal(1), IntVal(1)))) {
       jfun[IntExpr, IntExpr](f, 1)
     }
-    expect (1) { concretize(Dummy(0), jfun[IntExpr, IntExpr](f, 1)) }
-    expect (2) { concretize(Dummy(1), jfun[IntExpr, IntExpr](f, 1)) }
+    expectResult (1) { concretize(Dummy(0), jfun[IntExpr, IntExpr](f, 1)) }
+    expectResult (2) { concretize(Dummy(1), jfun[IntExpr, IntExpr](f, 1)) }
   }
 }

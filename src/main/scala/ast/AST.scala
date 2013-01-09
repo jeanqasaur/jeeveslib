@@ -208,6 +208,9 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom]
     assert(args.length == 0)
     ObjectField(this, ObjectFieldDesc(name))
   }
+  def selectDynamic(name: String) = {
+    ObjectField(this, ObjectFieldDesc(name))
+  }
 }
 
 case class ObjectFacet[+T >: Null <: Atom](
@@ -303,7 +306,10 @@ sealed abstract class RelExpr extends Expr[Set[Atom]] with Dynamic {
   def applyDynamic(name: String)(args: Any*) = {
     assert(args.length == 0)
     RelJoin(this, ObjectFieldDesc(name))
-  } 
+  }
+  def selectDynamic(name: String) = {
+    RelJoin(this, ObjectFieldDesc(name))
+  }
 }
 case class Singleton(sub: ObjectExpr[Atom])
   extends RelExpr with UnaryExpr[ObjectExpr[Atom]] {

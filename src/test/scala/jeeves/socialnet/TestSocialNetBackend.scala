@@ -1,7 +1,7 @@
 package test.cap.jeeveslib.jeeves.socialnet
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 import scala.collection.immutable.Map
 
 import test.cap.jeeveslib.jeeves.socialnet._
@@ -34,35 +34,35 @@ class ExampleSocialNetBackend extends FunSuite {
   addFriend(joe, kuat);
 
   test ("name") {
-    expect (null) { concretize(kuat, joe.name) }
-    expect (null) { concretize(joe, jean.name) }
-    expect (Name("Kuat Yessenov")) { concretize(jean, kuat.name) }
+    expectResult (null) { concretize(kuat, joe.name) }
+    expectResult (null) { concretize(joe, jean.name) }
+    expectResult (Name("Kuat Yessenov")) { concretize(jean, kuat.name) }
   }
 
   test ("getFriends") {
-    expect (kuat :: Nil) {concretize(kuat, jean.getFriends())}
-    expect (Nil) {concretize(joe, jean.getFriends())}
-    expect (Nil) {concretize(kuat, joe.getFriends())}
+    expectResult (kuat :: Nil) {concretize(kuat, jean.getFriends())}
+    expectResult (Nil) {concretize(joe, jean.getFriends())}
+    expectResult (Nil) {concretize(kuat, joe.getFriends())}
   }
 
   test ("isFriends") {
-    expect (true) { concretize(jean, jean.isFriends(kuat)) }
-    expect (true) { concretize(kuat, jean.isFriends(kuat)) }
-    expect (true) { concretize(joe, joe.isFriends(kuat)) }
-    expect (true) { concretize(jean, kuat.isFriends(joe)) }
-    expect (false) { concretize(jean, joe.isFriends(kuat)) }
+    expectResult (true) { concretize(jean, jean.isFriends(kuat)) }
+    expectResult (true) { concretize(kuat, jean.isFriends(kuat)) }
+    expectResult (true) { concretize(joe, joe.isFriends(kuat)) }
+    expectResult (true) { concretize(jean, kuat.isFriends(joe)) }
+    expectResult (false) { concretize(jean, joe.isFriends(kuat)) }
   }
 
   test ("networks") {
-    expect (MIT) {concretize(kuat, jean.network)}
-    expect (null) {concretize(jean, kuat.network)}
-    expect (jean :: Nil) {concretize(jean, getUsersByNetwork(MIT))}
+    expectResult (MIT) {concretize(kuat, jean.network)}
+    expectResult (null) {concretize(jean, kuat.network)}
+    expectResult (jean :: Nil) {concretize(jean, getUsersByNetwork(MIT))}
   }
 
   test ("email") {
-    expect (null) {concretize(kuat, joe.email)}
-    expect (null) {concretize(joe, jean.email)}
-    expect (Email("kuat@mit.edu")) {concretize(kuat, kuat.email)}
+    expectResult (null) {concretize(kuat, joe.email)}
+    expectResult (null) {concretize(joe, jean.email)}
+    expectResult (Email("kuat@mit.edu")) {concretize(kuat, kuat.email)}
   }
   
   test ("state change") {
@@ -71,32 +71,32 @@ class ExampleSocialNetBackend extends FunSuite {
       Email("eskang@mit.edu"), Anyone,
       MIT, Anyone, 
       Anyone);
-    expect (null) { concretize(eunsuk, joe.network)}
+    expectResult (null) { concretize(eunsuk, joe.network)}
     addFriend(joe, eunsuk)
-    expect (MIT) { concretize(eunsuk, joe.network)}
+    expectResult (MIT) { concretize(eunsuk, joe.network)}
     removeFriend(joe, eunsuk)
-    expect (null) { concretize(eunsuk, joe.network)} 
+    expectResult (null) { concretize(eunsuk, joe.network)} 
   }
 
   test("geo location") {
     jean.setLocation(8, 8) // top
     kuat.setLocation(4, 4)
     joe.setLocation(0, 0) // bottom
-    expect((1000, 1000)) {concretize(jean, joe.location)}
-    expect((1000, 1000)) {concretize(joe, jean.location)}
-    expect((0, 0)) {concretize(kuat, joe.location)}
-    expect((8, 8)) {concretize(kuat, jean.location)}
-    expect((4, 4)) {concretize(joe, kuat.location)}
-    expect((4, 4)) {concretize(jean, kuat.location)}
-    expect((4, 4)) {concretize(kuat, kuat.location)}
+    expectResult((1000, 1000)) {concretize(jean, joe.location)}
+    expectResult((1000, 1000)) {concretize(joe, jean.location)}
+    expectResult((0, 0)) {concretize(kuat, joe.location)}
+    expectResult((8, 8)) {concretize(kuat, jean.location)}
+    expectResult((4, 4)) {concretize(joe, kuat.location)}
+    expectResult((4, 4)) {concretize(jean, kuat.location)}
+    expectResult((4, 4)) {concretize(kuat, kuat.location)}
   }
 
   test("symbolic context") {
-    expect(Set(Receipt(Email("kuat@mit.edu"), null))) {
+    expectResult(Set(Receipt(Email("kuat@mit.edu"), null))) {
       announceName(jean)
     }
 
-    expect(Set(Receipt(null, null))) {
+    expectResult(Set(Receipt(null, null))) {
       announceName(joe)
     }
   }

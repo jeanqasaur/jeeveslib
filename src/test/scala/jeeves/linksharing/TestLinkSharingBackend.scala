@@ -1,7 +1,7 @@
 package test.cap.jeeveslib.jeeves.linksharing
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 import scala.collection.immutable.Map
 
 import test.cap.jeeveslib.jeeves.linksharing._
@@ -34,35 +34,35 @@ class ExampleLinkSharingBackend extends FunSuite {
   addFriend(joe, kuat);
 
   test ("name") {
-    expect (null) { concretize(kuat, joe.getName()) }
-    expect (null) { concretize(joe, jean.getName()) }
-    expect (S("Kuat Yessenov")) { concretize(jean, kuat.getName()) }
+    expectResult (null) { concretize(kuat, joe.getName()) }
+    expectResult (null) { concretize(joe, jean.getName()) }
+    expectResult (S("Kuat Yessenov")) { concretize(jean, kuat.getName()) }
   }
 
   test ("getFriends") {
-    expect (kuat :: Nil) {concretize(kuat, jean.getFriends())}
-    expect (Nil) {concretize(joe, jean.getFriends())}
-    expect (Nil) {concretize(kuat, joe.getFriends())}
+    expectResult (kuat :: Nil) {concretize(kuat, jean.getFriends())}
+    expectResult (Nil) {concretize(joe, jean.getFriends())}
+    expectResult (Nil) {concretize(kuat, joe.getFriends())}
   }
 
   test ("isFriends") {
-    expect (true) { concretize(jean, jean.isFriends(kuat)) }
-    expect (true) { concretize(kuat, jean.isFriends(kuat)) }
-    expect (true) { concretize(joe, joe.isFriends(kuat)) }
-    expect (true) { concretize(jean, kuat.isFriends(joe)) }
-    expect (false) { concretize(jean, joe.isFriends(kuat)) }
+    expectResult (true) { concretize(jean, jean.isFriends(kuat)) }
+    expectResult (true) { concretize(kuat, jean.isFriends(kuat)) }
+    expectResult (true) { concretize(joe, joe.isFriends(kuat)) }
+    expectResult (true) { concretize(jean, kuat.isFriends(joe)) }
+    expectResult (false) { concretize(jean, joe.isFriends(kuat)) }
   }
 
   test ("getNetwork") {
-    expect (MIT) {concretize(kuat, jean.getNetwork())}
-    expect (null) {concretize(jean, kuat.getNetwork())}
-    expect (jean :: Nil) {concretize(jean, getUsersByNetwork(MIT))}
+    expectResult (MIT) {concretize(kuat, jean.getNetwork())}
+    expectResult (null) {concretize(jean, kuat.getNetwork())}
+    expectResult (jean :: Nil) {concretize(jean, getUsersByNetwork(MIT))}
   }
 
   test ("email") {
-    expect (null) {concretize(kuat, joe.getEmail())}
-    expect (null) {concretize(joe, jean.getEmail())}
-    expect (S("kuat@mit.edu")) {concretize(kuat, kuat.getEmail())}
+    expectResult (null) {concretize(kuat, joe.getEmail())}
+    expectResult (null) {concretize(joe, jean.getEmail())}
+    expectResult (S("kuat@mit.edu")) {concretize(kuat, kuat.getEmail())}
   }
   
   test ("state change") {
@@ -71,19 +71,19 @@ class ExampleLinkSharingBackend extends FunSuite {
       S("eskang@mit.edu"), Anyone,
       MIT, Anyone, 
       Anyone);
-    expect (null) { concretize(eunsuk, joe.getNetwork())}
+    expectResult (null) { concretize(eunsuk, joe.getNetwork())}
     addFriend(joe, eunsuk)
-    expect (MIT) { concretize(eunsuk, joe.getNetwork())}
+    expectResult (MIT) { concretize(eunsuk, joe.getNetwork())}
     removeFriend(joe, eunsuk)
-    expect (null) { concretize(eunsuk, joe.getNetwork())} 
+    expectResult (null) { concretize(eunsuk, joe.getNetwork())} 
   }
 
   test("symbolic context") {
-    expect(Set(Receipt(S("kuat@mit.edu"), null))) {
+    expectResult(Set(Receipt(S("kuat@mit.edu"), null))) {
       announceName(jean)
     }
 
-    expect(Set(Receipt(null, null))) {
+    expectResult(Set(Receipt(null, null))) {
       announceName(joe)
     }
   }

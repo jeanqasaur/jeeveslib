@@ -1,7 +1,7 @@
 package test.cap.jeeves
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 import scala.collection.immutable.Map
 
 import cap.jeeveslib.ast._
@@ -39,9 +39,9 @@ class JeevesTinyCFM extends FunSuite with JeevesLib {
       )
     }
 
-    expect(aliceName) { concretize(alice, name) }
-    expect(anonymousName) { concretize(bob, name) }
-    expect(anonymousName) { concretize(claire, name) }
+    expectResult(aliceName) { concretize(alice, name) }
+    expectResult(anonymousName) { concretize(bob, name) }
+    expectResult(anonymousName) { concretize(claire, name) }
   }
   
 
@@ -132,10 +132,10 @@ class JeevesTinyCFM extends FunSuite with JeevesLib {
   val paper0 = new Paper("Paper", aliceUser, Nil, false)
 
   test ("title restrict") {
-    expect("Paper") { paper0.showTitle(ConfContext(aliceUser, Submission)) }
-    expect("") { paper0.showTitle(ConfContext(defaultUser, Submission)) }
-    expect("Paper") { paper0.showTitle(ConfContext(bobUser, Submission)) }
-    expect("Paper") { paper0.showTitle(ConfContext(claireUser, Submission)) }
+    expectResult("Paper") { paper0.showTitle(ConfContext(aliceUser, Submission)) }
+    expectResult("") { paper0.showTitle(ConfContext(defaultUser, Submission)) }
+    expectResult("Paper") { paper0.showTitle(ConfContext(bobUser, Submission)) }
+    expectResult("Paper") { paper0.showTitle(ConfContext(claireUser, Submission)) }
   }
 
   // TODO: Demonstrate circular dependencies.

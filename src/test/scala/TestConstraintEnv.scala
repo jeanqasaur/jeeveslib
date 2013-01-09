@@ -1,7 +1,7 @@
 package test.cap.jeeveslib
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 
 import cap.jeeveslib.ast._
 import cap.jeeveslib.env.ConstraintEnv
@@ -10,7 +10,7 @@ class ExampleConstraintEnv extends FunSuite with ConstraintEnv {
   test ("bool var") {
     val x = pickBool();
     assume (! x);
-    expect (false) {concretize(x)};
+    expectResult (false) {concretize(x)};
   }
 
   /*
@@ -24,10 +24,10 @@ class ExampleConstraintEnv extends FunSuite with ConstraintEnv {
     val yVar: ObjectVar[Dummy] = pickObject(y);
     assume(yVar === y);
 
-    expect(true) { concretize(xVar === xVar) }
-    expect(true) { concretize(xVar~'uid === xVar~'uid) }
-    expect(false) { concretize(xVar === yVar) }
-    expect(false) { concretize(xVar~'uid === yVar~'uid) }
+    expectResult(true) { concretize(xVar === xVar) }
+    expectResult(true) { concretize(xVar~'uid === xVar~'uid) }
+    expectResult(false) { concretize(xVar === yVar) }
+    expectResult(false) { concretize(xVar~'uid === yVar~'uid) }
   }
   */
 }

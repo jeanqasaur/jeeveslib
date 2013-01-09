@@ -1,7 +1,7 @@
 package test.cap.jeeveslib.jeeves
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
@@ -36,10 +36,10 @@ class Auction extends FunSuite with JeevesLib {
     val policy = (context: ObjectExpr[AuctionContext]) => BoolVal(false)
     val aliceBid = Bid(3, alice, policy)
 
-    expect(3) {
+    expectResult(3) {
       concretize(AuctionContext(alice, Timestamp(0), List()), aliceBid.value)
     }
-    expect(-1) {
+    expectResult(-1) {
       concretize(AuctionContext(bob, Timestamp(0), List()), aliceBid.value)
     }
   }
@@ -52,11 +52,11 @@ class Auction extends FunSuite with JeevesLib {
         context.time.time > auctionEndTime.time
     val aliceBid = Bid(3, alice, policy)
 
-    expect(3) {
+    expectResult(3) {
       concretize(
         AuctionContext(bob, Timestamp(11), List()), aliceBid.value)
     };
-    expect(-1) {
+    expectResult(-1) {
       concretize(
         AuctionContext(bob, Timestamp(10), List()), aliceBid.value)
     }
@@ -88,16 +88,16 @@ class Auction extends FunSuite with JeevesLib {
     val bobBid = Bid(4, bob, policy)
     val claireBid = Bid(5, claire, policy)
 
-    expect(-1) {
+    expectResult(-1) {
       concretize(
         AuctionContext(bob, Timestamp(11), List(aliceBid)), aliceBid.value)
     }
-    expect(-1) {
+    expectResult(-1) {
       concretize(
         AuctionContext(bob, Timestamp(11), List(aliceBid, bobBid))
         , aliceBid.value)
     }
-    expect(3) {
+    expectResult(3) {
       concretize(
         AuctionContext(bob, Timestamp(11), List(aliceBid, bobBid, claireBid))
         , aliceBid.value)

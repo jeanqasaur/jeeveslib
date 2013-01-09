@@ -375,7 +375,7 @@ object SMT {
       case UnsatException =>
         debug(" *** FAILED SOLVING TIME: " + (System.currentTimeMillis - start) + " ms")
         None;
-      case e => 
+      case e: Throwable => 
         throw e;
     } finally {
       solver.close()
