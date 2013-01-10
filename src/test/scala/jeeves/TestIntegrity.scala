@@ -210,7 +210,15 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     expectResult(0) { concretize(aliceContext(List(alice)), x.v) }
     expectResult(42) { concretize(aliceContext(List()), x.v) }
   }
-  
+ 
+  /* Make sure we can change the input channel type without things breaking. */
+  test ("Different types for input channels") {
+    val x = ProtectedIntRef[DummyContext, DummyContext](0
+      , (ictxt, octxt) => ictxt.viewer === alice)(this)
+    x.update(aliceContext(List()), 42)
+    expectResult(42) { concretize(aliceContext(), x.v) }
+  }
+
   def id[T](x: T): T = x
   def inc(x: IntExpr): IntExpr = x + 1
 
