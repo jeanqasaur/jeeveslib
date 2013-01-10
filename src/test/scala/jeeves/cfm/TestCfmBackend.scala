@@ -5,7 +5,7 @@ import test.cap.jeeveslib.jeeves.cfm._
 import CfmBackend._
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 import scala.collection.immutable.Map
 import scala.collection.mutable.Set
 import scala.util.Random
@@ -53,114 +53,114 @@ class TestCfmBackend extends FunSuite {
 
   // Name visibility
   test ("name visibility") {
-    expect(paper0Name) { concretize(getAuthorCtxt0(), paper0.name); }
-    expect(emptyName) { concretize(getAuthorCtxt2(), paper0.name); }
+    expectResult(paper0Name) { concretize(getAuthorCtxt0(), paper0.name); }
+    expectResult(emptyName) { concretize(getAuthorCtxt2(), paper0.name); }
 
     val viewMap =
       Map((Submission, paper0Name), (Review, paper0Name), (Decision, paper0Name));
     viewMap.foreach {
       case (stage, r) =>
-        expect (r) {
+        expectResult (r) {
           concretize(getReviewerCtxt0(stage), paper0.name)
         };
-        expect (r) {
+        expectResult (r) {
           concretize(getPcCtxt0(stage), paper0.name);
         }
     }
 
-    expect(emptyName) { concretize(getPublicCtxt0(Submission), paper1.name); }
-    expect(paper1Name) { concretize(getPublicCtxt0(Public), paper1.name); }
+    expectResult(emptyName) { concretize(getPublicCtxt0(Submission), paper1.name); }
+    expectResult(paper1Name) { concretize(getPublicCtxt0(Public), paper1.name); }
   }
 
   // Author list visibility
   test ("author list") {
-    expect (true) {
+    expectResult (true) {
       concretize(getAuthorCtxt0(), paper0.authors.has(author0))
     };
-    expect (true) {
+    expectResult (true) {
       concretize(getAuthorCtxt1(), paper0.authors.has(author0))
     }
-    expect (false) {
+    expectResult (false) {
       concretize( getReviewerCtxt0(Submission)
                 , paper0.authors.has(author0));
     }
-    expect (true) {
+    expectResult (true) {
       concretize(getReviewerCtxt0(Decision), paper0.authors.has(author0));
     }
-    expect (true) {
+    expectResult (true) {
       concretize(getPcCtxt0(Decision), paper0.authors.has(author0));
     }
   }
 
   test ("tag visibility") {
-    expect (false) {
+    expectResult (false) {
       concretize(getAuthorCtxt0(Decision), paper1.hasTag(Accepted)) }
-    expect (true) {
+    expectResult (true) {
       concretize(getAuthorCtxt0(Public), paper1.hasTag(Accepted));
     }
   }
 
   test ("tag state change") {
-    expect (false) {
+    expectResult (false) {
       concretize(getAuthorCtxt0(Public), paper0.hasTag(Accepted));
     }
     paper0.addTag(Accepted);
-    expect (true) {
+    expectResult (true) {
       concretize(getAuthorCtxt0(Public), paper0.hasTag(Accepted));
     }
     paper0.removeTag(Accepted);
-    expect (false) {
+    expectResult (false) {
       concretize(getAuthorCtxt0(Public), paper0.hasTag(Accepted));
     }
 
   }
 
   test ("review assignment") {
-    expect (true) { isAssigned(paper0, reviewer0); }
-    expect (true) { isAssigned(paper0, reviewer1); }
-    expect (false) { isAssigned(paper1, reviewer0); }
-    expect (false) { isAssigned(paper1, reviewer1); }
+    expectResult (true) { isAssigned(paper0, reviewer0); }
+    expectResult (true) { isAssigned(paper0, reviewer1); }
+    expectResult (false) { isAssigned(paper1, reviewer0); }
+    expectResult (false) { isAssigned(paper1, reviewer1); }
 
     assignReview(paper1, author0);
-    expect (false) { isAssigned(paper1, author0); }
+    expectResult (false) { isAssigned(paper1, author0); }
   }
 
   test ("review tag visibility") {
-    expect (false) {
+    expectResult (false) {
       concretize(getAuthorCtxt0(Review), paper0.hasTag(ReviewedBy(reviewer0)));
     }
-    expect (true) {
+    expectResult (true) {
       concretize(getReviewerCtxt0(Review), paper0.hasTag(ReviewedBy(reviewer0)));
     }
-    expect (true) {
+    expectResult (true) {
       concretize(getPcCtxt0(Review), paper0.hasTag(ReviewedBy(reviewer0)));
     }
   }
 
   /*
   test ("review visibility") {
-    expect(null) {
+    expectResult(null) {
       concretize(getAuthorCtxt1(Review), paper0Review);
     }
-    expect(null) {
+    expectResult(null) {
       concretize(getAuthorCtxt0(Review), paper0Review.reviewer);
     }
-    expect(reviewer0) {
+    expectResult(reviewer0) {
       concretize(getReviewerCtxt0(Review), paper0Review.reviewer);
     }
   }
 
   test ("back end functionality") {
-    expect(Some(paper0)) { getById(paper0.id); }
-    expect(false) {
+    expectResult(Some(paper0)) { getById(paper0.id); }
+    expectResult(false) {
       concretize( getPublicCtxt0(Public)
                 , searchByName("my paper").has(paper0) );
     }
-    expect(true) {
+    expectResult(true) {
       concretize( getPublicCtxt0(Public)
                 , searchByName("hello world").has(paper1) );
     }
-    expect(true) {
+    expectResult(true) {
       concretize( getPublicCtxt0(Public)
                 , searchByAuthor(author2).has(paper1) );
     }
