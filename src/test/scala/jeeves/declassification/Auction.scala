@@ -1,4 +1,4 @@
-package test.cap.jeeveslib.jeeves
+package test.cap.jeeveslib.jeeves.declassification
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expectResult}
@@ -7,34 +7,34 @@ import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
 
-class Auction extends FunSuite with JeevesLib {
-  case class User(id: BigInt) extends Atom
+case class User(id: BigInt) extends Atom
+case class AuctionContext(
+  user: User, time: Timestamp, bids: List[Bid]) extends Atom
+case class Timestamp(time: BigInt) extends Atom
+case class Bid( private val _value: BigInt
+              , private val _owner: User
+              , private val _policy: ObjectExpr[AuctionContext] => Formula)
+              (implicit jeevesLib: JeevesLib[AuctionContext])
+              extends Atom {
+    private val l = jeevesLib.mkLevel()
+    // The policy allows the owner to always be able to see their own bid.
+    // Otherwise it defers to the policy passed in.
+    jeevesLib.restrict(l
+      , (context: ObjectExpr[AuctionContext]) =>
+          (context.user === _owner) || _policy(context))
+    val value = jeevesLib.mkSensitiveInt(l, _value, -1)
+    val owner = _owner
+}
+
+class AuctionTest extends FunSuite with JeevesLib[AuctionContext] {
   val alice = User(0)
   val bob = User(1)
   val claire = User(2)
 
-  case class Timestamp(time: BigInt) extends Atom
-
-  case class Bid( private val _value: BigInt
-                , private val _owner: User
-                , private val _policy: ObjectExpr[AuctionContext] => Formula)
-              extends Atom {
-    private val l = mkLevel()
-    // The policy allows the owner to always be able to see their own bid.
-    // Otherwise it defers to the policy passed in.
-    restrict(l
-      , (context: ObjectExpr[AuctionContext]) =>
-          (context.user === _owner) || _policy(context))
-    val value = mkSensitiveInt(l, _value, -1)
-    val owner = _owner
-  }
-  case class AuctionContext(user: User, time: Timestamp, bids: List[Bid])
-    extends Atom
-
   /* This test makes sure the owner can always see their own bid. */
   test ("owner can see") {
     val policy = (context: ObjectExpr[AuctionContext]) => BoolVal(false)
-    val aliceBid = Bid(3, alice, policy)
+    val aliceBid = Bid(3, alice, policy)(this)
 
     expectResult(3) {
       concretize(AuctionContext(alice, Timestamp(0), List()), aliceBid.value)
@@ -50,7 +50,7 @@ class Auction extends FunSuite with JeevesLib {
     val policy =
       (context: ObjectExpr[AuctionContext]) =>
         context.time.time > auctionEndTime.time
-    val aliceBid = Bid(3, alice, policy)
+    val aliceBid = Bid(3, alice, policy)(this)
 
     expectResult(3) {
       concretize(
@@ -84,9 +84,9 @@ class Auction extends FunSuite with JeevesLib {
       allUsers.foldLeft[Formula](BoolVal(true))(
         (acc: Formula, c) => hasBidFromUser(ctxt, c) && acc)
     
-    val aliceBid = Bid(3, alice, policy)
-    val bobBid = Bid(4, bob, policy)
-    val claireBid = Bid(5, claire, policy)
+    val aliceBid = Bid(3, alice, policy)(this)
+    val bobBid = Bid(4, bob, policy)(this)
+    val claireBid = Bid(5, claire, policy)(this)
 
     expectResult(-1) {
       concretize(

@@ -11,7 +11,7 @@ import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.eval.Partial
 import cap.jeeveslib.util.Debug
 
-trait PolicyEnv extends ConstraintEnv with PC {
+trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
   // Level variables for confidentiality and integrity
   sealed trait Level extends Serializable
   object HIGH extends Level
@@ -22,7 +22,7 @@ trait PolicyEnv extends ConstraintEnv with PC {
   }
 
   private val _policies
-    : WeakHashMap[LevelVar, (Level, ObjectExpr[Atom] => Formula)] =
+    : WeakHashMap[LevelVar, (Level, ObjectExpr[C] => Formula)] =
     new WeakHashMap()
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
@@ -30,10 +30,9 @@ trait PolicyEnv extends ConstraintEnv with PC {
   def mkSensitiveInt(lvar: LevelVar, high: IntExpr, low: IntExpr = -1)
     : IntExpr = 
     lvar ? high ! low
-    def mkSensitive[C >: Null <: Atom](
-      lvar: LevelVar, high: ObjectExpr[C], low: ObjectExpr[C] = NULL)
-    : ObjectExpr[C] = 
-    lvar ? high ! low
+    def mkSensitive[T >: Null <: Atom](
+      lvar: LevelVar, high: ObjectExpr[T], low: ObjectExpr[T] = NULL)
+    : ObjectExpr[T] = lvar ? high ! low
   def mkSensitiveIntFunction(lvar: LevelVar
     , high: FunctionExpr[IntExpr, IntExpr], low: FunctionExpr[IntExpr, IntExpr])
   : FunctionExpr[IntExpr, IntExpr] = lvar ? high ! low
@@ -50,18 +49,16 @@ trait PolicyEnv extends ConstraintEnv with PC {
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-   def restrict[C >: Null <: Atom](lvar: LevelVar
+   def restrict(lvar: LevelVar
      , f: ObjectExpr[C] => Formula) = {
     _policies += (lvar ->
       ( LOW
-        , mkGuardedConfPolicy(
-          (ctxt: ObjectExpr[Atom]) =>
-            Not (f (ctxt.asInstanceOf[ObjectExpr[C]])))))
+        , mkGuardedConfPolicy(ctxt => Not (f (ctxt)))))
   }
 
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   
-  def concretizeExp[C >: Null <: Atom, T](ctx: ObjectExpr[C], e: Expr[T]) = {
+  def concretizeExp[T](ctx: ObjectExpr[C], e: Expr[T]) = {
     Debug.debug(" *** # _policies: " + _policies.size)
     val context =
       AND(_policies.map{

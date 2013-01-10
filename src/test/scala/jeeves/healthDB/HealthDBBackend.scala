@@ -12,7 +12,7 @@ import Expr._
  * External interface to healthDB.
  * @author jean
  */
-object HealthDBBackend extends JeevesLib {
+object HealthDBBackend extends JeevesLib[HealthContext] {
   private var patients: List[PatientRecord] = Nil;
 
   private var _userCount = 0

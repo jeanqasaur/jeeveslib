@@ -1,4 +1,4 @@
-package test.cap.jeeveslib.jeeves
+package test.cap.jeeveslib.jeeves.testlib
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expectResult}
@@ -8,9 +8,8 @@ import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
 
-class ExampleJeevesLib extends FunSuite with JeevesLib {
-  case class Dummy(id: BigInt) extends Atom
-
+case class Dummy(id: BigInt) extends Atom
+class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
   test ("sensitive int") {
     val l = mkLevel();
     val x = mkSensitiveInt(l, 42, -1);

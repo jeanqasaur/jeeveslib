@@ -7,7 +7,7 @@ import cap.jeeveslib.ast._
 import Expr._
 import cap.jeeveslib.jeeves._
 
-object CfmBackend extends JeevesLib {
+object CfmBackend extends JeevesLib[ConfContext] {
   // We do not delegate integrity checking to Jeeves.
   private var users : List[ConfUser] = Nil
   private val assignments : Map[Int, Set[ConfUser]] = Map[Int, Set[ConfUser]]()

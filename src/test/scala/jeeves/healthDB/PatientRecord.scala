@@ -54,7 +54,7 @@ class PatientRecord(
   var meds = _meds.map(m => mkSensitive(mp, m, NULL))
   def addMed (newMed: MedicationRecord) (implicit ctxt: HealthContext): Unit = {
     val canSet = mkLevel ()
-    restrict (canSet, (ctxt: ObjectExpr[UserRecord]) => ctxt.user.status === Admin)
+    restrict (canSet, (ctxt: ObjectExpr[HealthContext]) => ctxt.user.status === Admin)
    
   /*
     _actualMeds = writeAs (

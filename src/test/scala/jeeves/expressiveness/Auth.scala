@@ -1,7 +1,7 @@
-package test.cap.jeeves
+package test.cap.jeeves.expressiveness
 
 import org.scalatest.FunSuite
-import org.scalatest.Assertions.{expect}
+import org.scalatest.Assertions.{expectResult}
 import scala.collection.immutable.Map
 
 import cap.jeeveslib.ast.{Atom, ObjectExpr, S}
@@ -12,7 +12,6 @@ import cap.jeeveslib.jeeves._
  * Based on the Fine benchmarks from PLDI '10.
  * @author jeanyang
  */
-class Authentication extends FunSuite with JeevesLib {
   /**
    * Principals, users, and credentials.
    */
@@ -35,6 +34,8 @@ class Authentication extends FunSuite with JeevesLib {
        }
     }
 
+class Authentication extends FunSuite
+  with JeevesLib[Authentication.AuthContext] {
   /**
    * File authentication.
    */
@@ -43,7 +44,7 @@ class Authentication extends FunSuite with JeevesLib {
       // File read location.
       val canWrite = mkLevel ()
       restrict (canWrite
-      , (ctxt: ObjectExpr[Authentication.Principal]) =>
+      , (ctxt: ObjectExpr[Authentication.AuthContext]) =>
         ((ctxt.prin === Authentication.Admin)
               && (ctxt.cred.p === ctxt.prin)))
       def getWriteLoc () = mkSensitive(canWrite, _loc, "")
@@ -64,24 +65,24 @@ class Authentication extends FunSuite with JeevesLib {
   import Authentication._;
   import FileAC._;
   test ("login") {
-    expect(Some(Cred(aliceUser))) { login(aliceUser, "APassword"); }
-    expect(None) { login(aliceUser, "otherpwd"); }
-    expect(Some(Cred(Admin))) { login(Admin, "Secret"); }
-    expect(None) { login(Admin, "other") }
+    expectResult(Some(Cred(aliceUser))) { login(aliceUser, "APassword"); }
+    expectResult(None) { login(aliceUser, "otherpwd"); }
+    expectResult(Some(Cred(Admin))) { login(Admin, "Secret"); }
+    expectResult(None) { login(Admin, "other") }
   }
 
   test("file write location") {
     val file = new File("file.txt");
-    expect("") {
+    expectResult("") {
       file.showWriteLoc(AuthContext(aliceUser, Cred(aliceUser)))
     }
-    expect("") {
+    expectResult("") {
       file.showWriteLoc(AuthContext(aliceUser, Cred(Admin)))
     }
-    expect("file.txt") {
+    expectResult("file.txt") {
       file.showWriteLoc(AuthContext(Admin, Cred(Admin)))
     }
-    expect("") {
+    expectResult("") {
       file.showWriteLoc(AuthContext(Admin, Cred(aliceUser)))
     }
   }

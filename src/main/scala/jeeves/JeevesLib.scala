@@ -11,12 +11,13 @@ import cap.jeeveslib.env.{EmptyEnv, PolicyEnv, WritePolicyEnv}
 import cap.jeeveslib.eval._
 import JeevesTypes._
 
-trait JeevesLib extends PolicyEnv with WritePolicyEnv {
+trait JeevesLib[C >: Null <: Atom]
+  extends PolicyEnv[C] with WritePolicyEnv[C] {
   /**
    * Given a context ctxt, applies f1 if the path condition is true under ctxt
    * and applies f2 otherwise.
    */
-   private def conditionOnPC[C >: Null <: Atom, T](
+   private def conditionOnPC[T](
       ctxt: ObjectExpr[C]
     , f1: Unit => T, f2: Unit => T): T = {
     getPCFormula ()  match {
@@ -31,16 +32,16 @@ trait JeevesLib extends PolicyEnv with WritePolicyEnv {
    * Concretization: Returns the default value if the path condition is not
    * satisfied.
    */
-   def concretize[C >: Null <: Atom, T] (ctxt: ObjectExpr[C], e: Expr[T]): T = {
+   def concretize[T](ctxt: ObjectExpr[C], e: Expr[T]): T = {
     conditionOnPC (ctxt
       , (_: Unit) => concretizeExp(ctxt, e), (_: Unit) => e.default)
   }
-  def concretize[C >: Null <: Atom, T] (
+  def concretize[T](
     ctx: ObjectExpr[C], e: (Expr[T], Expr[T]))
     : (T, T) =
     (concretize(ctx, e._1), concretize(ctx, e._2))
-  def concretize[C >: Null <: Atom, T >: Null <: Atom](
-    ctx: ObjectExpr[C], lst: Traversable[ObjectExpr[C]]): List[T] = {
+  def concretize[T >: Null <: Atom](
+    ctx: ObjectExpr[C], lst: Traversable[ObjectExpr[T]]): List[T] = {
     for (o <- lst.toList;
       t = concretize(ctx, o).asInstanceOf[T];
       if (t != null))
@@ -50,7 +51,7 @@ trait JeevesLib extends PolicyEnv with WritePolicyEnv {
   /**
    * Printing: only happens if the path condition allows it.
    */
-   def jprint[C >: Null <: Atom, T] (ctxt: ObjectExpr[C], e: Expr[T]): Unit = {
+   def jprint[T](ctxt: ObjectExpr[C], e: Expr[T]): Unit = {
     conditionOnPC (ctxt
       , (_: Unit) => println (concretize(ctxt, e)), (_: Unit) => ())
   }

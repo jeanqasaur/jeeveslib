@@ -12,7 +12,7 @@ import cap.jeeveslib.jeeves._
  * External interface to social network.
  * @author kuat
  */
-object SocialNetBackend extends JeevesLib {
+object SocialNetBackend extends JeevesLib[UserRecord] {
   private var users: List[UserRecord] = Nil;
 
   /* Database functions. */

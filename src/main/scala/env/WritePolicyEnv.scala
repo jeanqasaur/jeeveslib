@@ -13,7 +13,7 @@ import scala.collection.mutable.Stack;
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 
-trait WritePolicyEnv {
+trait WritePolicyEnv[OC >: Null <: Atom] {
   type WritePolicy = (ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
 
   private val _primaryContexts: WeakHashMap[LevelVar, Atom] =
@@ -22,9 +22,9 @@ trait WritePolicyEnv {
     _primaryContexts += (lvar -> ctxt)
   }
 
-  def addWritePolicy[IC >: Null <: Atom, OC >: Null <: Atom](lvar: LevelVar
+  def addWritePolicy[IC >: Null <: Atom](lvar: LevelVar
     , iPolicy: (IC, ObjectExpr[OC]) => Formula)
-    (implicit lvars: PolicyEnv)
+    (implicit lvars: PolicyEnv[OC])
   : LevelVar = {
     _primaryContexts.get(lvar) match {
       // If there is a context associated, create a fresh level variable and
@@ -43,8 +43,8 @@ trait WritePolicyEnv {
     }
   }
 
-  def addPolicy[IC >: Null <: Atom, OC >: Null <: Atom](f: Formula)
-    (implicit lvars: PolicyEnv
+  def addPolicy[IC >: Null <: Atom](f: Formula)
+    (implicit lvars: PolicyEnv[OC]
     , iPolicy: (IC, ObjectExpr[OC]) => Formula)
   : Formula = {
     f match {
@@ -70,8 +70,8 @@ trait WritePolicyEnv {
       case BoolVal(_) => f
     }
   }
-  def addPolicy[IC >: Null <: Atom, OC >: Null <: Atom](e: IntExpr)
-    (implicit lvars: PolicyEnv
+  def addPolicy[IC >: Null <: Atom](e: IntExpr)
+    (implicit lvars: PolicyEnv[OC]
     , iPolicy: (IC, ObjectExpr[OC]) => Formula)
   : IntExpr = {
     e match {
@@ -89,9 +89,9 @@ trait WritePolicyEnv {
       case IntVal (_) => e
     }
   }
-  def addPolicy[T >: Null <: Atom, IC >: Null <: Atom, OC >: Null <: Atom](
+  def addPolicy[T >: Null <: Atom, IC >: Null <: Atom](
     e: ObjectExpr[T])
-    (implicit lvars: PolicyEnv, iPolicy: (IC, ObjectExpr[OC]) => Formula)
+    (implicit lvars: PolicyEnv[OC], iPolicy: (IC, ObjectExpr[OC]) => Formula)
     : ObjectExpr[T] =
     e match {
       case ObjectFacet(cond, t, f) =>
@@ -105,9 +105,9 @@ trait WritePolicyEnv {
         ObjectField (addPolicy (root), f).asInstanceOf[ObjectExpr[T]]
       case Object(_) => e
   }
-  def addPolicy[A, B, IC >: Null <: Atom, OC >: Null <: Atom](
+  def addPolicy[A, B, IC >: Null <: Atom](
     e: FunctionExpr[A, B])
-    (implicit lvars: PolicyEnv, iPolicy: (IC, ObjectExpr[OC]) => Formula)
+    (implicit lvars: PolicyEnv[OC], iPolicy: (IC, ObjectExpr[OC]) => Formula)
     : FunctionExpr[A, B] =
     e match {
       case FunctionVal(_) => e
