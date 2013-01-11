@@ -1,0 +1,2 @@
+The current build works with Scala 2.10.0 and SBT 0.12.1.  You will need to copy
+the SBT jars into this directory.
