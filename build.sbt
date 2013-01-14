@@ -4,8 +4,16 @@ version := "1.0"
 
 scalaVersion := "2.10.0"
 
+crossScalaVersions := Seq("2.9.0-1", "2.10.0")
+
 scalaHome := Some(file(sys.env("SCALA_HOME")))
 
-libraryDependencies += "org.scalatest" %% "scalatest" % "1.9" % "test"
+libraryDependencies <+= scalaVersion(v => v match {
+  case "2.9.0-1" => "org.scalatest" %% "scalatest" % "1.8" % "test"
+  case "2.10.0" => "org.scalatest" %% "scalatest" % "1.9" % "test"
+})
 
-scalacOptions ++= Seq("-deprecation", "-unchecked", "-language:dynamics", "-language:implicitConversions", "-language:reflectiveCalls", "-feature")
+scalacOptions <++= scalaVersion map (v => v match {
+  case "2.9.0-1" => Seq("-deprecation", "-unchecked", "-Xexperimental")
+  case "2.10.0" => Seq("-deprecation", "-unchecked", "-language:dynamics", "-language:implicitConversions", "-language:reflectiveCalls", "-feature")
+})
