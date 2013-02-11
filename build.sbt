@@ -4,7 +4,7 @@ version := "1.0"
 
 scalaVersion := "2.10.0"
 
-crossScalaVersions := Seq("2.9.0-1", "2.9.2", "2.10.0")
+crossScalaVersions := Seq("2.9.0-1", "2.9.1", "2.9.2", "2.10.0")
 
 scalaHome := Some(file(sys.env("SCALA_HOME")))
 
@@ -13,7 +13,7 @@ libraryDependencies <++= scalaVersion(v => v match {
     Seq(
       "org.scalatest" %% "scalatest" % "1.8" % "test"
     , "org.squeryl" %% "squeryl" % "0.9.5-2")
-  case "2.9.2" =>
+  case "2.9.1" =>
     Seq(
       "org.scalatest" %% "scalatest" % "1.8" % "test"
     , "org.squeryl" %% "squeryl" % "0.9.5-2")
