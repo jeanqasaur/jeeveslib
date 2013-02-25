@@ -10,24 +10,6 @@ import cap.jeeveslib.jeeves._
 
 case class Dummy(id: BigInt) extends Atom
 class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
-  test ("sensitive int") {
-    val l = mkLevel();
-    val x = mkSensitiveInt(l, 42, -1);
-
-    expectResult(42) {concretize(l === HIGH, x)};
-    expectResult(-1) {concretize(l === LOW, x)};
-  }
-
-  test ("sensitive object") {
-    val l = mkLevel();
-    val t = Dummy(1);
-
-    val x = mkSensitive(l, t, NULL);
-    
-    expectResult(t) {concretize(l === HIGH, x)};
-    expectResult(null) {concretize(l === LOW, x)};
-  }
-
   test ("test restrict") {
     val x = Dummy(1)
     val a = mkLevel ()
