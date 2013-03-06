@@ -10,6 +10,7 @@ import HealthDBBackend._
 
 sealed trait UserStatus extends Atom
 case object Admin extends UserStatus
+case object Patient extends UserStatus
 case object Doctor extends UserStatus
 case object Pharmacist extends UserStatus
 case object Other extends UserStatus

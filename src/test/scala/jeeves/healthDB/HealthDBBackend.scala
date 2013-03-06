@@ -13,6 +13,9 @@ import Expr._
  * @author jean
  */
 object HealthDBBackend extends JeevesLib[HealthContext] {
+  val defaultUser = UserRecord(-1, S(""), Other)
+
+//  private var doctors: List[UserRecord] = Nil;
   private var patients: List[PatientRecord] = Nil;
 
   private var _userCount = 0
@@ -32,33 +35,10 @@ object HealthDBBackend extends JeevesLib[HealthContext] {
   def countPatients (doctor: UserRecord): IntExpr = {
     var count: IntExpr = 0
     patients.foreach { p =>
-      jif ((p.doctor === doctor)
+      jif ((p.getDoctor() === doctor)
         , ((_: Unit) => count = count + 1)
         , ((_: Unit) => ()) )
     }
     count
   }
-  /*
-  def removeFriend(record1: UserRecord, record2: UserRecord) {
-    record1.remove(record2);
-    record2.remove(record1);
-  }
-
-  def getFriendNetworks(user: UserRecord) =
-    user.getFriends().map(_.network)
-
-  def getUsersByNetwork(network : Network) = 
-    users.filter(_.network === network)
-
-  def announceName(u: UserRecord) = 
-    for (f <- u.getFriends())
-      yield email(f, u.name)
-
-  def email(f: Sensitive, b: Sensitive) = 
-    Receipt(concretize(f, f.email), concretize(f, b))
-
-  case class Receipt(email: Atom, body: Atom)
-
-  // send email to multiple people at the same time
-  */
 } 
