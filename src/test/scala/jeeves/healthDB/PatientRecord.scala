@@ -11,13 +11,12 @@ import HealthDBBackend._
 
 case class MedicationRecord(name: String) extends Atom
 
-class PatientRecord(
+case class PatientRecord(
     private val _identity: UserRecord
   , private val _doctor: UserRecord
   , private val _meds: List[MedicationRecord]) extends Atom {
-  private val defaultUser = UserRecord(-1, S(""), Other)
   private def isPatientOrDoctor (ctxt: ObjectExpr[HealthContext]): Formula = {
-    (ctxt.identity === this) || (ctxt.identity === doctor)
+    (ctxt.user === _identity) || (ctxt.user === _doctor)
   }
 
   // Patient identity.
@@ -28,23 +27,18 @@ class PatientRecord(
     mkSensitive(np, _identity, defaultUser)
   }
   def showIdentity (ctxt: HealthContext): UserRecord  = {
-    concretize(ctxt, identity).asInstanceOf[UserRecord]
+    concretize(ctxt, getIdentity()).asInstanceOf[UserRecord]
   }
 
   // Doctor identity.
+  val doctorRef = ProtectedObjectRef[UserRecord, HealthContext](_doctor
+    , (ictxt, octxt) => ictxt.status === Admin)(HealthDBBackend)
+  def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
+    doctorRef.update(ctxt.user, newDoctor)
+  }
   private val dp = mkLevel ()
   restrict (dp, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
-  var doctor: ObjectExpr[UserRecord] = mkSensitive(dp, _doctor, defaultUser)
-  def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
-  /*
-    doctor = writeAs (
-        ctxt
-        , (ictxt, octxt) => ictxt.user.status === Admin
-        , doctor // old value
-        , mkSensitive(dp, newDoctor, defaultUser) // new value
-      )
-    */
-  }
+  def getDoctor() = { mkSensitive(dp, doctorRef.v, defaultUser) }
 
   // Medication list.
   private val mp = mkLevel ()
