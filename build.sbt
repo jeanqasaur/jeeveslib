@@ -1,3 +1,5 @@
+import AssemblyKeys._
+
 name := "Jeeves Library"
 
 version := "1.0"
@@ -32,3 +34,9 @@ scalacOptions <++= scalaVersion map (v => v match {
   case "2.9.1" => Seq("-deprecation", "-unchecked", "-Xexperimental")
   case "2.10.0" => Seq("-deprecation", "-unchecked", "-language:dynamics", "-language:implicitConversions", "-language:reflectiveCalls", "-feature")
 })
+
+assemblySettings
+
+jarName in assembly := "runjeeves.jar"
+
+mainClass in assembly := Some("cap.jeeveslib.demo.battleship.BattleshipGame")
