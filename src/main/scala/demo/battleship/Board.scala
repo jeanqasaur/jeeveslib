@@ -118,7 +118,7 @@ case class Board() {
         } else if (curSquare.hasShip()) {
           print("S")
         } else {
-          print(" ")
+          print("W")
         }
       }
       print("\n")

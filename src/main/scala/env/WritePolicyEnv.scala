@@ -7,7 +7,7 @@ package cap.jeeveslib.env
  */
 
 import scala.collection.mutable.Map;
-import scala.collection.mutable.WeakHashMap;
+import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Stack;
 
 import cap.jeeveslib.ast._
@@ -16,8 +16,8 @@ import cap.jeeveslib.ast.JeevesTypes._
 trait WritePolicyEnv[OC >: Null <: Atom] {
   type WritePolicy = (ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
 
-  private val _primaryContexts: WeakHashMap[LevelVar, ObjectExpr[Atom]] =
-    new WeakHashMap()
+  private val _primaryContexts: HashMap[LevelVar, ObjectExpr[Atom]] =
+    new HashMap()
   def mapPrimaryContext (lvar: LevelVar, ctxt: ObjectExpr[Atom]): Unit = {
     _primaryContexts += (lvar -> ctxt)
   }
