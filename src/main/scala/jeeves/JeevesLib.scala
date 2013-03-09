@@ -137,4 +137,13 @@ trait JeevesLib[C >: Null <: Atom]
       case _ => throw Impossible
     }
   }
+
+  /**
+   * Some support for conditional data structures...
+   */
+  def jfilter[T >: Null <: Atom] (lst: List[T], default: ObjectExpr[T]
+    , f: T => Formula)
+    : List[ObjectExpr[T]] = {
+    lst.map((elt: T) => jif[T](f(elt), (_: Unit) => elt, (_: Unit) => default))
+  }
 }

@@ -5,7 +5,7 @@ package cap.jeeveslib.env
  * represent sensitive values.
  * @author jeanyang
  */
-import scala.collection.mutable.WeakHashMap;
+import scala.collection.mutable.HashMap;
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.eval.Partial
@@ -22,8 +22,8 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
   }
 
   private val _policies
-    : WeakHashMap[LevelVar, (Level, ObjectExpr[C] => Formula)] =
-    new WeakHashMap()
+    : HashMap[LevelVar, (Level, ObjectExpr[C] => Formula)] =
+    new HashMap()
 
   def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
 
