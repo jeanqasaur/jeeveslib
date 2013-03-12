@@ -58,7 +58,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
 
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   
-  def concretizeExp[T](ctx: ObjectExpr[C], e: Expr[T]) = {
+  def concretizeExp[T](ctx: ObjectExpr[C], e: FExpr[T]) = {
     Debug.debug(" *** # _policies: " + _policies.size)
     val context =
       AND(_policies.map{
@@ -66,4 +66,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
       })
     super.concretize(context, e);
   }
+
+  // Debug function.
+  def getPolicy(lvar: LevelVar): ObjectExpr[C] => Formula = _policies(lvar)._2
 }

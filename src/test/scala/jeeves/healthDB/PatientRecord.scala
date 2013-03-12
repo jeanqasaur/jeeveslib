@@ -4,7 +4,6 @@ package test.cap.jeeveslib.jeeves.healthDB
  * Patient records.
  * @author jeanyang
  */
-
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import HealthDBBackend._
@@ -32,7 +31,8 @@ case class PatientRecord(
 
   // Doctor identity.
   val doctorRef = ProtectedObjectRef[UserRecord, HealthContext](_doctor
-    , (ictxt, octxt) => ictxt.status === Admin)(HealthDBBackend)
+    , (ictxt, octxt) => ictxt.status === Admin
+    , false)(HealthDBBackend)
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
     doctorRef.update(ctxt.user, newDoctor)
   }

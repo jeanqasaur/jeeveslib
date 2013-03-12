@@ -32,12 +32,12 @@ trait JeevesLib[C >: Null <: Atom]
    * Concretization: Returns the default value if the path condition is not
    * satisfied.
    */
-   def concretize[T](ctxt: ObjectExpr[C], e: Expr[T]): T = {
+   def concretize[T](ctxt: ObjectExpr[C], e: FExpr[T]): T = {
     conditionOnPC (ctxt
       , (_: Unit) => concretizeExp(ctxt, e), (_: Unit) => e.default)
   }
   def concretize[T](
-    ctx: ObjectExpr[C], e: (Expr[T], Expr[T]))
+    ctx: ObjectExpr[C], e: (FExpr[T], FExpr[T]))
     : (T, T) =
     (concretize(ctx, e._1), concretize(ctx, e._2))
   def concretize[T >: Null <: Atom](
@@ -51,7 +51,7 @@ trait JeevesLib[C >: Null <: Atom]
   /**
    * Printing: only happens if the path condition allows it.
    */
-   def jprint[T](ctxt: ObjectExpr[C], e: Expr[T]): Unit = {
+   def jprint[T](ctxt: ObjectExpr[C], e: FExpr[T]): Unit = {
     conditionOnPC (ctxt
       , (_: Unit) => println (concretize(ctxt, e)), (_: Unit) => ())
   }

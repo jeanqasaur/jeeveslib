@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 import org.scalatest.Assertions
 
 import cap.jeeveslib.ast._
-import Expr._
+import FExpr._
 import cap.jeeveslib.env.EmptyEnv
 import cap.jeeveslib.eval.Partial._
 

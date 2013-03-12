@@ -15,21 +15,21 @@ case class Unexpected(msg: String) extends RuntimeException
 /**
  * Expressions.
  */
-sealed trait Expr[T] {
+sealed trait FExpr[T] {
   def vars: Set[Var[_]]
   def eval(implicit env: VarEnv = EmptyEnv): T
-  def ===(that: Expr[T]): Expr[Boolean]
+  def ===(that: FExpr[T]): FExpr[Boolean]
   def default: T
   def show: T = throw Unexpected("show: " ++ this.toString)
 }
-sealed trait Ite[T] extends Expr[T] {
-  def cond: Expr[Boolean]
-  def thn: Expr[T]
-  def els: Expr[T]
+sealed trait Ite[T] extends FExpr[T] {
+  def cond: FExpr[Boolean]
+  def thn: FExpr[T]
+  def els: FExpr[T]
   def vars = cond.vars ++ thn.vars ++ els.vars
   def eval(implicit env: VarEnv)= if (cond.eval) thn.eval else els.eval
 }
-sealed trait Var[T] extends Expr[T] {
+sealed trait Var[T] extends FExpr[T] {
   def id: String
   def vars: Set[Var[_]] = Set(this)
   def eval(implicit env: VarEnv) = env(this)
@@ -39,22 +39,22 @@ object Var {
   private def inc() = {COUNTER = COUNTER + 1; COUNTER.toString}
   def makeBool = BoolVar(inc())
 } 
-sealed trait BinaryExpr[T <: Expr[_]] {
+sealed trait BinaryExpr[T <: FExpr[_]] {
   assert (left != null)
   assert (right != null)
   def left: T
   def right: T
   def vars = left.vars ++ right.vars
 }
-sealed trait UnaryExpr[T <: Expr[_]] {
+sealed trait UnaryExpr[T <: FExpr[_]] {
   assert (sub != null)
   def sub: T
   def vars = sub.vars
 }
-sealed trait Eq[T <: Expr[_]] extends Expr[Boolean] with BinaryExpr[T] {
+sealed trait Eq[T <: FExpr[_]] extends FExpr[Boolean] with BinaryExpr[T] {
   def eval(implicit env: VarEnv) = left.eval == right.eval 
 }
-sealed trait Constant[T] extends Expr[T] {
+sealed trait Constant[T] extends FExpr[T] {
   protected def v: T
   def vars = Set()
   def eval(implicit env: VarEnv) = v
@@ -63,8 +63,8 @@ sealed trait Constant[T] extends Expr[T] {
 /** 
  * Boolean expressions and algebra.
  */
-sealed abstract class Formula extends Expr[Boolean] {
-  def ===(that: Expr[Boolean]): Formula = 
+sealed abstract class Formula extends FExpr[Boolean] {
+  def ===(that: FExpr[Boolean]): Formula = 
     that match {
       case that: Formula => BoolEq(this, that)
     }
@@ -139,8 +139,8 @@ case class RelEq(left: RelExpr, right: RelExpr) extends RelFormula with Eq[RelEx
 /**
  * Integer expression with Peano arithmetic.
  */
-sealed abstract class IntExpr extends Expr[BigInt] {
-  def ===(that: Expr[BigInt]): Formula = 
+sealed abstract class IntExpr extends FExpr[BigInt] {
+  def ===(that: FExpr[BigInt]): Formula = 
     that match {case that: IntExpr => IntEq(this, that)}
   def constant(t: BigInt) = IntVal(t)
   def default = zero[BigInt]
@@ -173,9 +173,9 @@ case class ObjectIntField(root: ObjectExpr[Atom], f: FieldDesc[BigInt])
   def eval(implicit env: VarEnv) = f(root.eval).eval
 }
 
-sealed abstract class FunctionExpr[A, B] extends Expr[A => B] {
+sealed abstract class FunctionExpr[A, B] extends FExpr[A => B] {
   def default: (A => B) = throw Impossible
-  def ===(that: Expr[A => B]): Expr[Boolean] = BoolVal(this == that)
+  def ===(that: FExpr[A => B]): FExpr[Boolean] = BoolVal(this == that)
 }
 case class FunctionVal[A, B](v: A => B)
 extends FunctionExpr[A, B] with Constant[A => B] {
@@ -192,10 +192,10 @@ extends FunctionExpr[A, B] with Ite[A => B]
 /* Atom is uniquely identified by its string representation.*/
 trait Atom extends AnyRef
 sealed abstract class ObjectExpr[+T >: Null <: Atom]
-  extends Expr[Atom] with Dynamic { 
-  def ===(that: Expr[Atom]): Formula = 
+  extends FExpr[Atom] with Dynamic { 
+  def ===(that: FExpr[Atom]): Formula = 
     that match {case that: ObjectExpr[_] => ObjectEq(this, that)}
-  def !==(that: Expr[Atom]) = ! (this === that)
+  def !==(that: FExpr[Atom]) = ! (this === that)
   def constant(t: Atom) = Object(t)
   def default = zero[Atom]
 
@@ -215,23 +215,23 @@ sealed abstract class ObjectExpr[+T >: Null <: Atom]
 
 case class ObjectFacet[+T >: Null <: Atom](
   cond: Formula, thn: ObjectExpr[T], els: ObjectExpr[T])
-  extends ObjectExpr[T] with Ite[Atom]  {
-    def applyFunction(f: T => Formula): Formula =
-      BoolFacet(cond, thn.applyFunction(f), els.applyFunction(f))
-    def applyFunction(f: T => IntExpr): IntExpr =
-      IntFacet(cond, thn.applyFunction(f), els.applyFunction(f))
-    def applyFunction[T2 >: Null <: Atom](f: T => ObjectExpr[T2])
-      : ObjectExpr[T2] = {
-      ObjectFacet(cond
-        , if (thn == null) null else thn.applyFunction[T2](f)
-        , if (els == null) null else els.applyFunction(f))
-    }
-    override def eval(implicit env: VarEnv): T =
-      if (cond.eval) {
-        if (thn == null) null else thn.eval.asInstanceOf[T]
-      } else {
-        if (els == null) null else els.eval.asInstanceOf[T]
-      }
+extends ObjectExpr[T] with Ite[Atom]  {
+  def applyFunction(f: T => Formula): Formula =
+    BoolFacet(cond, thn.applyFunction(f), els.applyFunction(f))
+  def applyFunction(f: T => IntExpr): IntExpr =
+    IntFacet(cond, thn.applyFunction(f), els.applyFunction(f))
+  def applyFunction[T2 >: Null <: Atom](f: T => ObjectExpr[T2])
+    : ObjectExpr[T2] = {
+    ObjectFacet(cond
+      , if (thn == null) null else thn.applyFunction[T2](f)
+      , if (els == null) null else els.applyFunction(f))
+  }
+  override def eval(implicit env: VarEnv): T =
+  if (cond.eval) {
+    if (thn == null) null else thn.eval.asInstanceOf[T]
+  } else {
+    if (els == null) null else els.eval.asInstanceOf[T]
+  }
 }
 case class Object[+T >: Null <: Atom](v: T)
   extends ObjectExpr[T] with Constant[Atom]  {
@@ -259,7 +259,7 @@ case class ObjectField(root: ObjectExpr[Atom], f: FieldDesc[Atom])
  */
 sealed trait FieldDesc[T] {
   def id: String
-  def apply(o: Atom): Expr[T]
+  def apply(o: Atom): FExpr[T]
   /** Read from the heap.*/
   def read(o: Atom): Option[AnyRef] = 
     if (o == null) None 
@@ -294,8 +294,8 @@ case class IntFieldDesc(id: String) extends FieldDesc[BigInt] {
 /**
  * Relational algebra.
  */
-sealed abstract class RelExpr extends Expr[Set[Atom]] with Dynamic {
-  def ===(that: Expr[Set[Atom]]): Formula = 
+sealed abstract class RelExpr extends FExpr[Set[Atom]] with Dynamic {
+  def ===(that: FExpr[Set[Atom]]): Formula = 
     that match {case that: RelExpr => RelEq(this, that)}
   def constant(t: Set[Atom]) = ObjectSet(t)
   def default = zero[Set[Atom]]
@@ -334,7 +334,7 @@ case class Intersect(left: RelExpr, right: RelExpr) extends BinaryRelExpr {
 /**
  * Implicit conversions.
  */
-object Expr {
+object FExpr {
   implicit def fromBigInt(i: BigInt) = IntVal(i)  
   implicit def fromInt(i: Int) = IntVal(i)
   implicit def fromBool(b: Boolean) = BoolVal(b)

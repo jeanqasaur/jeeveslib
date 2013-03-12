@@ -42,14 +42,14 @@ object TestUtil {
 
   val pc0 = mkUser("pc0", "PC0", "", "", userStatus=PCStatus);
   def getPcCtxt0 (stage : PaperStage = Submission)
-  : ConfContext = new ConfContext(public0, stage);
+  : ConfContext = new ConfContext(pc0, stage);
 
   val public0 = mkUser("public0", "Public0", "", "", userStatus=PublicStatus);
   def getPublicCtxt0 (stage: PaperStage = Submission)
-  : ConfContext = new ConfContext(public0, stage);
+    : ConfContext = new ConfContext(public0, stage);
 
   // papers.
-  val emptyName = "No permission"
+  val emptyName = ""
 
   val paper0Name = "my paper"
   val paper0 = addPaper(paper0Name, List(author0, author1));
