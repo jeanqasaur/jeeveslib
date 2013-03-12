@@ -4,8 +4,10 @@ package cap.jeeveslib.ast
  * Definition of references protected by write policies.
  * @author jeanyang
  */
+/*
 import scala.reflect.runtime.universe._
 import scala.tools.reflect.ToolBox
+*/
 
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.env.EmptyEnv
