@@ -9,7 +9,7 @@ import collection.immutable.ListSet;
 
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
-import Expr._
+import FExpr._
 import SocialNetBackend._
 
 case class Name(s: String) extends Atom

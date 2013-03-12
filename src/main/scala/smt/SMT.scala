@@ -126,7 +126,7 @@ object SMT {
     else
       v.toString
 
-  private def formula(f: Expr[Boolean])(implicit env: VarEnv, sc: Scope): String = f match {
+  private def formula(f: FExpr[Boolean])(implicit env: VarEnv, sc: Scope): String = f match {
     case And(a,b) => "(and " + formula(a) + " " + formula(b) + ")"
     case Or(a,b) => "(or " + formula(a) + " " + formula(b) + ")"
     case Not(a) => "(not " + formula(a) + ")"
@@ -147,7 +147,7 @@ object SMT {
     case v: BoolVar => variable(v)
   }
 
-  private def integer(e: Expr[BigInt])(implicit env: VarEnv, sc: Scope): String = e match {
+  private def integer(e: FExpr[BigInt])(implicit env: VarEnv, sc: Scope): String = e match {
     case Plus(a,b) => "(+ " + integer(a) + " " + integer(b) + ")"
     case Minus(a,b) => "(- " + integer(a) + " " + integer(b) + ")"
     case Times(a,b) => "(* " + integer(a) + " " + integer(b) + ")"
@@ -156,7 +156,7 @@ object SMT {
     case ObjectIntField(root, f) => "(" + f + " " + atom(root) + ")"
   }
 
-  private def atom(e: Expr[Atom])(implicit env: VarEnv, sc: Scope): String = e match {
+  private def atom(e: FExpr[Atom])(implicit env: VarEnv, sc: Scope): String = e match {
     case ObjectFacet(cond, thn, els) => "(if " + formula(cond) + " " + atom(thn) + " " + atom(els) + ")"
     case Object(o) => sc.encode(o)
     case ObjectField(root, f) => "(" + f + " " + atom(root) + ")"
@@ -168,7 +168,7 @@ object SMT {
 */
   }
 
-  private def set(e: Expr[Set[Atom]])(implicit q: String, env: VarEnv, sc: Scope): String = e match {
+  private def set(e: FExpr[Set[Atom]])(implicit q: String, env: VarEnv, sc: Scope): String = e match {
     case Union(a,b) => "(or " + set(a) + " " + set(b) + ")"
     case Diff(a,b) => "(and " + set(a) + " (not " + set(b) + "))"
     case Intersect(a,b) => "(and " + set(a) + " " + set(b) + ")"
@@ -241,7 +241,7 @@ object SMT {
    * This computation is necessary because we need to capture all objects relevant
    * to the objects involved in our constraints.
    */
-  private def univ(f: Expr[_])(implicit env: VarEnv): Scope = {
+  private def univ(f: FExpr[_])(implicit env: VarEnv): Scope = {
     (f: @unchecked) match {
       case f: BinaryExpr[_] => univ(f.left) ++ univ(f.right)
       case f: Ite[_] => univ(f.cond) ++ univ(f.thn) ++ univ(f.els)

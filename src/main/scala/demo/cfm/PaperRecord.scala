@@ -81,7 +81,6 @@ class PaperRecord(         val uid: BigInt
   var title: ObjectExpr[S] =
     mkSensitive(titleL, S(_title), emptyStringVal)
   def showTitle(ctxt: ConfContext): String = {
-    println("showing paper title")
     (concretize(ctxt, title).asInstanceOf[S]).s
   }
 
@@ -105,8 +104,9 @@ class PaperRecord(         val uid: BigInt
           , (ctxt: ObjectExpr[ConfContext]) =>
             (isPC (ctxt) || (ctxt.viewer~'uid === reviewerId)) );
         logPaperRecordPolicy();
-      case ReviewedBy (reviewer) =>
-      restrict (level, (ctxt: ObjectExpr[ConfContext]) => isPC (ctxt));
+      case ReviewedBy (reviewerId) =>
+      restrict (level, (ctxt: ObjectExpr[ConfContext]) =>
+        isPC (ctxt) || (ctxt.viewer~'uid === reviewerId));
         logPaperRecordPolicy();
       // Can see the "Accepted(b)" tag if is an internal user at the decision
       // stage or if all information is visible.
@@ -124,7 +124,7 @@ class PaperRecord(         val uid: BigInt
   def getTags (): List[ObjectExpr[PaperTag]] = {
     _tags.map(t => addTagPermission(t))
   }
-  def removeTag (tag : PaperTag) : Unit = { _tags.filterNot(_ == tag) }
+  def removeTag (tag : PaperTag) : Unit = { _tags = _tags.filterNot(_ == tag) }
   def hasTag (tag : ObjectExpr[PaperTag]) : Formula = (getTags ()).has(tag)
   def showTags (ctxt: ConfContext): List[PaperTag] = {
     (getTags ()).map(t => concretize(ctxt, t).asInstanceOf[PaperTag])

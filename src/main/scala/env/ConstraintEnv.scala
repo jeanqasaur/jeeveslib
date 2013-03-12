@@ -1,6 +1,6 @@
 package cap.jeeveslib.env
 
-import cap.jeeveslib.ast.{Atom, BoolVar, Expr, Formula, Var}
+import cap.jeeveslib.ast.{Atom, BoolVar, FExpr, Formula, Var}
 
 /** 
  * Constraint environment for ConstraintEnv.
@@ -42,7 +42,7 @@ trait ConstraintEnv {
     DEFAULTS = f :: DEFAULTS
   }
 
-  def concretize[T](e: Expr[T]): T = {
+  def concretize[T](e: FExpr[T]): T = {
     if (CONSTRAINTS.size > 0) {  
       ENV = solve(CONSTRAINTS);
       CONSTRAINTS = Nil;
@@ -50,6 +50,6 @@ trait ConstraintEnv {
     e.eval(ENV)
   }
     
-  def concretize[T](f: Formula, e: Expr[T]): T = 
+  def concretize[T](f: Formula, e: FExpr[T]): T = 
     e.eval(solve(f :: CONSTRAINTS));
 }

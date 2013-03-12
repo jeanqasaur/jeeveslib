@@ -9,7 +9,6 @@ import org.scalatest.Assertions.{expectResult}
 import TestUtil._
 
 class TestConfUser extends FunSuite {
-  /*
   test ("submitted papers in list") {
     expectResult(true) {
       concretize(
@@ -63,5 +62,4 @@ class TestConfUser extends FunSuite {
       }
     }
   }
-  */
 }

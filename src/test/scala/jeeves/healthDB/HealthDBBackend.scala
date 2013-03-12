@@ -6,7 +6,7 @@ import scala.collection.mutable.Set;
 import cap.jeeveslib.ast._
 import cap.jeeveslib.jeeves._
 
-import Expr._
+import FExpr._
 
 /**
  * External interface to healthDB.

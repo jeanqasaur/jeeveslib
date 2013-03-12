@@ -10,7 +10,6 @@ import org.scalatest.Assertions.{expectResult}
 import TestUtil._
 
 class TestPaperRecord extends FunSuite {
-  /*
   test ("title policy") {
     expectResult(paper0Name) { paper0.showTitle(getAuthorCtxt0(Submission)) }
   }
@@ -64,7 +63,7 @@ class TestPaperRecord extends FunSuite {
   }
 
   test ("title visibility - nonauthor cannot see title") {
-    expectResult(S("No permission")) {
+    expectResult(S("")) {
       concretize(getAuthorCtxt2 (Submission), paper0.title)
     }
   }
@@ -77,5 +76,4 @@ class TestPaperRecord extends FunSuite {
       }
     }
   }
-  */
 }

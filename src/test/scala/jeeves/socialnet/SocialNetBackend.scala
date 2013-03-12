@@ -4,7 +4,7 @@ import scala.collection.mutable.HashMap;
 import scala.collection.mutable.Set;
 
 import cap.jeeveslib.ast._
-import Expr._
+import FExpr._
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
 

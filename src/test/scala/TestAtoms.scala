@@ -9,7 +9,7 @@ class ExampleAtoms extends FunSuite {
 
   case class Dummy(ID: BigInt) extends Atom
 
-  def eval[T](expr: Expr[T]) = expr.eval
+  def eval[T](expr: FExpr[T]) = expr.eval
 
   test ("set operations") {
     import RelExpr._
@@ -34,7 +34,7 @@ class ExampleAtoms extends FunSuite {
   } 
 
   test ("conditional") {
-    import Expr._
+    import FExpr._
     val a = Dummy(1);
     expectResult(a) {eval ((a === a) ? a ! NULL)}
   }
@@ -59,7 +59,7 @@ class ExampleAtoms extends FunSuite {
   }
 
   test ("object int field") {
-    import Expr._
+    import FExpr._
     val a: ObjectExpr[_] = Dummy(1);
     expectResult(1) {eval(a.ID: IntExpr)}
   }
@@ -95,7 +95,7 @@ class ExampleAtoms extends FunSuite {
   case class Record(F: IntExpr, I: BigInt) extends Atom
 
   test ("SMT object field constraints") {
-    import Expr._
+    import FExpr._
     var x = Dummy(1);
     var y = Node(x);
     expectResult(false) {SMT.solve(y.sub === x).isEmpty}

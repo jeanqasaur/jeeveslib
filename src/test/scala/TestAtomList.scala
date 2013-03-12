@@ -10,7 +10,7 @@ class ExampleAtomList extends FunSuite with ConstraintEnv {
 
   case class Dummy(ID: BigInt) extends Atom
 
-  def eval[T](expr: Expr[T]) = expr.eval
+  def eval[T](expr: FExpr[T]) = expr.eval
 
   /*
   def mkElt(x: Dummy): ObjectExpr[Atom] = {

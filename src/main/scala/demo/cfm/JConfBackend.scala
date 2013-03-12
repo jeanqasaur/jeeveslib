@@ -198,14 +198,14 @@ object JConfBackend extends JeevesLib[ConfContext] {
   def getAllPapers(): List[PaperRecord] = jconfPapers.values.toList
   def getAllReviews(): List[PaperReview] = jconfReviews.values.toList
   
-  /*
   def searchByTitle(title: String) = 
-    getAllPapers().filter(_.title === StringVal(this, title))
-  */
-  /*
+    jfilter[PaperRecord](getAllPapers(), defaultPaper
+      , p => p.title === S(title))
+  
   def searchByAuthor(author: ConfUser) = 
-    JConfTables.getAllDBPapers().filter(_.getAuthors().has(author))
-  */
+    jfilter[PaperRecord](getAllPapers(), defaultPaper
+      , p => p.authors.has(author.uid))
+  
   /*
   def searchByTag(tag: PaperTag) = {
     getAllPapers().filter(_.getTags().has(tag))
