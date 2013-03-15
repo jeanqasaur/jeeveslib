@@ -19,7 +19,7 @@ case class PatientRecord(
   }
 
   // Patient identity.
-  private val np = mkLevel ()
+  private val np = mkLabel ()
   restrict (np, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
   var identity = mkSensitive(np, _identity, defaultUser)
   def getIdentity = {
@@ -36,18 +36,18 @@ case class PatientRecord(
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
     doctorRef.update(ctxt.user, newDoctor)
   }
-  private val dp = mkLevel ()
+  private val dp = mkLabel ()
   restrict (dp, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
   def getDoctor() = { mkSensitive(dp, doctorRef.v, defaultUser) }
 
   // Medication list.
-  private val mp = mkLevel ()
+  private val mp = mkLabel ()
   restrict (dp, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
 
   var _actualMeds = _meds // Keep this in order to remove.
   var meds = _meds.map(m => mkSensitive(mp, m, NULL))
   def addMed (newMed: MedicationRecord) (implicit ctxt: HealthContext): Unit = {
-    val canSet = mkLevel ()
+    val canSet = mkLabel ()
     restrict (canSet, (ctxt: ObjectExpr[HealthContext]) => ctxt.user.status === Admin)
    
   /*

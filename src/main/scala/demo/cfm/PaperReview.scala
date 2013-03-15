@@ -20,8 +20,8 @@ class PaperReview(
   /*************/
   /* Policies. */
   /*************/
-  private val _reviewerL = mkLevel ();
-  private val _scoreL = mkLevel ();
+  private val _reviewerL = mkLabel ();
+  private val _scoreL = mkLabel ();
   private def _isInternalF (ctxt: ObjectExpr[ConfContext]): Formula = {
     val vrole = ctxt.viewer.role;
     (vrole === ReviewerStatus) || (vrole === PCStatus);
@@ -67,14 +67,14 @@ class PaperReview(
   def showResultScore (ctxt: ConfContext): Int = _resultScore
 
   /* URL links. */
-  private val _reviewL = mkLevel()
+  private val _reviewL = mkLabel()
   restrict ( _reviewL
     , (ctxt: ObjectExpr[ConfContext]) =>
         !((ctxt.viewer.role === ReviewerStatus) ||
         (ctxt.viewer.role === PCStatus) ||
         ((ctxt.viewer.role === AuthorStatus) &&
         ctxt.stage === Public)) )
-  private val _editL = mkLevel()
+  private val _editL = mkLabel()
   restrict( _editL
     , (ctxt: ObjectExpr[ConfContext]) => !((ctxt.viewer~'uid === reviewer)
       && (ctxt.stage === Review)) )

@@ -12,14 +12,14 @@ case class Dummy(id: BigInt) extends Atom
 class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
   test ("test restrict") {
     val x = Dummy(1)
-    val a = mkLevel ()
+    val a = mkLabel ()
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === x)
     val xS = mkSensitive (a, x, Dummy(-1))
     expectResult (x) { concretize (x, xS) }
   }
 
   test ("jif with IntExpr") {
-    val a = mkLevel();
+    val a = mkLabel();
     val x = mkSensitiveInt(a, 0, 1)
     // If ctxt != 0, then a is LOW.
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
@@ -30,7 +30,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
   }
 
   test ("jif with ObjectExpr") {
-    val a = mkLevel();
+    val a = mkLabel();
     val x = mkSensitive(a, Dummy(0), Dummy(1))
     // If ctxt != 0, then a is LOW.
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
@@ -47,7 +47,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
   }
 
   test ("nested conditionals with shared path condition") {
-    val a = mkLevel();
+    val a = mkLabel();
     val x = mkSensitiveInt(a, 0, 1)
     val y = mkSensitiveInt(a, 2, 3)
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
@@ -63,8 +63,8 @@ class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
   }
 
   test ("nested conditionals with no shared path condition") {
-    val a = mkLevel();
-    val b = mkLevel();
+    val a = mkLabel();
+    val b = mkLabel();
 
     val x = mkSensitiveInt(a, 0, 1)
     val y = mkSensitiveInt(b, 2, 3)
@@ -88,7 +88,7 @@ class ExampleJeevesLib extends FunSuite with JeevesLib[Dummy] {
     def id[T](x: T): T = x
     def inc(x: IntExpr): IntExpr = x + 1
 
-    val a = mkLevel ()
+    val a = mkLabel ()
     restrict (a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(0))
     val f: FunctionExpr[IntExpr, IntExpr] =
       mkSensitiveIntFunction (a, FunctionVal(id[IntExpr]_), FunctionVal(inc))

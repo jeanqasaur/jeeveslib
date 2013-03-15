@@ -12,7 +12,7 @@ class TestContext extends FunSuite with JeevesLib[Dummy] {
   val defaultVal = Dummy(-1)
 
   def mkElt(x: Dummy): ObjectExpr[Dummy] = {
-    val l = mkLevel();
+    val l = mkLabel();
     restrict(l, (ctxt: ObjectExpr[Dummy]) => ctxt.id === IntVal(1));
     mkSensitive(l, x, defaultVal)
   }
@@ -65,7 +65,7 @@ class TestContext extends FunSuite with JeevesLib[Dummy] {
   }
 
   test("circular dependency") {
-    val a = mkLevel()
+    val a = mkLabel()
     val v = mkSensitive(a, Dummy(1), Dummy(0))
     restrict(a, (ctxt: ObjectExpr[Dummy]) => ctxt === Dummy(1))
     expectResult(Dummy(1)) {

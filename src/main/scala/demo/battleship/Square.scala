@@ -11,9 +11,10 @@ case class Square() extends Atom {
   // Policy: can put a ship where there wasn't a ship before.
   // TODO: Would it be useful to resolve the constraint right away so we can
   // do more declarative programming?
-  def updateShip(ship: GamePiece): Unit = {
+  def updateShip(ship: GamePiece): Boolean = {
     _ship = Some(ship)
     _hasShip = true
+    return true
   }
   def hasShip(): Boolean = _hasShip
   def getShip(): Option[GamePiece] = _ship

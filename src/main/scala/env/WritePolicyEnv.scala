@@ -16,21 +16,21 @@ import cap.jeeveslib.ast.JeevesTypes._
 trait WritePolicyEnv[OC >: Null <: Atom] {
   type WritePolicy = (ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
 
-  private val _primaryContexts: HashMap[LevelVar, ObjectExpr[Atom]] =
+  private val _primaryContexts: HashMap[LabelVar, ObjectExpr[Atom]] =
     new HashMap()
-  def mapPrimaryContext (lvar: LevelVar, ctxt: ObjectExpr[Atom]): Unit = {
+  def mapPrimaryContext (lvar: LabelVar, ctxt: ObjectExpr[Atom]): Unit = {
     _primaryContexts += (lvar -> ctxt)
   }
 
-  def addWritePolicy[IC >: Null <: Atom](lvar: LevelVar
+  def addWritePolicy[IC >: Null <: Atom](lvar: LabelVar
     , iPolicy: (ObjectExpr[IC], ObjectExpr[OC]) => Formula)
     (implicit lvars: PolicyEnv[OC])
-  : LevelVar = {
+  : LabelVar = {
     _primaryContexts.get(lvar) match {
       // If there is a context associated, create a fresh level variable and
       // attached the new integrity policy to it.
       case Some(ictxt) =>
-        val newLvar = lvars.mkLevel ()
+        val newLvar = lvars.mkLabel ()
         mapPrimaryContext (newLvar, ictxt)
         lvars.restrict (newLvar
           , octxt =>

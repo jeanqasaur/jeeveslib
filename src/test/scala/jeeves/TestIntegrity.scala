@@ -188,7 +188,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   // Since only bob knows that he can write, only he can see his value...
   test ("Integrity policies that involve confidentiality policies") {
-    val a = mkLevel ()
+    val a = mkLabel ()
     restrict (a, (ctxt: ObjectExpr[DummyContext]) => ctxt.viewer === bob)
     val secretWriter: ObjectExpr[DummyUser] = mkSensitive(a, bob, nobody)
     val x = ProtectedIntRef[DummyUser, DummyContext](0

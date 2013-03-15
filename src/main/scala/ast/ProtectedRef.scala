@@ -70,7 +70,7 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
       // Even if we succeeded,
       case other =>
         // Make a new level variable based on this policy.
-        val ivar = jeevesEnv.mkLevel ()
+        val ivar = jeevesEnv.mkLabel ()
         jeevesEnv.mapPrimaryContext (ivar, ctxt)
         jeevesEnv.restrict (ivar, iPolicy(ctxt, _))
 
@@ -80,7 +80,7 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
         // Return a result that takes the path condition into account.
         jeevesEnv.pushPC(ivar.id)
         val r: T = jeevesEnv.mkFacetTree[T](
-          (lv: LevelVar) =>
+          (lv: LabelVar) =>
             jeevesEnv.addWritePolicy[IC](lv, iPolicy)(jeevesEnv)
           , jeevesEnv.getPCList(), pUntrusted, v)(facetCons)
         jeevesEnv.popPC()

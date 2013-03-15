@@ -12,8 +12,9 @@ import cap.jeeveslib.jeeves._
 case class CUser(id: BigInt, private val _pwd: String = "")
   (implicit jlib: JeevesLib[CUser]) extends Atom {
   // Only people who specify the right password can see the password...
-  val a = jlib.mkLevel()
-  jlib.restrict(a, (ctxt: ObjectExpr[CUser]) => ctxt === this)
+  val a = jlib.mkLabel()
+  jlib.restrict(a
+    , (ctxt: ObjectExpr[CUser]) => ctxt~'id === id && ctxt.pwd === pwd)
 
   val pwd: ObjectExpr[S] = { jlib.mkSensitive(a, S(_pwd), S("")) }
 }
@@ -23,11 +24,19 @@ class PasswordConfidentiality extends FunSuite with JeevesLib[CUser] {
 
   test ("user can see own password") {
     expectResult(S("alicePwd")) { concretize(alice, alice.pwd) }
+    expectResult(S("alicePwd")) {
+      concretize(CUser(0, "alicePwd")(this), alice.pwd)
+    }
     expectResult(S("bobPwd")) { concretize(bob, bob.pwd) }
   }
   test ("user cannot see other password") {
     expectResult(S("")) { concretize(alice, bob.pwd) }
     expectResult(S("")) { concretize(bob, alice.pwd) }
+  }
+  test ("user must supply correct password") {
+    expectResult(S("")) {
+      concretize(CUser(0, "alice!")(this), alice.pwd)
+    }
   }
 }
 
@@ -36,7 +45,7 @@ class PasswordConfidentiality extends FunSuite with JeevesLib[CUser] {
  */
 case class IUser(id: BigInt, private val _pwd: String = "")
   (implicit jlib: JeevesLib[IUser]) extends Atom {
-  val a = jlib.mkLevel()
+  val a = jlib.mkLabel()
   jlib.restrict(a, (ctxt: ObjectExpr[IUser]) => ctxt === this)
 
   private var pwdRef = ProtectedObjectRef[IUser, IUser](S(_pwd)

@@ -12,16 +12,16 @@ import cap.jeeveslib.ast.JeevesTypes._
 import FExpr._
 import LinkSharingBackend._
 
-sealed trait UserLevel 
-object Anyone extends UserLevel
-object Self extends UserLevel
-object Friends extends UserLevel
+sealed trait UserLabel 
+object Anyone extends UserLabel
+object Self extends UserLabel
+object Friends extends UserLabel
 
 class UserRecord(
-  private val _name: S, private val nameL: UserLevel,
-  private val _email: S, private val emailL: UserLevel, 
-  private val _network: S, private val networkL: UserLevel, 
-  private val friendsL: UserLevel) extends Atom {
+  private val _name: S, private val nameL: UserLabel,
+  private val _email: S, private val emailL: UserLabel, 
+  private val _network: S, private val networkL: UserLabel, 
+  private val friendsL: UserLabel) extends Atom {
   private var friends: Set[UserRecord] = Set()
   private var links: List[ObjectExpr[S]] = List()
 
@@ -42,8 +42,8 @@ class UserRecord(
   def isFriends(u: UserRecord) = getFriends.has(u)
 
   /** Helpers */
-  private def level (ul: UserLevel): LevelVar = {
-    val l = mkLevel();
+  private def level (ul: UserLabel): LabelVar = {
+    val l = mkLabel();
     def me (implicit ctxt: ObjectExpr[UserRecord]) = ctxt === this;
     ul match {
       case Anyone => 
