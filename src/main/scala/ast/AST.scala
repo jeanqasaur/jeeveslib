@@ -395,6 +395,6 @@ case class IF(cond: Formula) {
 case class S(s: String) extends Atom
 
 object JeevesTypes {
-  type LevelVar = BoolVar;
+  type LabelVar = BoolVar;
   type WriteVar = BoolVar;
 }

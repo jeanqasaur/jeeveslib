@@ -38,7 +38,7 @@ case class ConfUser(
     private def isPC (ctxt: ObjectExpr[ConfContext]): Formula =
       ctxt.viewer.status === PCStatus
 
-    private val selfL = mkLevel ();
+    private val selfL = mkLabel ();
     restrict (selfL, (ctxt: ObjectExpr[ConfContext]) => isSelf (ctxt));
     logConfUserPolicy();
     def showIsSelf(ctxt: ConfContext): Boolean = {
@@ -64,7 +64,7 @@ case class ConfUser(
       _isGrad
     }
 
-    private val numL = mkLevel()
+    private val numL = mkLabel()
     restrict (numL, (ctxt: ObjectExpr[ConfContext]) =>
       (isSelf (ctxt) || isPC (ctxt)))
     var acmNum = mkSensitive(numL, S(_acmNum), S(""))

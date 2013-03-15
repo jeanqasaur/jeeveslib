@@ -16,7 +16,7 @@ case class Bid( private val _value: BigInt
               , private val _policy: ObjectExpr[AuctionContext] => Formula)
               (implicit jeevesLib: JeevesLib[AuctionContext])
               extends Atom {
-    private val l = jeevesLib.mkLevel()
+    private val l = jeevesLib.mkLabel()
     // The policy allows the owner to always be able to see their own bid.
     // Otherwise it defers to the policy passed in.
     jeevesLib.restrict(l

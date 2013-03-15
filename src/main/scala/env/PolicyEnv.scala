@@ -12,31 +12,31 @@ import cap.jeeveslib.eval.Partial
 import cap.jeeveslib.util.Debug
 
 trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
-  // Level variables for confidentiality and integrity
-  sealed trait Level extends Serializable
-  object HIGH extends Level
-  object LOW extends Level
-  implicit def level2sym(l: Level): Formula = l match {
+  // Label variables for confidentiality and integrity
+  sealed trait Label extends Serializable
+  object HIGH extends Label
+  object LOW extends Label
+  implicit def level2sym(l: Label): Formula = l match {
     case HIGH => true
     case LOW => false
   }
 
   private val _policies
-    : HashMap[LevelVar, (Level, ObjectExpr[C] => Formula)] =
+    : HashMap[LabelVar, (Label, ObjectExpr[C] => Formula)] =
     new HashMap()
 
-  def mkLevel(): LevelVar = pickBool(_ => true, HIGH)
+  def mkLabel(): LabelVar = pickBool(_ => true, HIGH)
 
-  def mkSensitiveInt(lvar: LevelVar, high: IntExpr, low: IntExpr = -1)
+  def mkSensitiveInt(lvar: LabelVar, high: IntExpr, low: IntExpr = -1)
     : IntExpr = 
     lvar ? high ! low
     def mkSensitive[T >: Null <: Atom](
-      lvar: LevelVar, high: ObjectExpr[T], low: ObjectExpr[T] = NULL)
+      lvar: LabelVar, high: ObjectExpr[T], low: ObjectExpr[T] = NULL)
     : ObjectExpr[T] = lvar ? high ! low
-  def mkSensitiveIntFunction(lvar: LevelVar
+  def mkSensitiveIntFunction(lvar: LabelVar
     , high: FunctionExpr[IntExpr, IntExpr], low: FunctionExpr[IntExpr, IntExpr])
   : FunctionExpr[IntExpr, IntExpr] = lvar ? high ! low
-  def mkSensitiveFunction(lvar: LevelVar
+  def mkSensitiveFunction(lvar: LabelVar
     , high: FunctionExpr[Atom, Atom], low: FunctionExpr[Atom, Atom])
   : FunctionExpr[Atom, Atom] = lvar ? high ! low
 
@@ -49,7 +49,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-   def restrict(lvar: LevelVar
+   def restrict(lvar: LabelVar
      , f: ObjectExpr[C] => Formula) = {
     _policies += (lvar ->
       ( LOW
@@ -68,5 +68,5 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
   }
 
   // Debug function.
-  def getPolicy(lvar: LevelVar): ObjectExpr[C] => Formula = _policies(lvar)._2
+  def getPolicy(lvar: LabelVar): ObjectExpr[C] => Formula = _policies(lvar)._2
 }

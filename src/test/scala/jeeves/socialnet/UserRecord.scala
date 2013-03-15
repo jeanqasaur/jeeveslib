@@ -16,19 +16,19 @@ case class Name(s: String) extends Atom
 case class Email(s: String) extends Atom
 case class Network(s: String) extends Atom
 
-sealed trait UserLevel 
-object Anyone extends UserLevel
-object Self extends UserLevel
-object Friends extends UserLevel
+sealed trait UserLabel 
+object Anyone extends UserLabel
+object Self extends UserLabel
+object Friends extends UserLabel
 
 class UserRecord(
   nameV: Name, 
-  nameL: UserLevel,
+  nameL: UserLabel,
   emailV: Email,
-  emailL: UserLevel, 
+  emailL: UserLabel, 
   networkV: Network, 
-  networkL: UserLevel, 
-  friendsL: UserLevel) 
+  networkL: UserLabel, 
+  friendsL: UserLabel) 
 extends Atom {
   private var friends: Set[UserRecord] = Set()
   var X: IntExpr = 1000
@@ -38,7 +38,7 @@ extends Atom {
   def add(u: UserRecord) {friends = friends + u}
   def remove(u: UserRecord) {friends = friends - u}
   def setLocation(x: BigInt, y: BigInt) {
-    val l = mkLevel();
+    val l = mkLabel();
     restrict(l, (ctxt: ObjectExpr[UserRecord]) => DISTANCE(ctxt, this) < 10);
     this.X = mkSensitiveInt(l, x, 1000);
     this.Y = mkSensitiveInt(l, y, 1000);
@@ -56,8 +56,8 @@ extends Atom {
   def location() = (X, Y);
 
   /** Helpers */
-  private def level (ul: UserLevel): LevelVar = {
-    val l = mkLevel();
+  private def level (ul: UserLabel): LabelVar = {
+    val l = mkLabel();
     def me (implicit ctxt: ObjectExpr[UserRecord]) = ctxt === this;
     ul match {
       case Anyone => 

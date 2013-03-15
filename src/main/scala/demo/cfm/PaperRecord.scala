@@ -42,9 +42,9 @@ class PaperRecord(         val uid: BigInt
   /**************/
   /* Variables. */
   /**************/
-  private var _authorL = mkLevel()
-  private var _reviewerL = mkLevel()
-  private val titleL = mkLevel();
+  private var _authorL = mkLabel()
+  private var _reviewerL = mkLabel()
+  private val titleL = mkLabel();
 
   /*************/
   /* Policies. */
@@ -97,7 +97,7 @@ class PaperRecord(         val uid: BigInt
 
   /* Managing tags. */
   private def addTagPermission (tag : PaperTag) : ObjectExpr[PaperTag] = {
-    val level = mkLevel ();
+    val level = mkLabel ();
     tag match {
       case NeedsReview(reviewerId) =>
         restrict (level
@@ -161,7 +161,7 @@ class PaperRecord(         val uid: BigInt
     concretize(ctxt, isReviewedBy(reviewer))
   }
   def addReviewPolicy (r: ObjectExpr[PaperReview]): ObjectExpr[PaperReview] = {
-    val level = mkLevel();
+    val level = mkLabel();
     restrict( level
       , (ctxt: ObjectExpr[ConfContext]) =>
           ( (isInternal (ctxt) && (!isAuthor (ctxt))) ||
@@ -189,7 +189,7 @@ class PaperRecord(         val uid: BigInt
     _authors.foreach(a => println(a))
   }
   
-  private val _editL = mkLevel()
+  private val _editL = mkLabel()
   restrict(_editL
     , (ctxt: ObjectExpr[ConfContext]) =>
         (isAuthor (ctxt) && (ctxt.stage === Submission)) )
@@ -225,7 +225,7 @@ class PaperRecord(         val uid: BigInt
     "papers/" + "jcp" + key + "_" + showFile(ctxt)
   }
 
-  private val _assignL = mkLevel ()
+  private val _assignL = mkLabel ()
   restrict (_assignL, (ctxt: ObjectExpr[ConfContext]) => isPC (ctxt))
   private val _assignLink = "assign_paper?id=" + uid + "&key=" + key
   def getAssignLink(userId: BigInt): ObjectExpr[S] = {

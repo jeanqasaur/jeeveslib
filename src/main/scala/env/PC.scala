@@ -49,7 +49,7 @@ trait PC {
     }
   }
 
-  def mkFacetTree[T](lvfun: LevelVar => Unit
+  def mkFacetTree[T](lvfun: LabelVar => Unit
     , guardSet: List[PathCondition]
     , high: T, low: T) (implicit facetCons: (Formula, T, T) => T): T = {
     guardSet match {
