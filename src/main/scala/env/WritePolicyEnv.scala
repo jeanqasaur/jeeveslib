@@ -23,7 +23,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   }
 
   def addWritePolicy[IC >: Null <: Atom](lvar: LabelVar
-    , iPolicy: (ObjectExpr[IC], ObjectExpr[OC]) => Formula)
+    , iPolicy: ObjectExpr[IC] => (ObjectExpr[OC] => Formula))
     (implicit lvars: PolicyEnv[OC])
   : LabelVar = {
     _primaryContexts.get(lvar) match {
@@ -34,7 +34,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
         mapPrimaryContext (newLvar, ictxt)
         lvars.restrict (newLvar
           , octxt =>
-              lvar && iPolicy (ictxt.asInstanceOf[ObjectExpr[IC]], octxt))
+              lvar && iPolicy(ictxt.asInstanceOf[ObjectExpr[IC]])(octxt))
         newLvar
       // Otherwise return the old level variable.
       case None => lvar
@@ -43,7 +43,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
 
   def addPolicy[IC >: Null <: Atom](f: Formula)
     (implicit lvars: PolicyEnv[OC]
-    , iPolicy: (ObjectExpr[IC], ObjectExpr[OC]) => Formula)
+    , iPolicy: ObjectExpr[IC] => (ObjectExpr[OC] => Formula))
   : Formula = {
     f match {
       case BoolFacet(cond, t, f) =>
@@ -70,7 +70,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   }
   def addPolicy[IC >: Null <: Atom](e: IntExpr)
     (implicit lvars: PolicyEnv[OC]
-    , iPolicy: (ObjectExpr[IC], ObjectExpr[OC]) => Formula)
+    , iPolicy: ObjectExpr[IC] => ObjectExpr[OC] => Formula)
   : IntExpr = {
     e match {
       case IntFacet (cond, t, f) =>
@@ -90,7 +90,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   def addPolicy[T >: Null <: Atom, IC >: Null <: Atom](
     e: ObjectExpr[T])
     (implicit lvars: PolicyEnv[OC]
-      , iPolicy: (ObjectExpr[IC], ObjectExpr[OC]) => Formula)
+      , iPolicy: ObjectExpr[IC] => ObjectExpr[OC] => Formula)
     : ObjectExpr[T] =
     e match {
       case ObjectFacet(cond, t, f) =>
@@ -107,7 +107,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   def addPolicy[A, B, IC >: Null <: Atom](
     e: FunctionExpr[A, B])
     (implicit lvars: PolicyEnv[OC]
-      , iPolicy: (ObjectExpr[IC], ObjectExpr[OC]) => Formula)
+      , iPolicy: ObjectExpr[IC] => ObjectExpr[OC] => Formula)
     : FunctionExpr[A, B] =
     e match {
       case FunctionVal(_) => e

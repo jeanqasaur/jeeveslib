@@ -16,18 +16,26 @@ object DebugPrint {
     }
   }
 
-  /*
-  def debugPrint[T >: Null <: Atom, C >: Null <: Atom](
-    ctxt: C, of: ObjectFacet[T])
+  def debugPrint[C >: Null <: Atom](ctxt: C, e: Formula)
     (implicit jlib: JeevesLib[C])
     : Unit = {
-    val ObjectFacet(cond, _t, _f) = of
-    cond match {
-      case (lv: LabelVar) =>
+    e match {
+      case BoolFacet(lv: LabelVar, t, f) =>
         println(jlib.getPolicy(lv)(ctxt))
-        println(of)
-      case _ => println(of)
+        println(e)
+      case _ => println(e)
     }
   }
-  */
+
+  def debugPrint[T >: Null <: Atom, C >: Null <: Atom](
+    ctxt: C, e: ObjectExpr[T])
+    (implicit jlib: JeevesLib[C])
+    : Unit = {
+    e match {
+      case ObjectFacet(lv: LabelVar, _t, _f) =>
+        println(jlib.getPolicy(lv)(ctxt))
+        println(e)
+      case _ => println(e)
+    }
+  }
 }
