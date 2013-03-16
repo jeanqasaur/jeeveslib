@@ -49,7 +49,7 @@ case class IUser(id: BigInt, private val _pwd: String = "")
   jlib.restrict(a, (ctxt: ObjectExpr[IUser]) => ctxt === this)
 
   private var pwdRef = ProtectedObjectRef[IUser, IUser](S(_pwd)
-    , (ictxt, octxt) => ictxt === this
+    , ictxt => octxt => ictxt === this
     , false)
   def getPassword() = {
     jlib.mkSensitive(a, pwdRef.v, S(""))

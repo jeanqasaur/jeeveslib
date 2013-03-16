@@ -8,60 +8,61 @@ import cap.jeeveslib.jeeves._
 * Basic authentication.
 * @author jeanyang
 */
-/**
-* Principals and users.
-* Because of the way we represent 
-*/
 class Principal extends Atom
-case class User(name: String, private val _pwd: String = "")
-  (implicit jlib: JeevesLib[Cred])
-  extends Principal {
-  private var pwdRef = ProtectedObjectRef[Cred, Cred](S(_pwd)
-    , (ictxt, octxt) =>
-        (ictxt.name === name) && (ictxt.password === password)
-        && (octxt.name === name) && (octxt.password === password)
+case class User(id: BigInt, name: String, private val _pwd: String = "")
+  (implicit jlib: JeevesLib[Cred]) extends Principal {
+  // Initial password.
+  private val pwdLabel = jlib.mkLabel()
+  jlib.restrict(pwdLabel
+    , (ctxt: ObjectExpr[Cred]) =>
+    ctxt.p~'id === id && ctxt.p.password === password)
+  var password: ObjectExpr[S] = jlib.mkSensitive(pwdLabel, S(_pwd), S(""))
+
+    // Password update.
+  private var pwdRef = ProtectedObjectRef[Cred, Cred](password
+    , ictxt => octxt =>
+    (ictxt.p~'id === id) && (ictxt.p.password === password)
+    && (octxt.p~'id === id) && (octxt.p.password === password)
     , true)(jlib)
-  var password: ObjectExpr[S] = pwdRef.v.asInstanceOf[ObjectExpr[S]]
   def setPassword(c: Cred, newPwd: String) = {
     pwdRef.update(c, newPwd)
     password = pwdRef.v.asInstanceOf[ObjectExpr[S]]
   }
 }
-object Admin extends Principal
+case class Admin()(implicit jlib: JeevesLib[Cred]) extends Principal {
+  // Initial password.
+  private val pwdLabel = jlib.mkLabel()
+  jlib.restrict(pwdLabel
+    , (ctxt: ObjectExpr[Cred]) =>
+    ctxt.p === this && ctxt.p.password === password)
+  val password: ObjectExpr[S] = jlib.mkSensitive(pwdLabel, S("secret"), S(""))
+  }
+case object NullUser extends Principal
+
 case class Cred(p: Principal) extends Atom
 
 object Authentication extends JeevesLib[Cred] {
-  val nullUser: User = User("default", "")(this)
+  val admin = Admin()(this)
+  
+  class File(val owner: Principal, private val _contents: String = "")
+  (implicit jlib: JeevesLib[Cred]) extends Atom {
+    private val contents = ProtectedObjectRef[Cred, Cred](S(_contents)
+      , ictxt => octxt => (ictxt.p === owner) || (ictxt.p === admin)
+      , false)(jlib)
+    def writeContents(c: ObjectExpr[Cred], body: String): UpdateResult = 
+      contents.update(c, S(body))
+    def getContents(): ObjectExpr[S] = contents.v.asInstanceOf[ObjectExpr[S]]
+  }
+
   def login (p: Principal, pwd: String): ObjectExpr[Cred] = {
-    (p, pwd) match {
-      case (u@User(_, _), _) =>
-        jif(u.password === S(pwd)
-          , _ => Object(Cred(p)), _ => Object(Cred(nullUser)))
-      case (Admin, "secret") => Object(Cred(p))
-      case _ => Object(Cred(nullUser))
-    }
-  }
-
-  /**
-  * File authentication.
-   */
-  object FileAC {
-    class File(private val _contents: String = "")
-      (implicit jlib: JeevesLib[Cred]) extends Atom {
-      private val contents = ProtectedObjectRef[Cred, Cred](S(_contents)
-        , (ictxt, octxt) =>
-          (ictxt.p === Admin), false)(jlib)
-      def writeContents(c: Cred, body: String): UpdateResult =
-        contents.update(c, S(body))
-    }
-  }
-
-  /*
-  def client (p: Principal, c: Cred, f: FileAC.File): String = {
     p match {
-      case Admin => f.showWriteLoc(c)
-      case _ => ""
+      case u:User =>
+      jif(u.password === S(pwd)
+        , _ => Object(Cred(p)), _ => Object(Cred(NullUser)))
+      case a:Admin =>
+      jif(a.password === S(pwd)
+        , _ => Object(Cred(p)), _ => Object(Cred(NullUser)))
+      case _ => Object(Cred(NullUser))
     }
   }
-  */
 }
