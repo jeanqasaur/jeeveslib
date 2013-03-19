@@ -10,29 +10,29 @@ import scala.collection.mutable.Stack;
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 
-trait PC {
-  sealed trait PathCondition
-  case class PathVar (id: String) extends PathCondition
-  case class NegPathVar (id: String) extends PathCondition
+sealed trait PathCondition
+case class PathVar(bv: BoolVar) extends PathCondition
+case class NegPathVar (bv: BoolVar) extends PathCondition
 
+trait PC {
   private val _pc: Stack[PathCondition] = new Stack ()
  
-  def getPCList (): List[PathCondition] = _pc.toList
+  def getPCList(): List[PathCondition] = _pc.toList
 
-  def pushPC (id: String): Unit = _pc.push (PathVar (id))
-  def pushNegPC (id: String): Unit = _pc.push (NegPathVar (id))
+  def pushPC(bv: BoolVar): Unit = _pc.push(PathVar(bv))
+  def pushNegPC(bv: BoolVar): Unit = _pc.push (NegPathVar(bv))
   def popPC (): PathCondition = _pc.pop ()
 
-  def pcHasVar (v: String) = _pc.contains (PathVar (v))
-  def pcHasNegVar (v: String) = _pc.contains (NegPathVar (v))
+  def pcHasVar(bv: BoolVar) = _pc.contains(PathVar(bv))
+  def pcHasNegVar(bv: BoolVar) = _pc.contains (NegPathVar(bv))
 
   def getPCFormula (): Option[Formula] = {
     if (_pc.isEmpty) { None
     } else {
       def pcToFormula (pc: PathCondition): Formula = {
         pc match {
-          case PathVar (id) => BoolVar (id)
-          case NegPathVar (id) => Not (BoolVar (id))
+          case PathVar(bv) => bv
+          case NegPathVar(bv) => Not(bv)
         }
       }
       def mkAnd (f: Formula, pc: PathCondition): Formula = {
@@ -46,25 +46,6 @@ trait PC {
     getPCFormula () match {
       case Some(f) => (context: ObjectExpr[C]) => (f ==> p(context))
       case None => p
-    }
-  }
-
-  def mkFacetTree[T](lvfun: LabelVar => Unit
-    , guardSet: List[PathCondition]
-    , high: T, low: T) (implicit facetCons: (Formula, T, T) => T): T = {
-    guardSet match {
-      case Nil => high
-      case g::gs =>
-        g match {
-          case PathVar (id) =>
-            val lv = BoolVar(id);
-            lvfun (lv);
-            facetCons (lv, mkFacetTree[T](lvfun, gs, high, low), low)
-          case NegPathVar (id) =>
-            val lv = BoolVar (id);
-            lvfun (lv);
-            facetCons (lv, low, mkFacetTree[T](lvfun, gs, high, low))
-        }
     }
   }
 }

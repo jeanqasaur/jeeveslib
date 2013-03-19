@@ -26,15 +26,8 @@ trait ConstraintEnv {
       case None => throw Inconsistency
     }
   
-  /*
-  def pickBool(spec: BoolVar => Formula = _ => true): BoolVar = {
-    val x = Var.makeBool; 
-    assume(spec(x)); 
-    x
-  }
-  */
-  def pickBool(): BoolVar = {
-    val x = Var.makeBool
+  def pickBool(label: String=""): BoolVar = {
+    val x = Var.makeBool(label)
     _boolVars = _boolVars + x
     x
   }
@@ -43,18 +36,9 @@ trait ConstraintEnv {
     CONSTRAINTS = f :: CONSTRAINTS
   }
 
-  /*
-  def concretize[T](e: FExpr[T], defaults: List[Formula]): T = {
-    if (CONSTRAINTS.size > 0) {  
-      ENV = solve(CONSTRAINTS, defaults);
-      CONSTRAINTS = Nil;
-    }
-    e.eval(ENV)
-  }
-  */
-
   def concretize[T](f: Iterable[Formula], defaults: List[Formula]
     , e: FExpr[T]): T = {
+//    println("formula: " + f)
     e.eval(solve(f :: CONSTRAINTS, defaults))
   }
 }

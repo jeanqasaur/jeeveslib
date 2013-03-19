@@ -13,8 +13,8 @@ class ExamplePartial extends FunSuite {
   val T: Formula = true
   val F: Formula = false
 
-  val b = Var.makeBool
-  val c = Var.makeBool
+  val b = Var.makeBool()
+  val c = Var.makeBool()
 //  val a = Var.makeObject[Atom]
 
   test ("boolean simplifications") {

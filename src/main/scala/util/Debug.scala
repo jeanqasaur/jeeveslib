@@ -7,6 +7,7 @@ package cap.jeeveslib.util
 object Debug {
   var DEBUG = false;
   var DEBUGFILE = true;
+  var TRACE = true;
 
   val file: java.io.File = new java.io.File("output.txt");
  
