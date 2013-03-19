@@ -2,6 +2,7 @@ package test.cap.jeeveslib.jeeves.integrity
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions
+
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
@@ -99,16 +100,16 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     expectResult (85) { concretize(bobContext(), x.v + y.v) }
     expectResult (44) { concretize(carolContext(), x.v + y.v) }
   }
-
-   /* Alice is allowed to write to x and only Bob is allowed to write to y.
+  
+  /* Alice is allowed to write to x and only Bob is allowed to write to y.
      Our write policies disallow Bob from accidentally writing a value from
      Alice into y. (That is, without an explicit endorsement...) */
   test ("Prevent flow of untrusted writes") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, allowUserWrite(alice), None)(this)
+              0, allowUserWrite(alice), None, "x")(this)
     x.update(alice, aliceContext(), 42) 
     val y = ProtectedIntRef[DummyUser, DummyContext](
-              1, allowUserWrite(bob), None)(this)
+              1, allowUserWrite(bob), None, "y")(this)
     y.update(bob, bobContext(), x.v)
     expectResult (42) { concretize(aliceContext(), x.v) }
     expectResult (42) { concretize(bobContext(), x.v) }
@@ -259,6 +260,6 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     expectResult (1) {
       concretize(aliceContext(), jfun[IntExpr, IntExpr](x.v, 1)) }
   }
-
+  
   // TODO: Test object refs...
 }

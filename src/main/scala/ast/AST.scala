@@ -43,7 +43,7 @@ sealed trait Var[T] extends FExpr[T] {
 object Var {
   private var COUNTER = 0
   private def inc() = {COUNTER = COUNTER + 1; COUNTER.toString}
-  def makeBool = BoolVar(inc())
+  def makeBool(label: String="") = BoolVar(inc(), label)
 } 
 sealed trait BinaryExpr[T <: FExpr[_]] {
   assert (left != null)
@@ -131,8 +131,10 @@ case class RelSub(left: RelExpr, right: RelExpr) extends RelFormula {
   def eval(implicit env: VarEnv) = left.eval.subsetOf(right.eval)
 }
 case class BoolVal(v: Boolean) extends Formula with Constant[Boolean]
-case class BoolVar(id: String) extends Formula with Var[Boolean] {
-  override def toString = "b" + id
+case class BoolVar(id: String, label: String="")
+extends Formula with Var[Boolean] {
+  override def toString =
+    if (Debug.TRACE) { "b" + id + "_" + label } else { "b" + id }
 }
 /** 
  * Equality atomic predicates.

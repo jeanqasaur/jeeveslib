@@ -31,8 +31,8 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
   // INVARIANT: This contains an entry for every label.
   private val _varDeps: HashMap[LabelVar, Set[LabelVar]] = new HashMap()
 
-  def mkLabel(): LabelVar = {
-    val v = pickBool()
+  def mkLabel(label: String=""): LabelVar = {
+    val v = pickBool(label)
     _varDeps += (v -> Set())
     v
   }

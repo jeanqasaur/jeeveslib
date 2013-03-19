@@ -246,7 +246,6 @@ object SMT {
         solver.push();
         solver.assert(formula(d));
         if (! solver.check()) {
-          debug("default didn't work: " + d)
           solver.pop();
         }
       }

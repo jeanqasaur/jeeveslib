@@ -65,25 +65,25 @@ trait JeevesLib[C >: Null <: Atom]
     cs match {
       case BoolVal (true) => evalFun (t ())
       case BoolVal (false) => evalFun (f ())
-      case BoolFacet (BoolVar (v), tc, fc) => {
+      case BoolFacet (bv@BoolVar(v, label), tc, fc) => {
         // If we are already under a path containing the current condition,
         // we can just evaluate the true branch.
-        if (pcHasVar(v)) {
-          evalFun (t ())
-        } else if (pcHasNegVar(v)) {
-          evalFun (f ())
+        if (pcHasVar(bv)) {
+          evalFun(t())
+        } else if (pcHasNegVar(bv)) {
+          evalFun(f())
         } else {
           // First evaluate the true branch.
-          pushPC (v);
-          val tr: T = jifEval (tc, t, f, evalFun, facetCons);
-          popPC ();
+          pushPC(bv);
+          val tr: T = jifEval(tc, t, f, evalFun, facetCons);
+          popPC();
 
           // Then evaluate the false branch.
-          pushNegPC (v);
-          val fr: T = jifEval (fc, t, f, evalFun, facetCons);
-          popPC ();
+          pushNegPC(bv);
+          val fr: T = jifEval(fc, t, f, evalFun, facetCons);
+          popPC();
 
-          facetCons(BoolVar (v), evalFun (tr), evalFun (fr))
+          facetCons(bv, evalFun (tr), evalFun (fr))
         }
       }
       case _ => throw Impossible
@@ -109,28 +109,28 @@ trait JeevesLib[C >: Null <: Atom]
   }
 
   // TODO: Add more simplification.
-  def jfun[A, B] (f: FunctionExpr[A, B], arg: A)
+  def jfun[A, B](f: FunctionExpr[A, B], arg: A)
     (implicit vf: FacetCons[B]): B = {
     f match {
-      case FunctionVal (f) => f (arg)
-      case FunctionFacet (BoolVar (v), thn, els) =>
-        if (pcHasVar(v)) {
-          jfun (thn, arg)
-        } else if (pcHasNegVar(v)) {
-          jfun (els, arg)
+      case FunctionVal(f) => f(arg)
+      case FunctionFacet(bv@BoolVar(v, label), thn, els) =>
+        if (pcHasVar(bv)) {
+          jfun(thn, arg)
+        } else if (pcHasNegVar(bv)) {
+          jfun(els, arg)
         } else {
           // First evaluate the true branch.
-          pushPC (v);
-          val tr = jfun (thn, arg)
-          popPC ();
+          pushPC(bv);
+          val tr = jfun(thn, arg)
+          popPC();
 
           // Then evaluate the false branch.
-          pushNegPC (v);
-          val fr = jfun (els, arg)
-          popPC ();
+          pushNegPC(bv);
+          val fr = jfun(els, arg)
+          popPC();
 
           // Produce a faceted result and partially evaluate it.
-          val r = vf.facetCons(BoolVar (v), tr, fr)
+          val r = vf.facetCons(bv, tr, fr)
           // TODO: Partial.eval(r)(EmptyEnv)
           r
         }
