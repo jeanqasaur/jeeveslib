@@ -1,124 +1,16 @@
 package cap.jeeveslib.smt
 
+import java.io._
+
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.Zeros._
 import cap.jeeveslib.env.{DefaultEnv, VarEnv}
 import cap.jeeveslib.util.Debug._
 
 /* 
- * Translator to SMT-LIB2.
+ * Expression translators to SMT-LIB2.
  * @author kuat
  */
-private object UnsatException extends RuntimeException("inconsistent model")
-
-case class SolverException(msg: String) extends RuntimeException(msg)
-
-/** SMT-LIB2 compliant solver. */
-trait Solver {
-  /** Issue a command and expect success. */
-  def command(s: String) {
-    >(s);
-    val reply = <();
-    if (reply != "success") 
-      throw SolverException("unexpected reply: " + reply)
-  }
-  /** Check satisfiability. */
-  def check(): Boolean = {
-    >("(check-sat)"); 
-    val reply = <();
-    if (reply == "sat") 
-      true
-    else if (reply == "unsat")
-      false
-    else 
-      throw SolverException("unexpected reply: " + reply)
-  }
-  /** Evaluate the term in the current model. */
-  def eval(term: String): String = {>("(get-value (" + term + "))"); <<()}
-  /** Assert a boolean condition. */
-  def assert(s: String) = command("(assert " + s + ")")
-  /** Push a context */
-  def push() = command("(push)")
-  /** Pop a context */
-  def pop() = command("(pop)")
-  /** Reset the solver */
-  def reset() = command("(reset)")
-  /** Terminate the solver. */
-  def close()
-  /** Send to solver. */ 
-  protected def >(s: String)
-  /** Receive a line from the solver. */
-  protected def <(): String
-  /** Receive a term from the solver. */
-  def <<() = {
-    import scala.collection.mutable
-    val out = new mutable.ListBuffer[String]
-    var balance = 0;
-    do {
-      var line = <();
-      balance = balance + line.count(_ == '(') - line.count(_ == ')');
-      out += line;
-    } while (balance > 0)
-    out.toList.mkString;
-  }
-}
-
-/** Log input and output of a solver. */
-trait Logging extends Solver {
-  abstract override def >(s: String) {debug("> " + s); super.>(s)}
-  abstract override def <() = {val s = super.<(); debug("< " + s); s}
-  abstract override def close() = {super.close(); debug(this + " closed")}
-}
-
-/** Retrieve solver metadata. */
-trait SolverDescription extends Solver {
-  override val toString = {
-    >("(get-info :name)")
-    val name = <()
-      >("(get-info :version)")
-    val version = <()
-      name + version
-  } 
-}
-
-/** Z3 version 3.2+. */
-class Z3 extends Solver {
-  import java.io._
-
-  private def BINARY = Option(System.getProperty("smt.home")) match {
-    case Some(path) => path
-    case None => System.getProperty("user.home") + "/opt/z3/bin/z3"
-  }
-
-  private def PARAMS ="-smt2" :: "-in" :: Nil
-  
-  private var process = {
-    val pb = new ProcessBuilder((BINARY :: PARAMS).toArray: _*);
-    pb.redirectErrorStream(true);
-    pb.start;
-  }
-  
-  private var input = new BufferedWriter(new OutputStreamWriter(process.getOutputStream));
-  private var output = new BufferedReader(new InputStreamReader(process.getInputStream));
-  
-  override def >(s: String) = {input.write(s); input.newLine; input.flush}
-  override def <() = output.readLine 
-  
-  command("(set-option :print-success true)")
-  command("(set-option :produce-models true)")
-  command("(set-option :elim-quantifiers true)")
-  command("(set-option :mbqi false)")
-  command("(set-option :auto-config false)") // disable saturation engine, use all theories
-  command("(set-option :ematching false)")
-
-  override def close() {
-    input.close; 
-    output.close; 
-    process.destroy;
-  }
-}
-
-/** Expression translators to SMT-LIB2. */ 
 object SMT {
   private def variable(v: Var[_])(implicit env: VarEnv) =
     if (env.has(v))
@@ -126,7 +18,8 @@ object SMT {
     else
       v.toString
 
-  private def formula(f: FExpr[Boolean])(implicit env: VarEnv, sc: Scope): String = f match {
+  private def formula(f: FExpr[Boolean])(implicit env: VarEnv, sc: Scope)
+    : String = f match {
     case And(a,b) => "(and " + formula(a) + " " + formula(b) + ")"
     case Or(a,b) => "(or " + formula(a) + " " + formula(b) + ")"
     case Not(a) => "(not " + formula(a) + ")"
@@ -147,7 +40,8 @@ object SMT {
     case v: BoolVar => variable(v)
   }
 
-  private def integer(e: FExpr[BigInt])(implicit env: VarEnv, sc: Scope): String = e match {
+  private def integer(e: FExpr[BigInt])(implicit env: VarEnv, sc: Scope)
+  : String = e match {
     case Plus(a,b) => "(+ " + integer(a) + " " + integer(b) + ")"
     case Minus(a,b) => "(- " + integer(a) + " " + integer(b) + ")"
     case Times(a,b) => "(* " + integer(a) + " " + integer(b) + ")"
@@ -156,19 +50,15 @@ object SMT {
     case ObjectIntField(root, f) => "(" + f + " " + atom(root) + ")"
   }
 
-  private def atom(e: FExpr[Atom])(implicit env: VarEnv, sc: Scope): String = e match {
+  private def atom(e: FExpr[Atom])(implicit env: VarEnv, sc: Scope): String =
+  e match {
     case ObjectFacet(cond, thn, els) => "(if " + formula(cond) + " " + atom(thn) + " " + atom(els) + ")"
     case Object(o) => sc.encode(o)
     case ObjectField(root, f) => "(" + f + " " + atom(root) + ")"
-/*    case v: ObjectVar[_] =>  
-      if (env.has(v)) 
-        sc.encode(env(v))
-      else
-        v.toString
-*/
   }
 
-  private def set(e: FExpr[Set[Atom]])(implicit q: String, env: VarEnv, sc: Scope): String = e match {
+  private def set(e: FExpr[Set[Atom]])
+    (implicit q: String, env: VarEnv, sc: Scope): String = e match {
     case Union(a,b) => "(or " + set(a) + " " + set(b) + ")"
     case Diff(a,b) => "(and " + set(a) + " (not " + set(b) + "))"
     case Intersect(a,b) => "(and " + set(a) + " " + set(b) + ")"
@@ -201,7 +91,8 @@ object SMT {
     )
 
     lazy val ENCODING: List[(Atom, String)] = {
-      val result = objects.toList.map(o => (o, if (o == null) "|null|" else sanitize(o.toString)))
+      val result = objects.toList.map(o =>
+        (o, if (o == null) "|null|" else sanitize(o.toString)))
       if (result.map(_._2).toSet.size != objects.size)
         throw SolverException("atom name collision detected")
       result
@@ -231,7 +122,9 @@ object SMT {
 
     def size = objects.size + fields.size + vars.size
     
-    override def toString = objects.size + " objects; " + fields.size + " fields; " +  vars.size + " vars"
+    override def toString =
+      objects.size + " objects; " + fields.size + " fields; " +  vars.size +
+        " vars"
   }
 
   /**
@@ -321,7 +214,8 @@ object SMT {
    * 
    * Initial scope of objects is used to make sound equality theory for objects.
    */
-  def solve(f: Formula, defaults: List[Formula] = Nil, initial: Set[Atom] = Set())
+  def solve(f: Formula, defaults: List[Formula] = Nil
+    , initial: Set[Atom] = Set())
     (implicit env: VarEnv = DefaultEnv): Option[VarEnv] = {
     // Compute the scope of our current objects that is the transitive closure of the
     // objects mentioned in our current set of values.
@@ -351,7 +245,10 @@ object SMT {
       for (d <- defaults) {
         solver.push();
         solver.assert(formula(d));
-        if (! solver.check()) solver.pop();
+        if (! solver.check()) {
+          debug("default didn't work: " + d)
+          solver.pop();
+        }
       }
       assert(solver.check())
      

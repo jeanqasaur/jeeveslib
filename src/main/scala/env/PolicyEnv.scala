@@ -5,7 +5,10 @@ package cap.jeeveslib.env
  * represent sensitive values.
  * @author jeanyang
  */
+
+import scala.collection.immutable.Set
 import scala.collection.mutable.HashMap;
+
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.eval.Partial
@@ -21,11 +24,18 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
     case LOW => false
   }
 
-  private val _policies
-    : HashMap[LabelVar, (Label, ObjectExpr[C] => Formula)] =
+  // Policies and label dependencies.
+  private val _policies : HashMap[LabelVar, (Label, ObjectExpr[C] => Formula)] =
     new HashMap()
 
-  def mkLabel(): LabelVar = pickBool(_ => true, HIGH)
+  // INVARIANT: This contains an entry for every label.
+  private val _varDeps: HashMap[LabelVar, Set[LabelVar]] = new HashMap()
+
+  def mkLabel(): LabelVar = {
+    val v = pickBool()
+    _varDeps += (v -> Set())
+    v
+  }
 
   def mkSensitiveInt(lvar: LabelVar, high: IntExpr, low: IntExpr = -1)
     : IntExpr = 
@@ -58,13 +68,39 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
 
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   
+  private def getBoolVars(f: Formula): Set[BoolVar] = {
+    def isBoolVar(v: Var[_]) = {
+      v match {
+        case (b:BoolVar) => true
+        case _ => false
+      }
+    }
+    f.vars.filter(isBoolVar).map(x => x.asInstanceOf[BoolVar])
+  }
+  private def getDefaults(varDeps: HashMap[LabelVar, Set[LabelVar]])
+    : List[Formula] =
+    varDeps.keys.toList.map(v => v === HIGH)
   def concretizeExp[T](ctx: ObjectExpr[C], e: FExpr[T]) = {
     Debug.debug(" *** # _policies: " + _policies.size)
-    val context =
-      AND(_policies.map{
-        case (lvar, (level, f)) => f (ctx) ==> (lvar === level)
-      })
-    super.concretize(context, e);
+    
+    var context: List[Formula] = List()
+
+    // Get the dependencies of each level variable.
+    // Build up a formula about the policies.
+    _policies.foreach {
+      case (lvar, (level, f)) =>
+        val pred = f (ctx)
+        val predVars = getBoolVars(pred)
+        context = (pred ==> (lvar === level)) :: context
+        _varDeps.get(lvar) match {
+          case Some(deps) => _varDeps += (lvar -> (deps ++ predVars))
+          case None =>
+            throw Unexpected(
+              "PolicyEnv.concretize: no var dep for label " + lvar)
+        }
+    }
+
+    super.concretize(context, getDefaults(_varDeps), e);
   }
 
   // Debug function.

@@ -7,11 +7,13 @@ import cap.jeeveslib.ast._
 import cap.jeeveslib.env.ConstraintEnv
 
 class ExampleConstraintEnv extends FunSuite with ConstraintEnv {
+  /*
   test ("bool var") {
     val x = pickBool();
     assume (! x);
     expectResult (false) {concretize(x)};
   }
+  */
 
   /*
   test("symbolic fields") {
