@@ -3,6 +3,8 @@ package cap.jeeveslib.ast
 import cap.jeeveslib.ast.Zeros._
 import cap.jeeveslib.env._
 
+import cap.jeeveslib.util._
+
 /*
  * A DSL for logical constraints.
  * @author kuat, jeanyang
@@ -32,7 +34,11 @@ sealed trait Ite[T] extends FExpr[T] {
 sealed trait Var[T] extends FExpr[T] {
   def id: String
   def vars: Set[Var[_]] = Set(this)
-  def eval(implicit env: VarEnv) = env(this)
+  def eval(implicit env: VarEnv) = {
+    val r = env(this)
+    Debug.debug("eval var: " + this + " -> " + r)
+    r
+  }
 }
 object Var {
   private var COUNTER = 0
@@ -226,11 +232,14 @@ extends ObjectExpr[T] with Ite[Atom]  {
       , if (thn == null) null else thn.applyFunction[T2](f)
       , if (els == null) null else els.applyFunction(f))
   }
-  override def eval(implicit env: VarEnv): T =
+  override def eval(implicit env: VarEnv): T = {
+  Debug.debug("evaluating: " + this)
   if (cond.eval) {
+    Debug.debug("should be returning thn branch")
     if (thn == null) null else thn.eval.asInstanceOf[T]
   } else {
     if (els == null) null else els.eval.asInstanceOf[T]
+  }
   }
 }
 case class Object[+T >: Null <: Atom](v: T)

@@ -14,6 +14,8 @@ sealed trait VarEnv {
   def has[T](i: Var[T]): Boolean
   def apply[T](i: Var[T]): T
   def hasAll(vs: Traversable[Var[_]]) = vs.forall(has(_))
+
+  def show(): String = vars.toString()
 }
 class UnboundVarException(i: Var[_]) extends RuntimeException("unbound variable: " + i)
 object EmptyEnv extends VarEnv {

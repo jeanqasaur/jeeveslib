@@ -7,6 +7,7 @@ import scala.collection.immutable.Map
 import cap.jeeveslib.ast._
 import cap.jeeveslib.jeeves._
 import cap.jeeveslib.demo.authentication._
+import cap.jeeveslib.util.Debug._
 
 class TestAuthentication extends FunSuite {
   val alicePwd = "alicePwd"
@@ -17,6 +18,7 @@ class TestAuthentication extends FunSuite {
 
   val aliceCred = Authentication.login(aliceUser, "alicePwd")
   val bobCred = Authentication.login(bobUser, "bobPwd")
+  val adminCred = Authentication.login(Authentication.admin, "secret")
 
   val file = new Authentication.File(aliceUser, "hello world")(Authentication)
 
@@ -101,24 +103,33 @@ class TestAuthentication extends FunSuite {
     }
   }
 
+  test("everyone can see file owner") {
+    expectResult(aliceUser) {
+      Authentication.concretize(aliceCred, file.owner)
+    }
+    expectResult(aliceUser) {
+      Authentication.concretize(bobCred, file.owner)
+    }
+    expectResult(aliceUser) {
+      Authentication.concretize(adminCred, file.owner)
+    }
+  }
+
   test("using login credential to write file") {
     val aliceWrite = file.writeContents(aliceCred, "alice was here")
 
-    expectResult(Unresolved) {
+    expectResult(Success) {
       Authentication.concretize(aliceCred, aliceWrite)
     }
-    /*
     expectResult(S("alice was here")) {
       Authentication.concretize(Cred(Authentication.admin), file.getContents())
     }
-    */
     expectResult(S("alice was here")) {
       Authentication.concretize(aliceCred, file.getContents())
     }
     expectResult(S("alice was here")) {
       Authentication.concretize(Cred(bobUser), file.getContents())
     }
-    /*
     expectResult(Failure) {
       Authentication.concretize(bobCred
         , file.writeContents(bobCred, "bob was here"))
@@ -129,6 +140,5 @@ class TestAuthentication extends FunSuite {
     expectResult(S("alice was here")) {
       Authentication.concretize(bobCred, file.getContents())
     }
-    */
   }
 }

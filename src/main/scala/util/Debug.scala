@@ -6,10 +6,25 @@ package cap.jeeveslib.util
  */
 object Debug {
   var DEBUG = false;
+  var DEBUGFILE = true;
 
-  def debug(m: => String) = 
+  val file: java.io.File = new java.io.File("output.txt");
+ 
+  // if file doesnt exists, then create it
+  if (!file.exists()) {
+    file.createNewFile();
+  }
+ 
+  val fw: java.io.FileWriter = new java.io.FileWriter(file.getAbsoluteFile());
+  val bw: java.io.BufferedWriter = new java.io.BufferedWriter(fw);
+  // bw.write(content);
+  //    bw.close();
+
+  def debug(m: => String) = {
+    if (DEBUGFILE) bw.write(m + "\n")
     if (DEBUG) 
       Console.err.println(Console.YELLOW + m + Console.RESET)
+  }
 
   def warning(m: => String) =
     Console.out.println(Console.RED + m + Console.RESET)

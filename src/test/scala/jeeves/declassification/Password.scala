@@ -49,13 +49,12 @@ case class IUser(id: BigInt, private val _pwd: String = "")
   jlib.restrict(a, (ctxt: ObjectExpr[IUser]) => ctxt === this)
 
   private var pwdRef = ProtectedObjectRef[IUser, IUser](S(_pwd)
-    , ictxt => octxt => ictxt === this
-    , false)
+    , ictxt => ictxt === this, None)
   def getPassword() = {
     jlib.mkSensitive(a, pwdRef.v, S(""))
   }
   def setPassword(user: IUser, newPwd: String) = {
-    pwdRef.update(user, newPwd)
+    pwdRef.update(user, user, newPwd)
   }
 }
 class PasswordIntegrity extends FunSuite with JeevesLib[IUser] {
