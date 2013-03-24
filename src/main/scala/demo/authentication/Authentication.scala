@@ -1,6 +1,6 @@
 package cap.jeeveslib.demo.authentication
 
-import cap.jeeveslib.ast.{Atom, Object, ObjectExpr, ProtectedObjectRef, S, UpdateResult}
+import cap.jeeveslib.ast.{Atom, BoolVal, Object, ObjectExpr, ProtectedObjectRef, S, UpdateResult}
 import cap.jeeveslib.ast.JeevesTypes._
 import cap.jeeveslib.jeeves._
 
@@ -13,7 +13,7 @@ case class User(id: BigInt, name: String, private val _pwd: String = "")
   (implicit jlib: JeevesLib[Cred]) extends Principal {
   // Initial password: the initial password is a sensitive value that only
   // the current user can see.
-  private val pwdLabel = jlib.mkLabel()
+  private val pwdLabel = jlib.mkLabel("userPwd")
   jlib.restrict(pwdLabel
     , (ctxt: ObjectExpr[Cred]) =>
     ctxt.p~'id === id && ctxt.p.password === password)
@@ -23,11 +23,11 @@ case class User(id: BigInt, name: String, private val _pwd: String = "")
   // that says only the current user can update the password value.
   // This policy also encapsulates the confidentiality that only the current
   // user can see the result of the update.
-  private var pwdRef = ProtectedObjectRef[Cred, Cred](password
-    , ictxt => (ictxt.p~'id === id) && (ictxt.p.password === password)
+  val pwdRef = ProtectedObjectRef[Cred, Cred](password
+    , ictxt => ictxt.p === this
     , Some((ictxt:ObjectExpr[Cred]) => (octxt: ObjectExpr[Cred]) =>
-        ((ictxt.p~'id === id) && (ictxt.p.password === password))
-        && (octxt.p~'id === id) && (octxt.p.password === password)))(jlib)
+        octxt.p === this)
+    , "pwdRef")(jlib)
   def setPassword(c: Cred, newPwd: String) = {
     pwdRef.update(c, c, newPwd)
     password = pwdRef.v.asInstanceOf[ObjectExpr[S]]
@@ -35,7 +35,7 @@ case class User(id: BigInt, name: String, private val _pwd: String = "")
 }
 case class Admin()(implicit jlib: JeevesLib[Cred]) extends Principal {
   // Initial password.
-  private val pwdLabel = jlib.mkLabel()
+  private val pwdLabel = jlib.mkLabel("adminPwd")
   jlib.restrict(pwdLabel
     , (ctxt: ObjectExpr[Cred]) =>
     ctxt.p === this && ctxt.p.password === password)
@@ -51,12 +51,13 @@ object Authentication extends JeevesLib[Cred] {
   // File class where the contents is a protected reference cell.
   class File(val owner: Principal, private val _contents: String = "")
   (implicit jlib: JeevesLib[Cred]) extends Atom {
-    private val contents = ProtectedObjectRef[Cred, Cred](S(_contents)
+    private val contentsRef = ProtectedObjectRef[Cred, Cred](S(_contents)
       , ictxt => (ictxt.p === owner) || (ictxt.p === admin)
-      , None)(jlib)
+      , None
+      , "contentsRef")(jlib)
     def writeContents(c: ObjectExpr[Cred], body: String): UpdateResult = 
-      contents.update(c, c, S(body))
-    def getContents(): ObjectExpr[S] = contents.v.asInstanceOf[ObjectExpr[S]]
+      contentsRef.update(c, c, S(body))
+    def getContents(): ObjectExpr[S] = contentsRef.v.asInstanceOf[ObjectExpr[S]]
   }
 
   // No declassication is needed for the login function!
