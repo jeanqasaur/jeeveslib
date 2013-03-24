@@ -24,49 +24,51 @@ class TestAuthentication extends FunSuite {
 
   test ("user can see own password") {
     expectResult(S(alicePwd)) {
-      Authentication.concretize(Cred(aliceUser), aliceUser.password)
+      Authentication.concretize(Cred(aliceUser), aliceUser.pwdRef.v)
     }
     expectResult(S(alicePwd)) {
       Authentication.concretize(
         Cred(User(1, "Alice", alicePwd)(Authentication))
-        , aliceUser.password)
+        , aliceUser.pwdRef.v)
     }
     expectResult(S(bobPwd)) {
-      Authentication.concretize(Cred(bobUser), bobUser.password)
+      Authentication.concretize(Cred(bobUser), bobUser.pwdRef.v)
     }
   }
-  
+
   test ("user cannot see other password") {
     expectResult(S("")) {
-      Authentication.concretize(Cred(aliceUser), bobUser.password) }
+      Authentication.concretize(Cred(aliceUser), bobUser.pwdRef.v) }
     expectResult(S("")) {
-      Authentication.concretize(Cred(bobUser), aliceUser.password) }
+      Authentication.concretize(Cred(bobUser), aliceUser.pwdRef.v) }
   }
 
   test ("user must supply correct password") {
     expectResult(S("")) {
       Authentication.concretize(
-        Cred(User(1, "Alice", "alice!")(Authentication)), aliceUser.password)
+        Cred(User(1, "Alice", "alice!")(Authentication)), aliceUser.pwdRef.v)
+    }
+  }
+  
+  test ("other user cannot update password") {
+    aliceUser.setPassword(Cred(bobUser), bobPwd)
+    println(aliceUser.pwdRef.v)
+    expectResult(S(alicePwd)) {
+      Authentication.concretize(Cred(aliceUser), aliceUser.pwdRef.v)
+    }
+    expectResult(S("")) {
+      Authentication.concretize(Cred(bobUser), aliceUser.pwdRef.v)
     }
   }
 
-  test ("other user cannot update password") {
-    aliceUser.setPassword(Cred(bobUser), bobPwd)
-    expectResult(S(alicePwd)) {
-      Authentication.concretize(Cred(aliceUser), aliceUser.password)
-    }
-    expectResult(S("")) {
-      Authentication.concretize(Cred(bobUser), aliceUser.password)
-    }
-  }
   test ("user can update own password") {
     aliceUser.setPassword(Cred(aliceUser), "alicePwd2")
     expectResult(S("alicePwd2")) {
-      Authentication.concretize(Cred(aliceUser), aliceUser.password)
+      Authentication.concretize(Cred(aliceUser), aliceUser.pwdRef.v)
     }
     aliceUser.setPassword(Cred(aliceUser), alicePwd)
     expectResult(S("")) {
-      Authentication.concretize(Cred(bobUser), aliceUser.password)
+      Authentication.concretize(Cred(bobUser), aliceUser.pwdRef.v)
     }
   }
 
