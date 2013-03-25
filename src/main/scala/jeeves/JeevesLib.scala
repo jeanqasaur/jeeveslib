@@ -36,10 +36,8 @@ trait JeevesLib[C >: Null <: Atom]
     conditionOnPC (ctxt
       , (_: Unit) => concretizeExp(ctxt, e), (_: Unit) => e.default)
   }
-  def concretize[T](
-    ctx: ObjectExpr[C], e: (FExpr[T], FExpr[T]))
-    : (T, T) =
-    (concretize(ctx, e._1), concretize(ctx, e._2))
+  def concretize[T](ctxt: ObjectExpr[C], e: (FExpr[T], FExpr[T])): (T, T) =
+    (concretize(ctxt, e._1), concretize(ctxt, e._2))
   def concretize[T >: Null <: Atom](
     ctx: ObjectExpr[C], lst: Traversable[ObjectExpr[T]]): List[T] = {
     for (o <- lst.toList;

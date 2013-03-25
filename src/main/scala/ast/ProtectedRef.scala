@@ -19,10 +19,10 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
   var v: T
 
   // Policies directly associated with writing.
-  val writePolicy: ObjectExpr[IC] => Formula
+  val writePolicy: (T, ObjectExpr[IC]) => Formula
   def writePolicyFun(ctxt: ObjectExpr[OC])(implicit jeevesEnv: JeevesLib[OC])
     : ObjectExpr[IC] => Boolean = {
-    ic => jeevesEnv.concretize(ctxt, writePolicy(ic))
+    ic => jeevesEnv.concretize(ctxt, writePolicy(v, ic))
   }
   
   val outputPolicy: Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula]
@@ -139,7 +139,7 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
 
 case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: IntExpr
-  , val writePolicy: ObjectExpr[IC] => Formula
+  , val writePolicy: (IntExpr, ObjectExpr[IC]) => Formula
   , val outputPolicy
     : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
   , val varLabel: String = "")
@@ -159,7 +159,7 @@ case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
   
 case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: Formula
-  , val writePolicy: ObjectExpr[IC] => Formula
+  , val writePolicy: (Formula, ObjectExpr[IC]) => Formula
   , val outputPolicy
     : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
   , val varLabel: String = "")
@@ -179,7 +179,7 @@ case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
  
 case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: ObjectExpr[Atom]
-  , val writePolicy: ObjectExpr[IC] => Formula
+  , val writePolicy: (ObjectExpr[Atom], ObjectExpr[IC]) => Formula
   , val outputPolicy
     : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
   , val varLabel: String = "")
@@ -201,7 +201,7 @@ case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
 
 case class ProtectedFunctionRef[A, B, IC >: Null <: Atom, OC >: Null <: Atom](
   var v: FunctionExpr[A, B]
-  , val writePolicy: ObjectExpr[IC] => Formula
+  , val writePolicy: (FunctionExpr[A, B], ObjectExpr[IC]) => Formula
   , val outputPolicy
     : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
   , val varLabel: String = "")

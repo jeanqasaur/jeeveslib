@@ -8,23 +8,29 @@ case class Point(x: Int, y: Int) {
   def inLine(other: Point) = (x == other.x) || (y == other.y)
 }
 
-case class Board() {
+case class Board(val owner: User) extends Atom {
+  val boardSize = 10
+
   // Initialize board.
-  private val _board: Array[Array[Square]] = new Array(10)
-  for (i <- 0 until 10) {
+  private val _board: Array[Array[Square]] = new Array(boardSize)
+  for (i <- 0 until boardSize) {
     val elem = _board(i)
-    _board.update(i, new Array(10))
-    for (j <- 0 until 10) {
-      _board(i).update(j, new Square())
+    _board.update(i, new Array(boardSize))
+    for (j <- 0 until boardSize) {
+      _board(i).update(j, new Square(owner))
     }
   }
 
   private val _pieces: List[GamePiece] =
-    List( Carrier, Battleship, Cruiser
-        , Destroyer, Destroyer, Submarine, Submarine)
+    List( Carrier(owner), Battleship(owner), Cruiser(owner)
+        , Destroyer(owner), Destroyer(owner)
+        , Submarine(owner), Submarine(owner))
+
+  def getSquare(x: Int, y: Int): Square = { _board(x)(y) }
 
   // Question: How do we know the identities of each destroyer?
-  def placeShip(ship: GamePiece, start: Point, end: Point): Boolean = {
+  def placeShip(ctxt: GameContext
+    , ship: GamePiece, start: Point, end: Point): Boolean = {
     val it = _pieces.iterator
     while (it.hasNext) {
       val cur = it.next
@@ -36,35 +42,49 @@ case class Board() {
               pt => {
                 // Update the board with the ship and the ship with the board.
                 val Point(x, y) = pt
-                if (!(_board(x)(y).updateShip(cur))) { return false; }
-                if (!cur.addSquare(_board(x)(y))) { return false; }
+                if (!_board(x)(y).updateShip(ctxt, cur)
+                      || !cur.addSquare(_board(x)(y))) { return false; }
               }
             }
             return cur.placePiece()
           }
           // If the points didn't fit, then we can't place the ship.
-          case None => return false
+          case None => {
+            println("Piece didn't fit: " + ship)
+            return false
+          }
         }
       }
     }
+    println("Don't have piece to play: " + ship)
     return false
   }
 
-  def placeBomb(x: Int, y: Int): Option[GamePiece] = {
-    _board(x)(y).getShip() match {
-      case Some(ship) => {
-        ship.getSquares() foreach { square => square.bomb() }
-        Some(ship)
-      }
-      case None =>
-        _board(x)(y).bomb()
-        None
+  def placeBomb(ctxt: GameContext, x: Int, y: Int)
+    : (Formula, ObjectExpr[GamePiece]) = {
+    if (x < boardSize && y < boardSize) {
+      val boardShip = _board(x)(y).getShip();
+      val bomb = Bomb(ctxt.user);
+      val bombedPoint = _board(x)(y).bomb(ctxt, bomb)
+      val succeeded: Formula = jif (
+        (boardShip === NoShip)
+        , (_: Unit) => { bombedPoint }
+        , (_: Unit) => {
+          boardShip.applyFunction(s => s.getSquares().forall {
+              (square: Square) => square.bomb(ctxt, bomb)
+            }) } );
+      (succeeded, boardShip)
+    } else {
+      println("Bomb location outside of board: (" + x + ", " + y + ")");
+      (false, NoShip)
     }
   }
+
 
   def allPlaced() = { _pieces.forall(p => p.isPlaced()) }
   def hasLost(): Boolean = { _pieces.forall(p => p.isBombed()) }
 
+  /*
   def printBoard() = {
     for (j <- 0 until 10) {
       for (i <- 0 until 10) {
@@ -80,4 +100,5 @@ case class Board() {
       print("\n")
     }    
   }
+  */
 }
