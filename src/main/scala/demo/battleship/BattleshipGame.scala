@@ -1,5 +1,7 @@
 package cap.jeeveslib.demo.battleship
 
+import scala.collection.mutable.Map
+
 import cap.jeeveslib.ast._
 import cap.jeeveslib.jeeves._
 
@@ -7,7 +9,39 @@ import cap.jeeveslib.jeeves._
  * Battleship game implementation.
  * @author jean
  */
-object BattleshipGame extends JeevesLib[User] {
+case class Game(boards: Map[User, Board]) extends Atom {
+  case class NoSuchUserException(u: User) extends Throwable
+  def getBoard(user: User): Board = {
+    boards.get(user) match {
+      case Some(b) => b
+      case None => throw NoSuchUserException(user)
+    }
+  }
+  
+  def allShipsPlaced(): Boolean = {
+    boards.forall { case (_, board) => board.allPlaced() }
+  }
+
+  private var _moves: List[Bomb] = Nil
+  def hasTurn(user: User) = {
+    (_moves.isEmpty) || !(_moves.head.owner == user)
+  }
+  def bomb(ctxt: GameContext, user: User, x: Int, y: Int): Option[GamePiece] = {
+    val (succeeded, piece) = getBoard(user).placeBomb(ctxt, x, y)
+    if (BattleshipGame.concretize(ctxt, succeeded)) {
+      _moves = Bomb(ctxt.user) :: _moves
+      BattleshipGame.concretize(ctxt, piece).asInstanceOf[GamePiece] match {
+        case NoShip => None
+        case ship => Some(ship)
+      }
+    } else {
+      None
+    }
+  }
+}
+
+object BattleshipGame extends JeevesLib[GameContext] {
+  /*
   private val board0 = new Board()
   private val board1 = new Board()
 
@@ -26,4 +60,5 @@ object BattleshipGame extends JeevesLib[User] {
       val input = readLine("prompt> ")
     }
   }
+  */
 }

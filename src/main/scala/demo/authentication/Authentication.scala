@@ -15,22 +15,20 @@ case class User(id: BigInt, name: String, private val _pwd: String = "")
   // the current user can see.
   private val pwdLabel = jlib.mkLabel("userPwd")
   jlib.restrict(pwdLabel
-    , (ctxt: ObjectExpr[Cred]) =>
-    ctxt.p~'id === id && ctxt.p.password === password)
-  var password: ObjectExpr[S] = jlib.mkSensitive(pwdLabel, S(_pwd), S(""))
+    , (ctxt: ObjectExpr[Cred]) => ctxt.p === this)
+  val password: ObjectExpr[S] = jlib.mkSensitive(pwdLabel, S(_pwd), S(""))
 
   // Password update: the password is protected by a write policy for integrity
   // that says only the current user can update the password value.
   // This policy also encapsulates the confidentiality that only the current
   // user can see the result of the update.
   val pwdRef = ProtectedObjectRef[Cred, Cred](password
-    , ictxt => ictxt.p === this
+    , (_, ictxt) => ictxt.p === this
     , Some((ictxt:ObjectExpr[Cred]) => (octxt: ObjectExpr[Cred]) =>
         octxt.p === this)
     , "pwdRef")(jlib)
-  def setPassword(c: Cred, newPwd: String) = {
+  def setPassword(c: ObjectExpr[Cred], newPwd: String) = {
     pwdRef.update(c, c, newPwd)
-    password = pwdRef.v.asInstanceOf[ObjectExpr[S]]
   }
 }
 case class Admin()(implicit jlib: JeevesLib[Cred]) extends Principal {
@@ -52,7 +50,7 @@ object Authentication extends JeevesLib[Cred] {
   class File(val owner: Principal, private val _contents: String = "")
   (implicit jlib: JeevesLib[Cred]) extends Atom {
     private val contentsRef = ProtectedObjectRef[Cred, Cred](S(_contents)
-      , ictxt => (ictxt.p === owner) || (ictxt.p === admin)
+      , (_, ictxt) => (ictxt.p === owner) || (ictxt.p === admin)
       , None
       , "contentsRef")(jlib)
     def writeContents(c: ObjectExpr[Cred], body: String): UpdateResult = 
@@ -64,7 +62,7 @@ object Authentication extends JeevesLib[Cred] {
   def login (p: Principal, pwd: String): ObjectExpr[Cred] = {
     p match {
       case u:User =>
-      jif(u.password === S(pwd)
+      jif(u.pwdRef.v === S(pwd)
         , _ => Object(Cred(p)), _ => Object(Cred(NullUser)))
       case a:Admin =>
       jif(a.password === S(pwd)

@@ -52,7 +52,6 @@ class TestAuthentication extends FunSuite {
   
   test ("other user cannot update password") {
     aliceUser.setPassword(Cred(bobUser), bobPwd)
-    println(aliceUser.pwdRef.v)
     expectResult(S(alicePwd)) {
       Authentication.concretize(Cred(aliceUser), aliceUser.pwdRef.v)
     }
@@ -69,6 +68,17 @@ class TestAuthentication extends FunSuite {
     aliceUser.setPassword(Cred(aliceUser), alicePwd)
     expectResult(S("")) {
       Authentication.concretize(Cred(bobUser), aliceUser.pwdRef.v)
+    }
+  }
+
+  test ("password update with secret credentials") {
+    aliceUser.setPassword(aliceCred, "alicePwd2")
+    expectResult(S("alicePwd2")) {
+      Authentication.concretize(aliceCred, aliceUser.pwdRef.v)
+    }
+    aliceUser.setPassword(aliceCred, alicePwd)
+    expectResult(S("")) {
+      Authentication.concretize(bobCred, aliceUser.pwdRef.v)
     }
   }
 
