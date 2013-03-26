@@ -46,7 +46,7 @@ case class Board(val owner: User) extends Atom {
                       || !cur.addSquare(_board(x)(y))) { return false; }
               }
             }
-            return cur.placePiece()
+            return cur.placePiece(ctxt)
           }
           // If the points didn't fit, then we can't place the ship.
           case None => {
@@ -70,9 +70,9 @@ case class Board(val owner: User) extends Atom {
         (boardShip === NoShip)
         , (_: Unit) => { bombedPoint }
         , (_: Unit) => {
-          boardShip.applyFunction(s => s.getSquares().forall {
-              (square: Square) => square.bomb(ctxt, bomb)
-            }) } );
+            boardShip.applyFunction((s: GamePiece) =>
+              s.getSquares().forall {
+                (square: Square) => square.bomb(ctxt, bomb) } && s.bombPiece(ctxt))});
       (succeeded, boardShip)
     } else {
       println("Bomb location outside of board: (" + x + ", " + y + ")");
@@ -81,17 +81,20 @@ case class Board(val owner: User) extends Atom {
   }
 
 
-  def allPlaced() = { _pieces.forall(p => p.isPlaced()) }
-  def hasLost(): Boolean = { _pieces.forall(p => p.isBombed()) }
+  def allPlaced(): Boolean = {
+    _pieces.forall(p => p.isPlaced())
+  }
+  def hasLost(): Boolean = {
+    _pieces.forall(p => p.isBombed())
+  }
 
-  /*
-  def printBoard() = {
+  def printBoard(ctxt: ObjectExpr[GameContext]) = {
     for (j <- 0 until 10) {
       for (i <- 0 until 10) {
         val curSquare = _board(i)(j)
-        if (curSquare.hasBomb()) {
+        if (concretize(ctxt, curSquare.hasBomb())) {
           print("X")
-        } else if (curSquare.hasShip()) {
+        } else if (concretize(ctxt, curSquare.hasShip())) {
           print("S")
         } else {
           print("W")
@@ -100,5 +103,9 @@ case class Board(val owner: User) extends Atom {
       print("\n")
     }    
   }
-  */
+
+  def printRemainingPieces() = {
+    println("Remaining pieces:")
+    _pieces.foreach { p => if (!p.isBombed()) { println(p) } }
+  }
 }

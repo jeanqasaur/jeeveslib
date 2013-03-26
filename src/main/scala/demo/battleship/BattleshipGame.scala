@@ -22,6 +22,10 @@ case class Game(boards: Map[User, Board]) extends Atom {
     boards.forall { case (_, board) => board.allPlaced() }
   }
 
+  def gameOver(): Boolean = {
+    boards.exists { case (_, board) => board.hasLost() }
+  }
+
   private var _moves: List[Bomb] = Nil
   def hasTurn(user: User) = {
     (_moves.isEmpty) || !(_moves.head.owner == user)
