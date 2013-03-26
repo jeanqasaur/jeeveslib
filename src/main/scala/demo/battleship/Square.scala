@@ -5,18 +5,21 @@ import BattleshipGame._
 
 case class Square(val owner: User) extends Atom {
   /* Policy definitions. */
-  def isOwner(ctxt: ObjectExpr[GameContext]) = {
-    ctxt.user === owner
-  }
-  def hasTurn(ctxt: ObjectExpr[GameContext]): Formula = {
+  private def isOwner(ctxt: ObjectExpr[GameContext]) = { ctxt.user === owner }
+  private def hasTurn(ctxt: ObjectExpr[GameContext]): Formula = {
     ctxt.applyFunction(ctxt => ctxt.game.hasTurn(ctxt.user))
   }
-  def allShipsPlaced(ctxt: ObjectExpr[GameContext]): Formula = {
+  private def allShipsPlaced(ctxt: ObjectExpr[GameContext]): Formula = {
     ctxt.applyFunction(ctxt => ctxt.game.allShipsPlaced())
   }
-  def mkShipSecret(ship: GamePiece): ObjectExpr[GamePiece] = {
+  private def gameOver(ctxt: ObjectExpr[GameContext]): Formula = {
+    ctxt.applyFunction(ctxt => ctxt.game.gameOver())
+  }
+  private def mkShipSecret(ship: GamePiece): ObjectExpr[GamePiece] = {
     val a = mkLabel("ship");
-    restrict(a, ctxt => (hasBomb() || isOwner(ctxt)));
+    restrict(a
+      , ctxt =>
+          hasBomb() || isOwner(ctxt) || gameOver(ctxt));
     mkSensitive(a, ship, NoShip)
   }
 
@@ -43,7 +46,7 @@ case class Square(val owner: User) extends Atom {
   private var _hasBombRef =
     new ProtectedObjectRef[GameContext, GameContext](NULL
       , (_: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
-          allShipsPlaced(ic) && hasTurn(ic)
+          allShipsPlaced(ic) && hasTurn(ic) && !gameOver(ic)
       , None
       , "hasBomb")(BattleshipGame)
   def bomb(ctxt: GameContext, bomb: Bomb): Boolean = {

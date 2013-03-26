@@ -35,7 +35,9 @@ class TestBattleshipGame extends FunSuite {
         aliceCtxt, Battleship(alice), Point(0, 0), Point(0, 4))
     }
 
-    expectResult(false) { aliceBoard.allPlaced() }
+    expectResult(false) {
+      aliceBoard.allPlaced()
+    }
   }
 
   test ("Cannot place bombs until all pieces have been placed") {
@@ -141,10 +143,62 @@ class TestBattleshipGame extends FunSuite {
   }
 
   test ("Cannot see ship if not bombed") {
+    expectResult(NoShip) {
+      concretize(aliceCtxt, bobBoard.getSquare(0, 0).getShip())
+    }
+  }
 
+  test ("Playing the rest of the game..." ) {
+    expectResult(Some(Carrier(bob))) {
+      game.bomb(aliceCtxt, bob, 0, 0)
+    }
+    expectResult(Some(Battleship(alice))) {
+      game.bomb(bobCtxt, alice, 1, 0)
+    }
+    expectResult(Some(Battleship(bob))) {
+      game.bomb(aliceCtxt, bob, 1, 0)
+    }
+    expectResult(Some(Cruiser(alice))) {
+      game.bomb(bobCtxt, alice, 2, 0)
+    }
+    expectResult(Some(Cruiser(bob))) {
+      game.bomb(aliceCtxt, bob, 2, 0)
+    }
+    expectResult(Some(Destroyer(alice))) {
+      game.bomb(bobCtxt, alice, 3, 0)
+    }
+    expectResult(Some(Destroyer(bob))) {
+      game.bomb(aliceCtxt, bob, 3, 0)
+    }
+    expectResult(Some(Destroyer(alice))) {
+      game.bomb(bobCtxt, alice, 4, 0)
+    }
+    expectResult(Some(Destroyer(bob))) {
+      game.bomb(aliceCtxt, bob, 4, 0)
+    }
+    expectResult(Some(Submarine(alice))) {
+      game.bomb(bobCtxt, alice, 5, 0)
+    }
+    expectResult(Some(Submarine(bob))) {
+      game.bomb(aliceCtxt, bob, 5, 0)
+    }
+    expectResult(Some(Submarine(alice))) {
+      game.bomb(bobCtxt, alice, 5, 1)
+    }
+    expectResult(true) {
+      game.gameOver()
+    }
+  }
+
+  test ("Cannot place ships once somebody has won") {
+    expectResult(None) {
+      game.bomb(aliceCtxt, bob, 5, 1)
+    }
   }
 
   test ("Can see all ships once done") {
-
+    expectResult(Submarine(bob))) {
+      concretize(aliceCtxt, bobBoard.getSquare(5, 1).getShip())
+    }
   }
 }
