@@ -134,9 +134,9 @@ case class BoolVal(v: Boolean) extends Formula with Constant[Boolean]
 case class BoolVar(id: String, label: String="")
 extends Formula with Var[Boolean] {
   override def toString =
-    /* if (Debug.TRACE && !label.isEmpty) {
+    if (Debug.TRACE && !label.isEmpty) {
       "b" + id + "_" + label
-    } else {*/  "b" + id //}
+    } else { "b" + id }
 }
 /** 
  * Equality atomic predicates.

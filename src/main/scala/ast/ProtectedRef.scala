@@ -19,22 +19,24 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
   var v: T
 
   // Policies directly associated with writing.
-  val writePolicy: (T, ObjectExpr[IC]) => Formula
+  val writePolicy: Option[(T, ObjectExpr[IC]) => Formula]
   def writePolicyFun(ctxt: ObjectExpr[OC])(implicit jeevesEnv: JeevesLib[OC])
     : ObjectExpr[IC] => Boolean = {
-    ic => jeevesEnv.concretize(ctxt, writePolicy(v, ic))
+    writePolicy match {
+      case Some(wp) => ic => jeevesEnv.concretize(ctxt, wp(v, ic))
+      case None => ic => true
+    }
   }
   
-  val outputPolicy: Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula]
-  val defaultOutputPolicy: ObjectExpr[IC] => ObjectExpr[OC] => Formula =
+  val outputPolicy: Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula]
+  val defaultOutputPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula =
     ic => oc => BoolVal(true)
-  def getOutputPolicy(): ObjectExpr[IC] => ObjectExpr[OC] => Formula =
+  def getOutputPolicy(): ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula =
     outputPolicy match {
       case Some(ip) => ip
       case None => defaultOutputPolicy
     }
- 
-  
+
   def varLabel: String
 
   /*
@@ -102,17 +104,37 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
       , newVal: T, policyFun: T => T
       , facetCons: (Formula, T, T) => T)
     (implicit jeevesEnv: JeevesLib[OC]): (UpdateResult, T) = {
+    // If the input write policy passes, then apply to subfacets and apply the
+    // output write policy.
     if ((writePolicyFun(asOCtxt)(jeevesEnv))(ctxt)) {
-      val (outcome, iPolicy) = outputPolicy match {
-        case Some(ip) => (Unresolved, ip)
+      val (outcome, iPolicy):
+        (UpdateResult, ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula) =
+        outputPolicy match {
+        case Some(ip) =>
+          try {
+            lazy val undefined = ???
+            Partial.eval(ip(ctxt)(undefined))(EmptyEnv) match {
+              case BoolVal(true) =>
+                println("successful eval to true")
+                (Success, ip)
+              case BoolVal(false) => println("successful eval to false"); (Failure, ip)
+              case _otherwise => (Unresolved, ip)
+            }
+          }
+          catch {
+            case u: NotImplementedError =>
+              (Unresolved, ip)
+          }
         case None =>
           (Success
-            , (ic: ObjectExpr[IC]) => (oc: ObjectExpr[OC]) => BoolVal(true))
+            , ic => oc => BoolVal(true))
       }
       // Make a new label based on this policy.
       val ivar = jeevesEnv.mkLabel(varLabel)
       jeevesEnv.mapPrimaryContext (ivar, ctxt)
-      jeevesEnv.restrict (ivar, iPolicy(ctxt)(_))
+      val cfun: ObjectExpr[OC] => Formula = octxt => iPolicy(ctxt)(octxt)
+      jeevesEnv.restrict (ivar, cfun)
+//        , octxt => iPolicy(ctxt)(octxt))
 
       // Apply the integrity policy to the untrusted facet.
       val pUntrusted = policyFun(newVal)
@@ -139,9 +161,9 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
 
 case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: IntExpr
-  , val writePolicy: (IntExpr, ObjectExpr[IC]) => Formula
+  , val writePolicy: Option[(IntExpr, ObjectExpr[IC]) => Formula]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
+    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[IntExpr, IC, OC] {
@@ -159,9 +181,9 @@ case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
   
 case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: Formula
-  , val writePolicy: (Formula, ObjectExpr[IC]) => Formula
+  , val writePolicy: Option[(Formula, ObjectExpr[IC]) => Formula]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
+    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[Formula, IC, OC] {
@@ -179,9 +201,9 @@ case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
  
 case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
   var v: ObjectExpr[Atom]
-  , val writePolicy: (ObjectExpr[Atom], ObjectExpr[IC]) => Formula
+  , val writePolicy: Option[(ObjectExpr[Atom], ObjectExpr[IC]) => Formula]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
+    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[ObjectExpr[Atom], IC, OC] {
@@ -201,9 +223,9 @@ case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
 
 case class ProtectedFunctionRef[A, B, IC >: Null <: Atom, OC >: Null <: Atom](
   var v: FunctionExpr[A, B]
-  , val writePolicy: (FunctionExpr[A, B], ObjectExpr[IC]) => Formula
+  , val writePolicy: Option[(FunctionExpr[A, B], ObjectExpr[IC]) => Formula]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => ObjectExpr[OC] => Formula] = None
+    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[FunctionExpr[A, B], IC, OC] {

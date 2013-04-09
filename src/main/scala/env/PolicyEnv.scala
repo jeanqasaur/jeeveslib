@@ -87,7 +87,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
 
     // Get the dependencies of each level variable.
     // Build up a formula about the policies.
-    _policies.foreach {
+    _policies.toList.foreach {
       case (lvar, (level, f)) =>
         val pred = f (ctx)
         val predVars = getBoolVars(pred)

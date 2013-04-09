@@ -6,7 +6,9 @@ package cap.jeeveslib.util
  */
 object Debug {
   var DEBUG = false;
-  var DEBUGFILE = true;
+  var DEBUGFILE = false;
+
+  // Whether we track the variable names that go with labels.
   var TRACE = true;
 
   val file: java.io.File = new java.io.File("output.txt");

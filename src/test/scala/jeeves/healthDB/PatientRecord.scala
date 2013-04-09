@@ -31,7 +31,7 @@ case class PatientRecord(
 
   // Doctor identity.
   val doctorRef = ProtectedObjectRef[UserRecord, HealthContext](_doctor
-    , (_, ictxt) => ictxt.status === Admin, None)(HealthDBBackend)
+    , Some((_, ictxt) => ictxt.status === Admin), None)(HealthDBBackend)
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
     doctorRef.update(ctxt.user, ctxt, newDoctor)
   }

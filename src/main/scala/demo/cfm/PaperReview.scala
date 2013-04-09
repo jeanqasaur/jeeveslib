@@ -5,7 +5,8 @@ package cap.jeeveslib.demo.cfm
  * @author jeanyang
  */
 import JConfBackend._
-import cap.jeeveslib.ast.{Atom, Formula, IntExpr, ObjectExpr, S}
+import cap.jeeveslib.ast.{Atom, Formula, IntExpr, ObjectExpr
+  , ProtectedIntRef, ProtectedObjectRef, S}
 
 class PaperReview(
             val  uid: BigInt
@@ -45,6 +46,11 @@ class PaperReview(
     concretize(ctxt, getReviewerTag()).asInstanceOf[PaperTag]
   }
 
+  private val _bodyRef =
+    ProtectedObjectRef[ConfContext, ConfContext](S(_body)
+    , Some((_, (ic: ObjectExpr[ConfContext])) => ic.viewer~'id === _reviewerId)
+    , None
+    , "reviewBody")(JConfBackend)
   def setBody (newbody: String) = _body = newbody
   def getBody (): String = _body
   def showBody(ctxt: ConfContext): String = _body
@@ -66,6 +72,14 @@ class PaperReview(
   def getResultScore (): Int = _resultScore
   def showResultScore (ctxt: ConfContext): Int = _resultScore
 
+  private val _scoreRef =
+    ProtectedIntRef[ConfContext, ConfContext](-1
+    , None
+    , Some(
+        (ic: ObjectExpr[ConfContext]) => _ =>
+          ic.viewer~'id === _reviewerId)
+    , "reviewScore")(JConfBackend)
+  
   /* URL links. */
   private val _reviewL = mkLabel()
   restrict ( _reviewL

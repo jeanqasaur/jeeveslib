@@ -21,7 +21,7 @@ libraryDependencies <++= scalaVersion(v => v match {
     , "org.squeryl" %% "squeryl" % "0.9.5-2")
   case "2.10.0" =>
     Seq(
-      "org.scalatest" %% "scalatest" % "1.9" % "test"
+      "org.scalatest" %% "scalatest" % "1.9.1" % "test"
     , "org.squeryl" %% "squeryl" % "0.9.5-6")
 })
 
@@ -34,6 +34,12 @@ scalacOptions <++= scalaVersion map (v => v match {
   case "2.9.1" => Seq("-deprecation", "-unchecked", "-Xexperimental")
   case "2.10.0" => Seq("-deprecation", "-unchecked", "-language:dynamics", "-language:implicitConversions", "-language:reflectiveCalls", "-feature")
 })
+
+fork in run := true
+
+javaOptions ++= Seq(
+  "-agentlib:hprof=cpu=times,file=/home/jeanyang/Documents/jeeveslib/hprof.txt"
+)
 
 assemblySettings
 
