@@ -28,8 +28,8 @@ case class Square(val owner: User) extends Atom {
     new ProtectedObjectRef[GameContext, GameContext](NoShip
       // Policy for updating: must be owner and there can't be a ship there
       // already.
-      , (ship: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
-          isOwner(ic) && (ship === NoShip)
+      , Some((ship: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
+          isOwner(ic) && (ship === NoShip))
       , None
       , "hasShip")(BattleshipGame)
 
@@ -45,8 +45,8 @@ case class Square(val owner: User) extends Atom {
   /* Bombs. */
   private var _hasBombRef =
     new ProtectedObjectRef[GameContext, GameContext](NULL
-      , (_: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
-          allShipsPlaced(ic) && hasTurn(ic) && !gameOver(ic)
+      , Some((_: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
+          allShipsPlaced(ic) && hasTurn(ic) && !gameOver(ic))
       , None
       , "hasBomb")(BattleshipGame)
   def bomb(ctxt: GameContext, bomb: Bomb): Boolean = {

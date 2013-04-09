@@ -72,7 +72,8 @@ case class Board(val owner: User) extends Atom {
         , (_: Unit) => {
             boardShip.applyFunction((s: GamePiece) =>
               s.getSquares().forall {
-                (square: Square) => square.bomb(ctxt, bomb) } && s.bombPiece(ctxt))});
+                (square: Square) => square.bomb(ctxt, bomb) } &&
+                  s.bombPiece(ctxt))});
       (succeeded, boardShip)
     } else {
       println("Bomb location outside of board: (" + x + ", " + y + ")");

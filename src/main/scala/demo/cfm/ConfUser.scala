@@ -13,6 +13,7 @@ case object PublicStatus extends UserStatus
 case object AuthorStatus extends UserStatus
 case object ReviewerStatus extends UserStatus
 case object PCStatus extends UserStatus
+case object PCChairStatus extends UserStatus
 
 /* Conference User */
 case class ConfUser(
