@@ -16,25 +16,30 @@ import cap.jeeveslib.jeeves._
 import cap.jeeveslib.util.Debug._
 
 sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom] {
-  var v: T
+  protected var v: T
+  def getValue(): T = v
 
   // Policies directly associated with writing.
-  val writePolicy: Option[(T, ObjectExpr[IC]) => Formula]
+  val writePolicy: Option[InputWritePolicy[T, IC]]
   def writePolicyFun(ctxt: ObjectExpr[OC])(implicit jeevesEnv: JeevesLib[OC])
     : ObjectExpr[IC] => Boolean = {
     writePolicy match {
-      case Some(wp) => ic => jeevesEnv.concretize(ctxt, wp(v, ic))
+      case Some(wp) => ic =>
+        Partial.eval(wp(v, ic))(EmptyEnv) match {
+          case BoolVal(bv) => bv
+          case facetedExpr => jeevesEnv.concretize(ctxt, facetedExpr)
+        }
       case None => ic => true
     }
   }
   
-  val outputPolicy: Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula]
-  val defaultOutputPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula =
+  val outputPolicy: Option[T => OutputWritePolicy[IC, OC]]
+  val defaultOutputWritePolicy: OutputWritePolicy[IC, OC] =
     ic => oc => BoolVal(true)
-  def getOutputPolicy(): ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula =
+  def getOutputPolicy(): OutputWritePolicy[IC, OC] =
     outputPolicy match {
-      case Some(ip) => ip
-      case None => defaultOutputPolicy
+      case Some(ip) => ip(v)
+      case None => defaultOutputWritePolicy
     }
 
   def varLabel: String
@@ -107,34 +112,28 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
     // If the input write policy passes, then apply to subfacets and apply the
     // output write policy.
     if ((writePolicyFun(asOCtxt)(jeevesEnv))(ctxt)) {
-      val (outcome, iPolicy):
-        (UpdateResult, ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula) =
+      val (outcome, iPolicy): (UpdateResult, OutputWritePolicy[IC, OC]) =
         outputPolicy match {
         case Some(ip) =>
           try {
-            lazy val undefined = ???
-            Partial.eval(ip(ctxt)(undefined))(EmptyEnv) match {
-              case BoolVal(true) =>
-                println("successful eval to true")
-                (Success, ip)
-              case BoolVal(false) => println("successful eval to false"); (Failure, ip)
-              case _otherwise => (Unresolved, ip)
+            // TODO: If we already know that we can't write, we should throw away the other facet...
+            Partial.eval(ip(v)(ctxt)(???))(EmptyEnv) match {
+              case BoolVal(true) => (Success, ip(v))
+              case BoolVal(false) => (Failure, ip(v))
+              case _otherwise => (Unresolved, ip(v))
             }
           }
           catch {
             case u: NotImplementedError =>
-              (Unresolved, ip)
+              (Unresolved, ip(v))
           }
-        case None =>
-          (Success
-            , ic => oc => BoolVal(true))
+        case None => (Success, defaultOutputWritePolicy)
       }
       // Make a new label based on this policy.
       val ivar = jeevesEnv.mkLabel(varLabel)
       jeevesEnv.mapPrimaryContext (ivar, ctxt)
-      val cfun: ObjectExpr[OC] => Formula = octxt => iPolicy(ctxt)(octxt)
-      jeevesEnv.restrict (ivar, cfun)
-//        , octxt => iPolicy(ctxt)(octxt))
+      // val cfun: ObjectExpr[OC] => Formula = octxt => iPolicy(ctxt)(octxt)
+      jeevesEnv.restrict (ivar, octxt => iPolicy(ctxt)(octxt))
 
       // Apply the integrity policy to the untrusted facet.
       val pUntrusted = policyFun(newVal)
@@ -160,10 +159,10 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
 }
 
 case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
-  var v: IntExpr
-  , val writePolicy: Option[(IntExpr, ObjectExpr[IC]) => Formula]
+  protected var v: IntExpr
+  , val writePolicy: Option[InputWritePolicy[IntExpr, IC]]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
+    : Option[IntExpr => OutputWritePolicy[IC, OC]] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[IntExpr, IC, OC] {
@@ -180,10 +179,9 @@ case class ProtectedIntRef[IC >: Null <: Atom, OC >: Null <: Atom](
 }
   
 case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
-  var v: Formula
-  , val writePolicy: Option[(Formula, ObjectExpr[IC]) => Formula]
-  , val outputPolicy
-    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
+  protected var v: Formula
+  , val writePolicy: Option[InputWritePolicy[Formula, IC]]
+  , val outputPolicy: Option[Formula => OutputWritePolicy[IC, OC]] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[Formula, IC, OC] {
@@ -199,22 +197,23 @@ case class ProtectedBoolRef[IC >: Null <: Atom, OC >: Null <: Atom](
   }
 }
  
-case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
-  var v: ObjectExpr[Atom]
-  , val writePolicy: Option[(ObjectExpr[Atom], ObjectExpr[IC]) => Formula]
+case class ProtectedObjectRef[T >: Null <: Atom, IC >: Null <: Atom, OC >: Null <: Atom](
+  protected var v: ObjectExpr[T]
+  , val writePolicy: Option[InputWritePolicy[ObjectExpr[T], IC]]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
+    : Option[ObjectExpr[T] => OutputWritePolicy[IC, OC]] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
-  extends ProtectedRef[ObjectExpr[Atom], IC, OC] {
+  extends ProtectedRef[ObjectExpr[T], IC, OC] {
   def update(ctxt: ObjectExpr[IC], asOctxt: ObjectExpr[OC]
-    , vNew: ObjectExpr[Atom]): UpdateResult = {
+    , vNew: ObjectExpr[T]): UpdateResult = {
     val (updateResult, r) = writeAs(
-          ctxt, asOctxt, Partial.eval(vNew)(EmptyEnv)
-          , ((e: ObjectExpr[Atom]) =>
+          ctxt, asOctxt
+          , Partial.eval(vNew)(EmptyEnv).asInstanceOf[ObjectExpr[T]]
+          , ((e: ObjectExpr[T]) =>
               jeevesEnv.addPolicy(e)(
                 jeevesEnv, writePolicyFun(asOctxt), getOutputPolicy()))
-          , (c: Formula, t: ObjectExpr[Atom], f: ObjectExpr[Atom]) =>
+          , (c: Formula, t: ObjectExpr[T], f: ObjectExpr[T]) =>
             ObjectFacet (c, t, f))
     v = r
     return updateResult
@@ -222,10 +221,10 @@ case class ProtectedObjectRef[IC >: Null <: Atom, OC >: Null <: Atom](
 }
 
 case class ProtectedFunctionRef[A, B, IC >: Null <: Atom, OC >: Null <: Atom](
-  var v: FunctionExpr[A, B]
-  , val writePolicy: Option[(FunctionExpr[A, B], ObjectExpr[IC]) => Formula]
+  protected var v: FunctionExpr[A, B]
+  , val writePolicy: Option[InputWritePolicy[FunctionExpr[A, B], IC]]
   , val outputPolicy
-    : Option[ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula] = None
+    : Option[FunctionExpr[A, B] => OutputWritePolicy[IC, OC]] = None
   , val varLabel: String = "")
   (implicit val jeevesEnv: JeevesLib[OC])
   extends ProtectedRef[FunctionExpr[A, B], IC, OC] {

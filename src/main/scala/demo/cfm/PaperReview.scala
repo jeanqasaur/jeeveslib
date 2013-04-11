@@ -47,7 +47,7 @@ class PaperReview(
   }
 
   private val _bodyRef =
-    ProtectedObjectRef[ConfContext, ConfContext](S(_body)
+    ProtectedObjectRef[S, ConfContext, ConfContext](S(_body)
     , Some((_, (ic: ObjectExpr[ConfContext])) => ic.viewer~'id === _reviewerId)
     , None
     , "reviewBody")(JConfBackend)
@@ -76,7 +76,7 @@ class PaperReview(
     ProtectedIntRef[ConfContext, ConfContext](-1
     , None
     , Some(
-        (ic: ObjectExpr[ConfContext]) => _ =>
+        _this => (ic: ObjectExpr[ConfContext]) => _oc =>
           ic.viewer~'id === _reviewerId)
     , "reviewScore")(JConfBackend)
   

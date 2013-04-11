@@ -22,10 +22,9 @@ case class User(id: BigInt, name: String, private val _pwd: String = "")
   // that says only the current user can update the password value.
   // This policy also encapsulates the confidentiality that only the current
   // user can see the result of the update.
-  val pwdRef = ProtectedObjectRef[Cred, Cred](password
+  val pwdRef = ProtectedObjectRef[S, Cred, Cred](password
     , None
-    , Some(ictxt =>
-        octxt =>
+    , Some(_this =>ictxt => octxt =>
           ictxt.p === this && octxt.p === this)
     , "pwdRef")(jlib)
   def setPassword(c: ObjectExpr[Cred], newPwd: String) = {
@@ -50,20 +49,20 @@ object Authentication extends JeevesLib[Cred] {
   // File class where the contents is a protected reference cell.
   class File(val owner: Principal, private val _contents: String = "")
   (implicit jlib: JeevesLib[Cred]) extends Atom {
-    private val contentsRef = ProtectedObjectRef[Cred, Cred](S(_contents)
+    private val contentsRef = ProtectedObjectRef[S, Cred, Cred](S(_contents)
       , Some((_, ictxt) => (ictxt.p === owner) || (ictxt.p === admin))
       , None
       , "contentsRef")(jlib)
     def writeContents(c: ObjectExpr[Cred], body: String): UpdateResult = 
       contentsRef.update(c, c, S(body))
-    def getContents(): ObjectExpr[S] = contentsRef.v.asInstanceOf[ObjectExpr[S]]
+    def getContents(): ObjectExpr[S] = contentsRef.getValue()
   }
 
   // No declassication is needed for the login function!
   def login (p: Principal, pwd: String): ObjectExpr[Cred] = {
     p match {
       case u:User =>
-      jif(u.pwdRef.v === S(pwd)
+      jif(u.pwdRef.getValue() === S(pwd)
         , _ => Object(Cred(p)), _ => Object(Cred(NullUser)))
       case a:Admin =>
       jif(a.password === S(pwd)

@@ -30,14 +30,14 @@ case class PatientRecord(
   }
 
   // Doctor identity.
-  val doctorRef = ProtectedObjectRef[UserRecord, HealthContext](_doctor
+  val doctorRef = ProtectedObjectRef[UserRecord, UserRecord, HealthContext](_doctor
     , Some((_, ictxt) => ictxt.status === Admin), None)(HealthDBBackend)
   def setDoctor (newDoctor: UserRecord) (implicit ctxt: HealthContext) = {
     doctorRef.update(ctxt.user, ctxt, newDoctor)
   }
   private val dp = mkLabel ()
   restrict (dp, (ctxt: ObjectExpr[HealthContext]) => isPatientOrDoctor(ctxt))
-  def getDoctor() = { mkSensitive(dp, doctorRef.v, defaultUser) }
+  def getDoctor() = { mkSensitive(dp, doctorRef.getValue(), defaultUser) }
 
   // Medication list.
   private val mp = mkLabel ()

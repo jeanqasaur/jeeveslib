@@ -91,7 +91,6 @@ class TestBattleshipGame extends FunSuite {
     }
   }
 
-  /*
   test ("Putting all of Bob's pieces") {
     expectResult(true) {
       bobBoard.placeShip(
@@ -198,9 +197,8 @@ class TestBattleshipGame extends FunSuite {
   }
 
   test ("Can see all ships once done") {
-    expectResult(Submarine(bob))) {
+    expectResult(Submarine(bob)) {
       concretize(aliceCtxt, bobBoard.getSquare(5, 1).getShip())
     }
   }
-  */
 }
