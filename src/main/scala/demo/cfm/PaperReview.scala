@@ -28,7 +28,7 @@ class PaperReview(
     (vrole === ReviewerStatus) || (vrole === PCStatus);
   }
   restrict(_reviewerL,
-    (ctxt: ObjectExpr[ConfContext]) => true) //_isInternalF (ctxt))
+    (ctxt: ObjectExpr[ConfContext]) => true)
 
   val reviewer: IntExpr = mkSensitiveInt(_reviewerL, _reviewerId, -1)
   def showReviewer(ctxt: ConfContext): ConfUser = {
