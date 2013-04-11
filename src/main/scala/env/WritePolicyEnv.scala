@@ -28,7 +28,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
    */
   def addWritePolicy[IC >: Null <: Atom](lvar: LabelVar
     , writePolicy: ObjectExpr[IC] => Boolean
-    , iPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula)
+    , iPolicy: OutputWritePolicy[IC, OC])
     (implicit lvars: PolicyEnv[OC])
   : LabelVar = {
     _primaryContexts.get(lvar) match {
@@ -53,7 +53,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   def addPolicy[IC >: Null <: Atom](f: Formula)
     (implicit lvars: PolicyEnv[OC]
     , writePolicy: ObjectExpr[IC] => Boolean
-    , iPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula)
+    , iPolicy: OutputWritePolicy[IC, OC])
   : Formula = {
     f match {
       case BoolFacet(cond, t, f) =>
@@ -81,7 +81,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   def addPolicy[IC >: Null <: Atom](e: IntExpr)
     (implicit lvars: PolicyEnv[OC]
     , writePolicy: ObjectExpr[IC] => Boolean
-    , iPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula)
+    , iPolicy: OutputWritePolicy[IC, OC])
   : IntExpr = {
     e match {
       case IntFacet (cond, t, f) =>
@@ -102,7 +102,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
     e: ObjectExpr[T])
     (implicit lvars: PolicyEnv[OC]
       , writePolicy: ObjectExpr[IC] => Boolean
-      , iPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula)
+      , iPolicy: OutputWritePolicy[IC, OC])
     : ObjectExpr[T] =
     e match {
       case ObjectFacet(cond, t, f) =>
@@ -120,7 +120,7 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
     e: FunctionExpr[A, B])
     (implicit lvars: PolicyEnv[OC]
       , writePolicy: ObjectExpr[IC] => Boolean
-      , iPolicy: ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula)
+      , iPolicy: OutputWritePolicy[IC, OC])
     : FunctionExpr[A, B] =
     e match {
       case FunctionVal(_) => e

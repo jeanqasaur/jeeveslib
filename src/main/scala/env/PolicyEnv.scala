@@ -25,7 +25,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
   }
 
   // Policies and label dependencies.
-  private val _policies : HashMap[LabelVar, (Label, ObjectExpr[C] => Formula)] =
+  private val _policies : HashMap[LabelVar, (Label, ConfPolicy[C])] =
     new HashMap()
 
   // INVARIANT: This contains an entry for every label.
@@ -59,8 +59,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
    * to the level variable, then the value/formula pair can be garbage-collected
    * as well.
    */
-   def restrict(lvar: LabelVar
-     , f: ObjectExpr[C] => Formula) = {
+   def restrict(lvar: LabelVar, f: ConfPolicy[C]) = {
     _policies += (lvar ->
       ( LOW
         , mkGuardedConfPolicy(ctxt => Not (f (ctxt)))))

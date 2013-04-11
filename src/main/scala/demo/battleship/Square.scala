@@ -25,7 +25,7 @@ case class Square(val owner: User) extends Atom {
 
   /* Ships. */
   private val _shipRef =
-    new ProtectedObjectRef[GameContext, GameContext](NoShip
+    new ProtectedObjectRef[GamePiece, GameContext, GameContext](NoShip
       // Policy for updating: must be owner and there can't be a ship there
       // already.
       , Some((ship: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
@@ -37,14 +37,12 @@ case class Square(val owner: User) extends Atom {
   def updateShip(ctxt: GameContext, ship: GamePiece): Boolean = {
     _shipRef.update(ctxt, ctxt, mkShipSecret(ship)) == Success
   }
-  def hasShip(): Formula = !(_shipRef.v === NoShip)
-  def getShip(): ObjectExpr[GamePiece] = {
-    _shipRef.v.asInstanceOf[ObjectExpr[GamePiece]]
-  }
+  def hasShip(): Formula = !(_shipRef.getValue() === NoShip)
+  def getShip(): ObjectExpr[GamePiece] = { _shipRef.getValue() }
 
   /* Bombs. */
   private var _hasBombRef =
-    new ProtectedObjectRef[GameContext, GameContext](NULL
+    new ProtectedObjectRef[Bomb, GameContext, GameContext](NULL
       , Some((_: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
           allShipsPlaced(ic) && hasTurn(ic) && !gameOver(ic))
       , None
@@ -52,5 +50,5 @@ case class Square(val owner: User) extends Atom {
   def bomb(ctxt: GameContext, bomb: Bomb): Boolean = {
     _hasBombRef.update(ctxt, ctxt, bomb) == Success
   }
-  def hasBomb(): Formula = !(_hasBombRef.v === NULL)
+  def hasBomb(): Formula = !(_hasBombRef.getValue() === NULL)
 }

@@ -410,4 +410,11 @@ case class S(s: String) extends Atom
 object JeevesTypes {
   type LabelVar = BoolVar;
   type WriteVar = BoolVar;
+
+  type InputWritePolicy[T <: FExpr[_], IC >: Null <: Atom] =
+    (T, ObjectExpr[IC]) => Formula
+  type OutputWritePolicy[IC >: Null <: Atom, OC >: Null <: Atom] =
+    ObjectExpr[IC] => (=> ObjectExpr[OC]) => Formula
+
+  type ConfPolicy[IC >: Null <: Atom] = ObjectExpr[IC] => Formula
 }
