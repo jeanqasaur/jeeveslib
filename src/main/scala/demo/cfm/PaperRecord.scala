@@ -50,9 +50,7 @@ class PaperRecord(         val uid: BigInt
   /* Policies. */
   /*************/
   private def isAuthor (ctxt: ObjectExpr[ConfContext]): Formula =
-    !authors.has(defaultUser.uid) && authors.has(ctxt.viewer~'uid)
-  private def isDefault (ctxt: ObjectExpr[ConfContext]): Formula =
-    ctxt.viewer === defaultUser
+    authors.has(ctxt.viewer~'uid)
   private def isInternal (ctxt: ObjectExpr[ConfContext]): Formula =
     (ctxt.viewer.role === ReviewerStatus) ||
     (ctxt.viewer.role === PCStatus)
@@ -166,8 +164,7 @@ class PaperRecord(         val uid: BigInt
     val level = mkLabel();
     restrict( level
       , (ctxt: ObjectExpr[ConfContext]) =>
-          ( (isInternal (ctxt) && !(isAuthor (ctxt) || isDefault(ctxt))) ||
-                (isAuthor (ctxt) && authorCanSeeReview (ctxt)) ) );
+          isInternal(ctxt) && !isAuthor(ctxt) && !(_authorL === LOW) );
     logPaperRecordPolicy();
     mkSensitive(level, r, Object(defaultReview))
   }
