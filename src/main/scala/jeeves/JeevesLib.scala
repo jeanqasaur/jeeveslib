@@ -63,7 +63,7 @@ trait JeevesLib[C >: Null <: Atom]
     cs match {
       case BoolVal (true) => evalFun (t ())
       case BoolVal (false) => evalFun (f ())
-      case BoolFacet (bv@BoolVar(v, label), tc, fc) => {
+      case BoolFacet (bv: BoolVar, tc, fc) => {
         // If we are already under a path containing the current condition,
         // we can just evaluate the true branch.
         if (pcHasVar(bv)) {
@@ -111,7 +111,7 @@ trait JeevesLib[C >: Null <: Atom]
     (implicit vf: FacetCons[B]): B = {
     f match {
       case FunctionVal(f) => f(arg)
-      case FunctionFacet(bv@BoolVar(v, label), thn, els) =>
+      case FunctionFacet(bv: BoolVar, thn, els) =>
         if (pcHasVar(bv)) {
           jfun(thn, arg)
         } else if (pcHasNegVar(bv)) {

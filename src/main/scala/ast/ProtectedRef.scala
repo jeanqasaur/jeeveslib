@@ -87,13 +87,13 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
           // Make a copy of the path variable so we can customize it for this
           // integrity expression.
           case PathVar(bv) =>
-            val lv = jeevesEnv.mkLabel(bv.label);
+            val lv = jeevesEnv.mkLabel(bv.label, jeevesEnv.IntegrityLabel);
             jeevesEnv.restrict(lv, ctxt => lv);
             jeevesEnv.mapPrimaryContext(lv, ictxt)
             lvfun(bv);
             facetCons (bv, mkFacetTree[T](ictxt, lvfun, gs, high, low), low)
           case NegPathVar(bv) =>
-            val lv = jeevesEnv.mkLabel(bv.label);
+            val lv = jeevesEnv.mkLabel(bv.label, jeevesEnv.IntegrityLabel);
             jeevesEnv.restrict(lv, ctxt => !(lv))
             jeevesEnv.mapPrimaryContext(lv, ictxt)
             lvfun(bv);
@@ -130,7 +130,7 @@ sealed trait ProtectedRef[T <: FExpr[_], IC >: Null <: Atom, OC >: Null <: Atom]
         case None => (Success, defaultOutputWritePolicy)
       }
       // Make a new label based on this policy.
-      val ivar = jeevesEnv.mkLabel(varLabel)
+      val ivar = jeevesEnv.mkLabel(varLabel, jeevesEnv.IntegrityLabel)
       jeevesEnv.mapPrimaryContext (ivar, ctxt)
       // val cfun: ObjectExpr[OC] => Formula = octxt => iPolicy(ctxt)(octxt)
       jeevesEnv.restrict (ivar, octxt => iPolicy(ctxt)(octxt))
