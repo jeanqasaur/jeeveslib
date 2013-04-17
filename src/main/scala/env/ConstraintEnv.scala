@@ -26,8 +26,8 @@ trait ConstraintEnv {
       case None => throw Inconsistency
     }
   
-  def pickBool(label: String=""): BoolVar = {
-    val x = Var.makeBool(label)
+  def pickBool(label: String="", isConfidentiality: Boolean=true): BoolVar = {
+    val x = Var.makeBool(label, isConfidentiality)
     _boolVars = _boolVars + x
     x
   }

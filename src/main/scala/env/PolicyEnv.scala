@@ -24,13 +24,19 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
     case LOW => false
   }
 
+  sealed trait LabelType
+  object ConfidentialityLabel extends LabelType
+  object IntegrityLabel extends LabelType
+
   // Policies and label dependencies.
   private var _labels: List[LabelVar] = List()
   private val _policies : HashMap[LabelVar, ConfPolicy[C]] =
     new HashMap()
 
-  def mkLabel(label: String=""): LabelVar = {
-    val v = pickBool(label)
+  def mkLabel(label: String="", labelType: LabelType = ConfidentialityLabel)
+    : LabelVar = {
+    val isConfidentiality = labelType == ConfidentialityLabel
+    val v = pickBool(label, isConfidentiality)
     _labels = v::_labels
     v
   }
@@ -63,10 +69,10 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
 
   override def assume(f: Formula) = super.assume(Partial.eval(f)(EmptyEnv))
   
-  private def getBoolVars(f: Formula): Set[BoolVar] = {
+  private def getConfLabels(f: Formula): Set[LabelVar] = {
     def isBoolVar(v: Var[_]) = {
       v match {
-        case (b:BoolVar) => true
+        case (b:LabelVar) => b.isConfidentiality
         case _ => false
       }
     }
@@ -84,7 +90,7 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
     _policies.toList.foreach {
       case (lvar, f) =>
         val pred = f (ctx)
-        val predVars = getBoolVars(pred)
+        val predVars = getConfLabels(pred)
         context = (pred ==> (lvar === LOW)) :: context
         varDeps.get(lvar) match {
           case Some(deps) => varDeps += (lvar -> (deps ++ predVars))
@@ -107,7 +113,10 @@ trait PolicyEnv[C >: Null <: Atom] extends ConstraintEnv with PC {
       }
     }
 
-    super.concretize(context, _labels.map(_ === HIGH), e);
+    // NOTE(JY): We search for defaults for variables in the order they were
+    // created. This is especially important for dependencies for integrity
+    // labels. This may not be the best way to do things...
+    super.concretize(context, _labels.reverse.map(_ === HIGH), e);
   }
 
   // Debug function.

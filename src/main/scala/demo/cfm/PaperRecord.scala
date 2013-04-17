@@ -163,8 +163,9 @@ class PaperRecord(         val uid: BigInt
   def addReviewPolicy (r: ObjectExpr[PaperReview]): ObjectExpr[PaperReview] = {
     val level = mkLabel();
     restrict( level
+      // isAuthor depends on _authorL, so this must be low if _authorL == low
       , (ctxt: ObjectExpr[ConfContext]) =>
-          isInternal(ctxt) && !isAuthor(ctxt) && !(_authorL === LOW) );
+          isInternal(ctxt) && !isAuthor(ctxt) );
     logPaperRecordPolicy();
     mkSensitive(level, r, Object(defaultReview))
   }

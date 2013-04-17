@@ -5,6 +5,7 @@ import org.scalatest.Assertions
 
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.debug._
 import cap.jeeveslib.jeeves._
 
 case class DummyUser(id: BigInt) extends Atom
@@ -263,6 +264,26 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     expectResult (1) {
       concretize(aliceContext(), jfun[IntExpr, IntExpr](x.getValue(), 1)) }
   }
-  
+
+  test ("Output write policies involving 'this'--cannot update") {
+    val x =
+      ProtectedIntRef[DummyUser, DummyContext](0
+      , None, Some(v => ictxt => _ => !(v === 3) && ictxt === alice))(this)
+    x.update(alice, aliceContext(), 1)
+    expectResult(1) {
+      concretize(aliceContext(), x.getValue())
+    }
+    x.update(alice, aliceContext(), 3)
+    expectResult(3) {
+      concretize(aliceContext(), x.getValue())
+    }
+    x.update(alice, aliceContext(), 5)
+    println(x.getValue())
+    DebugPrint.debugPrint(aliceContext(), x.getValue())(this)
+    expectResult(3) {
+      concretize(aliceContext(), x.getValue())
+    }
+  }
+
   // TODO: Test object refs...
 }
