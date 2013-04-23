@@ -1,4 +1,4 @@
-package test.cap.jeeveslib.jeeves.declassification
+package test.cap.jeeveslib.jeeves.demo
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expectResult}
