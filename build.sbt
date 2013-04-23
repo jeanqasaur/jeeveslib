@@ -14,14 +14,17 @@ libraryDependencies <++= scalaVersion(v => v match {
   case "2.9.0-1" =>
     Seq(
       "org.scalatest" %% "scalatest" % "1.8" % "test"
+    , "org.specs2" %% "specs2" % "1.8.2" % "test"
     , "org.squeryl" %% "squeryl" % "0.9.5-2")
   case "2.9.1" =>
     Seq(
       "org.scalatest" %% "scalatest" % "1.8" % "test"
+    , "org.specs2" %% "specs2" % "1.6.9" % "test"
     , "org.squeryl" %% "squeryl" % "0.9.5-2")
   case "2.10.0" =>
     Seq(
       "org.scalatest" %% "scalatest" % "1.9.1" % "test"
+    , "org.specs2" %% "specs2" % "1.14" % "test"
     , "org.squeryl" %% "squeryl" % "0.9.5-6")
 })
 
