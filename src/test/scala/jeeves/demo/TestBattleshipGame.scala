@@ -1,9 +1,10 @@
-package test.cap.jeeveslib.jeeves.demo.battleship
+package test.cap.jeeveslib.demo.battleship
 
 import org.scalatest.FunSuite
 import scala.collection.mutable.Map
 
 import cap.jeeveslib.ast._
+import cap.jeeveslib.debug.DebugPrint._
 import cap.jeeveslib.demo.battleship._
 import BattleshipGame._
 
@@ -122,18 +123,25 @@ class TestBattleshipGame extends FunSuite {
   }
 
   test ("Can bomb a piece with no ship") {
-    expectResult(None) { game.bomb(aliceCtxt, bob, 9, 9) }
+    expectResult(NoShip) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 9, 9))
+    }
   }
 
   test ("Can bomb a piece with a ship") {
-    expectResult(Some(Carrier(alice))) { game.bomb(bobCtxt, alice, 0, 0) }
+    expectResult(Carrier(alice)) {
+      concretize(aliceCtxt, game.bomb(bobCtxt, alice, 0, 0))
+    }
   }
 
   test ("Cannot put two bombs in a row") {
-    expectResult(None) { game.bomb(bobCtxt, alice, 0, 0) }
+    expectResult(NoShip) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 0, 0))
+    }
   }
 
   test ("Can see ship if bombed") {
+    // debugPrint(bobCtxt, aliceBoard.getSquare(0, 0).getShip())(BattleshipGame)
     expectResult(Carrier(alice)) {
       concretize(bobCtxt, aliceBoard.getSquare(0, 0).getShip())
     }
@@ -149,41 +157,41 @@ class TestBattleshipGame extends FunSuite {
   }
 
   test ("Playing the rest of the game..." ) {
-    expectResult(Some(Carrier(bob))) {
-      game.bomb(aliceCtxt, bob, 0, 0)
+    expectResult(Carrier(bob)) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 0, 0))
     }
-    expectResult(Some(Battleship(alice))) {
-      game.bomb(bobCtxt, alice, 1, 0)
+    expectResult(Battleship(alice)) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 1, 0))
     }
-    expectResult(Some(Battleship(bob))) {
-      game.bomb(aliceCtxt, bob, 1, 0)
+    expectResult(Battleship(bob)) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 1, 0))
     }
-    expectResult(Some(Cruiser(alice))) {
-      game.bomb(bobCtxt, alice, 2, 0)
+    expectResult(Cruiser(alice)) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 2, 0))
     }
-    expectResult(Some(Cruiser(bob))) {
-      game.bomb(aliceCtxt, bob, 2, 0)
+    expectResult(Cruiser(bob)) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 2, 0))
     }
-    expectResult(Some(Destroyer(alice))) {
-      game.bomb(bobCtxt, alice, 3, 0)
+    expectResult(Destroyer(alice)) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 3, 0))
     }
-    expectResult(Some(Destroyer(bob))) {
-      game.bomb(aliceCtxt, bob, 3, 0)
+    expectResult(Destroyer(bob)) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 3, 0))
     }
-    expectResult(Some(Destroyer(alice))) {
-      game.bomb(bobCtxt, alice, 4, 0)
+    expectResult(Destroyer(alice)) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 4, 0))
     }
-    expectResult(Some(Destroyer(bob))) {
-      game.bomb(aliceCtxt, bob, 4, 0)
+    expectResult(Destroyer(bob)) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 4, 0))
     }
-    expectResult(Some(Submarine(alice))) {
-      game.bomb(bobCtxt, alice, 5, 0)
+    expectResult(Submarine(alice)) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 5, 0))
     }
-    expectResult(Some(Submarine(bob))) {
-      game.bomb(aliceCtxt, bob, 5, 0)
+    expectResult(Submarine(bob)) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 5, 0))
     }
-    expectResult(Some(Submarine(alice))) {
-      game.bomb(bobCtxt, alice, 5, 1)
+    expectResult(Submarine(alice)) {
+      concretize(bobCtxt, game.bomb(bobCtxt, alice, 5, 1))
     }
     expectResult(true) {
       game.gameOver()
@@ -191,8 +199,8 @@ class TestBattleshipGame extends FunSuite {
   }
 
   test ("Cannot place ships once somebody has won") {
-    expectResult(None) {
-      game.bomb(aliceCtxt, bob, 5, 1)
+    expectResult(NoShip) {
+      concretize(aliceCtxt, game.bomb(aliceCtxt, bob, 5, 1))
     }
   }
 

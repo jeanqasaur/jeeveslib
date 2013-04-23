@@ -81,7 +81,11 @@ trait JeevesLib[C >: Null <: Atom]
           val fr: T = jifEval(fc, t, f, evalFun, facetCons);
           popPC();
 
-          facetCons(bv, evalFun (tr), evalFun (fr))
+          val trueBranch = evalFun(tr)
+          val falseBranch = evalFun(fr)
+          if (trueBranch == falseBranch) {
+            trueBranch
+          } else { facetCons(bv, trueBranch, falseBranch) }
         }
       }
       case _ => throw Impossible

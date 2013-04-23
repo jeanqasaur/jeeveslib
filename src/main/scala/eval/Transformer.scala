@@ -144,9 +144,7 @@ object Partial {
 
   def eval (f: Formula) (implicit env: VarEnv): Formula = 
     {f match {
-      case BoolFacet(a, b, c) => 
-        val sa = eval(a); 
-        BoolFacet(sa, eval(b), eval(c))
+      case BoolFacet(a, b, c) => BoolFacet(eval(a), eval(b), eval(c))
       case BoolEq(a, b) =>
         BoolEq(eval(a), eval(b))
       case And(a, b) =>

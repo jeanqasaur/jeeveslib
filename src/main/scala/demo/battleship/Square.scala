@@ -18,8 +18,7 @@ case class Square(val owner: User) extends Atom {
   private def mkShipSecret(ship: GamePiece): ObjectExpr[GamePiece] = {
     val a = mkLabel("ship");
     restrict(a
-      , ctxt =>
-          hasBomb() || isOwner(ctxt) || gameOver(ctxt));
+      , ctxt => hasBomb() || isOwner(ctxt) || gameOver(ctxt));
     mkSensitive(a, ship, NoShip)
   }
 
@@ -28,8 +27,8 @@ case class Square(val owner: User) extends Atom {
     new ProtectedObjectRef[GamePiece, GameContext, GameContext](NoShip
       // Policy for updating: must be owner and there can't be a ship there
       // already.
-      , Some((ship: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
-          isOwner(ic) && (ship === NoShip))
+      , Some(ship => ic => ship === NoShip)
+      , Some(ship => ic => isOwner(ic))
       , None
       , "hasShip")(BattleshipGame)
 
@@ -43,8 +42,8 @@ case class Square(val owner: User) extends Atom {
   /* Bombs. */
   private var _hasBombRef =
     new ProtectedObjectRef[Bomb, GameContext, GameContext](NULL
-      , Some((_: ObjectExpr[Atom], ic: ObjectExpr[GameContext]) =>
-          allShipsPlaced(ic) && hasTurn(ic) && !gameOver(ic))
+      , Some(_ => ic => hasTurn(ic))
+      , Some(_bomb => ic => ((allShipsPlaced(ic) && !gameOver(ic))))
       , None
       , "hasBomb")(BattleshipGame)
   def bomb(ctxt: GameContext, bomb: Bomb): Boolean = {
