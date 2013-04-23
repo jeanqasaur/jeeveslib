@@ -1,4 +1,4 @@
-package test.cap.jeeveslib.demo.cfm
+package test.cap.jeeveslib.jeeves.demo.cfm
 
 import cap.jeeveslib.demo.cfm._
 import JConfBackend._
