@@ -1,4 +1,4 @@
-package test.cap.jeeves.expressiveness
+package test.cap.jeeveslib.jeeves.demo.authentication
 
 import org.scalatest.FunSuite
 import org.scalatest.Assertions.{expectResult}

@@ -1,4 +1,4 @@
-package test.cap.jeeveslib.demo.battleship
+package test.cap.jeeveslib.jeeves.demo.battleship
 
 import org.scalatest.FunSuite
 import scala.collection.mutable.Map
