@@ -9,6 +9,8 @@ case class Point(x: Int, y: Int) {
 }
 
 case class Board(val owner: User) extends Atom {
+  case object OutOfBoundsException extends Throwable
+
   val boardSize = 10
 
   // Initialize board.
@@ -60,8 +62,7 @@ case class Board(val owner: User) extends Atom {
     return false
   }
 
-  def placeBomb(ctxt: GameContext, x: Int, y: Int)
-    : (Formula, ObjectExpr[GamePiece]) = {
+  def placeBomb(ctxt: GameContext, x: Int, y: Int): ObjectExpr[GamePiece] = {
     if (x < boardSize && y < boardSize) {
       val boardShip = _board(x)(y).getShip();
       val bomb = Bomb(ctxt.user);
@@ -74,10 +75,10 @@ case class Board(val owner: User) extends Atom {
               s.getSquares().forall {
                 (square: Square) => square.bomb(ctxt, bomb) } &&
                   s.bombPiece(ctxt))});
-      (succeeded, boardShip)
+     jif (succeeded, (_: Unit) => boardShip, (_: Unit) => NoShip)
     } else {
       println("Bomb location outside of board: (" + x + ", " + y + ")");
-      (false, NoShip)
+      throw OutOfBoundsException
     }
   }
 

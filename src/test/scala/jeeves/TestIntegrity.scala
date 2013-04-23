@@ -24,15 +24,15 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
   def carolContext(badUsers: List[DummyUser] = List()) =
     DummyContext(carol, badUsers)
 
-  def allowUserWrite[T](user: DummyUser)
-    : T => OutputWritePolicy[DummyUser, DummyContext] = {
-    _this => ictxt => _octxt => ictxt === user
+  def allowUserWrite[T <: FExpr[_]](user: DummyUser)
+    : ICOutputWritePolicy[T, DummyUser] = {
+    _this => ictxt => ictxt === user
   }
 
   test ("write allowed for all viewers") {
     val x =
       ProtectedIntRef[DummyUser, DummyContext](
-        0, None, Some(allowUserWrite (alice)))(this)
+        0, None, Some(allowUserWrite (alice)), None)(this)
     assert(x.update(alice, aliceContext(), 42) == Success)
     expectResult (42) { concretize(aliceContext(), x.getValue()) }
     expectResult (42) { concretize(bobContext(), x.getValue()) }
@@ -41,7 +41,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("write disallowed for all viewers") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-      0, None, Some(allowUserWrite (alice)))(this)
+      0, None, Some(allowUserWrite(alice)), None)(this)
     assert(x.update(bob, bobContext(), 42) == Failure)
     expectResult (0) { concretize(aliceContext(), x.getValue()) }
     expectResult (0) { concretize(bobContext(), x.getValue()) }
@@ -50,7 +50,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("write selectively allowed for some viewers") {
     val x = ProtectedIntRef[DummyUser, DummyContext](0
-      , None // (_, ictxt: ObjectExpr[DummyUser]) => (ictxt === alice)
+      , None, None
       , Some(
         _this => ictxt => octxt =>
           (ictxt === alice) && octxt.viewer === bob))(this)
@@ -62,7 +62,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("permitted writer overwite") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite (bob)))(this)
+              0, None, Some(allowUserWrite(bob)), None)(this)
     assert(x.update(alice, aliceContext(), 42) == Failure)
     assert(x.update(bob, bobContext(), 43) == Success)
     expectResult (43) { concretize(aliceContext(), x.getValue()) }
@@ -72,7 +72,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("restricted writer overwrite") {
     var x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite (bob)))(this)
+              0, None, Some(allowUserWrite(bob)), None)(this)
     x.update(bob, bobContext(), 43)
     x.update(alice, aliceContext(), 42)
     expectResult (43) { concretize(aliceContext(), x.getValue()) }
@@ -82,7 +82,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("output varies depending on who is viewing") {
     val x = ProtectedIntRef[DummyUser, DummyContext](0
-      , None // (_, ictxt) => ictxt === alice
+      , None, None
       , Some(_this => ictxt => octxt =>
           ictxt === alice && octxt.viewer === bob))(this)
     x.update(alice, aliceContext(), 42)
@@ -93,10 +93,10 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("combining integrity policies in an operation") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite (bob)))(this)
+              0, None, Some(allowUserWrite(bob)), None)(this)
     x.update(bob, bobContext(), 42)
     val y = ProtectedIntRef[DummyUser, DummyContext](2
-      , None
+      , None, None
       , Some(_this => ictxt => octxt =>
           ictxt === alice && octxt.viewer === bob))(this)
     y.update(alice, aliceContext(), 43)
@@ -112,10 +112,10 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
      Alice into y. (That is, without an explicit endorsement...) */
   test ("Prevent flow of untrusted writes") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite(alice)), "x")(this)
+              0, None, Some(allowUserWrite(alice)), None, "x")(this)
     x.update(alice, aliceContext(), 42) 
     val y = ProtectedIntRef[DummyUser, DummyContext](
-              1, None, Some(allowUserWrite(bob)), "y")(this)
+              1, None, Some(allowUserWrite(bob)), None, "y")(this)
     y.update(bob, bobContext(), x.getValue())
     expectResult (42) { concretize(aliceContext(), x.getValue()) }
     expectResult (42) { concretize(bobContext(), x.getValue()) }
@@ -125,13 +125,13 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("Prevent flow of operations on untrusted writes") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite(alice)))(this)
+              0, None, Some(allowUserWrite(alice)), None)(this)
     x.update(alice, aliceContext(), 42)
     val y = ProtectedIntRef[DummyUser, DummyContext](
-              1, None, Some(allowUserWrite(bob)))(this)
+              1, None, Some(allowUserWrite(bob)), None)(this)
     y.update(bob, aliceContext(), 43)
     val z = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite(carol)))(this)
+              0, None, Some(allowUserWrite(carol)), None)(this)
     z.update(carol, carolContext(), x.getValue() + y.getValue())
     expectResult (1) { concretize(aliceContext(), z.getValue()) }
     expectResult (1) { concretize(bobContext(), z.getValue()) }
@@ -143,21 +143,21 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
      writes. */
   test ("Prevent untrusted writes through implicit flows.") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite(alice)))(this)
+              0, None, Some(allowUserWrite(alice)), None)(this)
     x.update(alice, aliceContext(), 42)
     val y = ProtectedIntRef[DummyUser, DummyContext](
-              1, None, Some(allowUserWrite(bob)))(this)
+              1, None, Some(allowUserWrite(bob)), None)(this)
     y.update(bob, bobContext(), jif (x.getValue() === 42, _ => 2, _ => 3))
     expectResult (3) { concretize(aliceContext(), y.getValue()) }
     expectResult (3) { concretize(bobContext(), y.getValue()) }
   }
 
   test ("Prevent implicit flows of confidential values") {
-    val x = ProtectedIntRef[DummyUser, DummyContext](0, None
+    val x = ProtectedIntRef[DummyUser, DummyContext](0, None, None
       , Some(_this => ictxt => octxt =>
           ictxt === alice && octxt.viewer === alice))(this)
     x.update(alice, aliceContext(), 42)
-    val y = ProtectedIntRef[DummyUser, DummyContext](1, None
+    val y = ProtectedIntRef[DummyUser, DummyContext](1, None, None
       , Some(_this => ictxt => octxt => ictxt === bob || ictxt === alice))(this)
     y.update(bob, bobContext(), jif(x.getValue() === 42, _ => 2, _ => 3))
     expectResult (2) { concretize(aliceContext(), y.getValue()) }
@@ -169,13 +169,13 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
      allowed to write. */
   test ("combining values into permissive write") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite (bob)))(this)
+              0, None, Some(allowUserWrite(bob)), None)(this)
     x.update(bob, bobContext(), 42)
     val y = ProtectedIntRef[DummyUser, DummyContext](
-              1, None, Some(allowUserWrite (alice)))(this)
+              1, None, Some(allowUserWrite(alice)), None)(this)
     y.update(alice, aliceContext(), 43)
     val z =
-      ProtectedIntRef[DummyUser, DummyContext](0, None
+      ProtectedIntRef[DummyUser, DummyContext](0, None, None
       , Some(_this => ictxt => octxt =>
           ictxt === alice || ictxt === bob || ictxt === carol))(this)
     z.update(carol, carolContext(), x.getValue() + y.getValue())
@@ -187,13 +187,13 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
   // Only bob can see the special value alice wrote to him...
   test ("Combining confidentiality with operations") {
     val x = ProtectedIntRef[DummyUser, DummyContext](
-              0, None, Some(allowUserWrite (bob)))(this)
+              0, None, Some(allowUserWrite(bob)), None)(this)
     x.update(bob, bobContext(), 42)
-    val y = ProtectedIntRef[DummyUser, DummyContext](2, None
+    val y = ProtectedIntRef[DummyUser, DummyContext](2, None, None
       , Some(_this => ictxt => octxt =>
           ictxt === alice && octxt.viewer === bob))(this)
     y.update(alice, aliceContext(), 43)
-    val z = ProtectedIntRef[DummyUser, DummyContext](0, None
+    val z = ProtectedIntRef[DummyUser, DummyContext](0, None, None
       , Some(_this => ictxt => _octxt =>
           ictxt === alice || ictxt === bob || ictxt === carol))(this)
     z.update(carol, carolContext(),  x.getValue() + y.getValue())
@@ -207,7 +207,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     val a = mkLabel ()
     restrict (a, (ctxt: ObjectExpr[DummyContext]) => ctxt.viewer === bob)
     val secretWriter: ObjectExpr[DummyUser] = mkSensitive(a, bob, nobody)
-    val x = ProtectedIntRef[DummyUser, DummyContext](0, None
+    val x = ProtectedIntRef[DummyUser, DummyContext](0, None, None
     , Some(_this => ictxt => octxt => ictxt === secretWriter))(this)
     x.update(bob, bobContext(), 42)
     expectResult (bob) { concretize(bobContext(), secretWriter) }
@@ -221,7 +221,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
   /* If Alice does something bad, then we will reject all of her influences.
    */
   test ("Determine whether a writer is trusted later") {
-    val x = ProtectedIntRef[DummyUser, DummyContext](0, None
+    val x = ProtectedIntRef[DummyUser, DummyContext](0, None, None
       , Some(_this => ictxt => octxt => (
           octxt.applyFunction((oc: DummyContext) =>
            !Atoms(oc.badUsers).has(ictxt)))))(this)
@@ -232,8 +232,8 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
  
   /* Make sure we can change the input channel type without things breaking. */
   test ("Different types for input channels") {
-    val x = ProtectedIntRef[DummyContext, DummyContext](0
-      , None, Some(_this => ictxt => _octxt => ictxt.viewer === alice))(this)
+    val x = ProtectedIntRef[DummyContext, DummyContext](0, None, None
+      , Some(_this => ictxt => _octxt => ictxt.viewer === alice))(this)
     x.update(aliceContext(List()), aliceContext(), 42)
     expectResult(42) { concretize(aliceContext(), x.getValue()) }
   }
@@ -245,7 +245,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     val x =
       ProtectedFunctionRef[IntExpr, IntExpr, DummyUser, DummyContext](
         FunctionVal(id[IntExpr]_)
-        , None, Some(allowUserWrite(bob)))(this)
+        , None, Some(allowUserWrite(bob)), None)(this)
     expectResult (1) {
       concretize(aliceContext(), jfun[IntExpr, IntExpr](x.getValue(), 1)) }
     x.update(bob, bobContext(), FunctionVal(inc))
@@ -257,7 +257,7 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
     val x =
       ProtectedFunctionRef[IntExpr, IntExpr, DummyUser, DummyContext](
         FunctionVal(id[IntExpr]_)
-        , None, Some(allowUserWrite(bob)))(this)
+        , None, Some(allowUserWrite(bob)), None)(this)
     expectResult (1) {
       concretize(aliceContext(), jfun[IntExpr, IntExpr](x.getValue(), 1)) }
     x.update(alice, aliceContext(), FunctionVal(inc))
@@ -267,8 +267,8 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
 
   test ("Output write policies involving 'this'--cannot update") {
     val x =
-      ProtectedIntRef[DummyUser, DummyContext](0
-      , None, Some(v => ictxt => _ => !(v === 3) && ictxt === alice))(this)
+      ProtectedIntRef[DummyUser, DummyContext](0, None, None
+      , Some(v => ictxt => _ => !(v === 3) && ictxt === alice))(this)
     x.update(alice, aliceContext(), 1)
     expectResult(1) {
       concretize(aliceContext(), x.getValue())
@@ -278,12 +278,26 @@ class TestIntegrity extends FunSuite with JeevesLib[DummyContext] {
       concretize(aliceContext(), x.getValue())
     }
     x.update(alice, aliceContext(), 5)
-    println(x.getValue())
-    DebugPrint.debugPrint(aliceContext(), x.getValue())(this)
+    // println(x.getValue())
+    // DebugPrint.debugPrint(aliceContext(), x.getValue())(this)
     expectResult(3) {
       concretize(aliceContext(), x.getValue())
     }
   }
 
+  test ("Output write policies involving 'this'--can update") {
+    val x =
+      ProtectedIntRef[DummyUser, DummyContext](0
+      , None, None, Some(v => ictxt => _ => (v === 0) && ictxt === alice))(this)
+    x.update(alice, aliceContext(), 1)
+    expectResult(1) {
+      concretize(aliceContext(), x.getValue())
+    }
+    x.update(alice, aliceContext(), 3)
+    expectResult(1) {
+      concretize(aliceContext(), x.getValue())
+    }
+  }
+  
   // TODO: Test object refs...
 }

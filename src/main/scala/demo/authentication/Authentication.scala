@@ -24,6 +24,7 @@ case class User(id: BigInt, name: String, private val _pwd: String = "")
   // user can see the result of the update.
   val pwdRef = ProtectedObjectRef[S, Cred, Cred](password
     , None
+    , None
     , Some(_this =>ictxt => octxt =>
           ictxt.p === this && octxt.p === this)
     , "pwdRef")(jlib)
@@ -50,7 +51,8 @@ object Authentication extends JeevesLib[Cred] {
   class File(val owner: Principal, private val _contents: String = "")
   (implicit jlib: JeevesLib[Cred]) extends Atom {
     private val contentsRef = ProtectedObjectRef[S, Cred, Cred](S(_contents)
-      , Some((_, ictxt) => (ictxt.p === owner) || (ictxt.p === admin))
+      , Some(_ => ictxt => (ictxt.p === owner) || (ictxt.p === admin))
+      , None
       , None
       , "contentsRef")(jlib)
     def writeContents(c: ObjectExpr[Cred], body: String): UpdateResult = 

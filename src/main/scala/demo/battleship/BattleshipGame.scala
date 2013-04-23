@@ -30,17 +30,11 @@ case class Game(boards: Map[User, Board]) extends Atom {
   def hasTurn(user: User) = {
     (_moves.isEmpty) || !(_moves.head.owner == user)
   }
-  def bomb(ctxt: GameContext, user: User, x: Int, y: Int): Option[GamePiece] = {
-    val (succeeded, piece) = getBoard(user).placeBomb(ctxt, x, y)
-    if (BattleshipGame.concretize(ctxt, succeeded)) {
-      _moves = Bomb(ctxt.user) :: _moves
-      BattleshipGame.concretize(ctxt, piece).asInstanceOf[GamePiece] match {
-        case NoShip => None
-        case ship => Some(ship)
-      }
-    } else {
-      None
-    }
+  def bomb(ctxt: GameContext, user: User, x: Int, y: Int)
+    : ObjectExpr[GamePiece] = {
+    val piece = getBoard(user).placeBomb(ctxt, x, y)
+    _moves = Bomb(ctxt.user) :: _moves
+    piece
   }
 }
 

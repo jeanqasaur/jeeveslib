@@ -12,6 +12,7 @@ import scala.collection.mutable.Stack;
 
 import cap.jeeveslib.ast._
 import cap.jeeveslib.ast.JeevesTypes._
+import cap.jeeveslib.eval.Partial
 
 trait WritePolicyEnv[OC >: Null <: Atom] {
   type WritePolicy = (ObjectExpr[Atom], ObjectExpr[Atom]) => Formula
@@ -27,8 +28,9 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
    * new write/integrity policies.
    */
   def addWritePolicy[IC >: Null <: Atom](lvar: LabelVar
-    , writePolicy: ObjectExpr[IC] => Boolean
-    , iPolicy: OutputWritePolicy[IC, OC])
+    , inputWritePolicy: Option[ObjectExpr[IC] => Boolean]
+    , icOutputWritePolicy: Option[ObjectExpr[IC] => Formula]
+    , outputWritePolicy: Option[OutputWritePolicy[IC, OC]])
     (implicit lvars: PolicyEnv[OC])
   : LabelVar = {
     _primaryContexts.get(lvar) match {
@@ -38,11 +40,32 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
         val ictxt = ic.asInstanceOf[ObjectExpr[IC]]
         val newLvar = lvars.mkLabel(lvar.label)
         mapPrimaryContext (newLvar, ictxt)
-        lvars.restrict (newLvar
-          , if (writePolicy(ictxt))
-              { octxt =>
-                 lvar && iPolicy(ictxt.asInstanceOf[ObjectExpr[IC]])(octxt) }
-            else { octxt => BoolVal(false) })
+        def owp(octxt: ObjectExpr[OC]): Formula = {
+          def withOutputWritePolicy(octxt: ObjectExpr[OC]): Formula = {
+            outputWritePolicy match {
+              case Some(owp) => owp(ictxt.asInstanceOf[ObjectExpr[IC]])(octxt)
+              case None => BoolVal(true)
+            }
+          }
+          def withICOutputWritePolicy(): Formula =
+            icOutputWritePolicy match {
+              case Some(iowp) =>
+                Partial.eval(iowp(ictxt.asInstanceOf[ObjectExpr[IC]]))(EmptyEnv)
+              case None => BoolVal(true)
+            }
+          withICOutputWritePolicy() match {
+            case BoolVal(false) => BoolVal(false)
+            case r => lvar && r && withOutputWritePolicy(octxt)
+          }
+        }
+        val policy =
+          inputWritePolicy match {
+            case Some(iwp) =>
+              if (iwp(ictxt)) { owp _ }
+              else { (octxt: ObjectExpr[OC]) => BoolVal(false) }
+            case None => owp _
+          }
+        lvars.restrict (newLvar, policy)
         newLvar
       }
       // Otherwise return the old level variable.
@@ -52,14 +75,17 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
 
   def addPolicy[IC >: Null <: Atom](f: Formula)
     (implicit lvars: PolicyEnv[OC]
-    , writePolicy: ObjectExpr[IC] => Boolean
-    , iPolicy: OutputWritePolicy[IC, OC])
+    , inputWritePolicy: Option[ObjectExpr[IC] => Boolean]
+    , icOutputWritePolicy: Option[ObjectExpr[IC] => Formula]
+    , outputWritePolicy: Option[OutputWritePolicy[IC, OC]])
   : Formula = {
     f match {
       case BoolFacet(cond, t, f) =>
       val newCond =
         cond match {
-        case c: BoolVar => addWritePolicy(c, writePolicy, iPolicy)
+        case c: BoolVar =>
+          addWritePolicy(
+            c, inputWritePolicy, icOutputWritePolicy, outputWritePolicy)
         case _ => throw Impossible
       }
       BoolFacet(newCond, addPolicy(t), addPolicy(f))
@@ -80,14 +106,17 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   }
   def addPolicy[IC >: Null <: Atom](e: IntExpr)
     (implicit lvars: PolicyEnv[OC]
-    , writePolicy: ObjectExpr[IC] => Boolean
-    , iPolicy: OutputWritePolicy[IC, OC])
+    , inputWritePolicy: Option[ObjectExpr[IC] => Boolean]
+    , icOutputWritePolicy: Option[ObjectExpr[IC] => Formula]
+    , outputWritePolicy: Option[OutputWritePolicy[IC, OC]])
   : IntExpr = {
     e match {
       case IntFacet (cond, t, f) =>
       val newCond =
         cond match {
-        case c: BoolVar => addWritePolicy(c, writePolicy, iPolicy)
+        case c: BoolVar =>
+          addWritePolicy(
+            c, inputWritePolicy, icOutputWritePolicy, outputWritePolicy)
         case _ => throw Impossible
       }
       IntFacet (newCond, addPolicy(t), addPolicy(f))
@@ -101,14 +130,17 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   def addPolicy[T >: Null <: Atom, IC >: Null <: Atom](
     e: ObjectExpr[T])
     (implicit lvars: PolicyEnv[OC]
-      , writePolicy: ObjectExpr[IC] => Boolean
-      , iPolicy: OutputWritePolicy[IC, OC])
+      , inputWritePolicy: Option[ObjectExpr[IC] => Boolean]
+      , icOutputWritePolicy: Option[ObjectExpr[IC] => Formula]
+      , outputWritePolicy: Option[OutputWritePolicy[IC, OC]])
     : ObjectExpr[T] =
     e match {
       case ObjectFacet(cond, t, f) =>
         val newCond =
           cond match {
-            case c: BoolVar => addWritePolicy(c, writePolicy, iPolicy)
+            case c: BoolVar =>
+              addWritePolicy(
+                c, inputWritePolicy, icOutputWritePolicy, outputWritePolicy)
             case _ => throw Impossible
           }
         ObjectFacet(newCond, addPolicy(t), addPolicy (f))
@@ -119,15 +151,18 @@ trait WritePolicyEnv[OC >: Null <: Atom] {
   def addPolicy[A, B, IC >: Null <: Atom](
     e: FunctionExpr[A, B])
     (implicit lvars: PolicyEnv[OC]
-      , writePolicy: ObjectExpr[IC] => Boolean
-      , iPolicy: OutputWritePolicy[IC, OC])
+      , inputWritePolicy: Option[ObjectExpr[IC] => Boolean]
+      , icOutputWritePolicy: Option[ObjectExpr[IC] => Formula]
+      , outputWritePolicy: Option[OutputWritePolicy[IC, OC]])
     : FunctionExpr[A, B] =
     e match {
       case FunctionVal(_) => e
       case FunctionFacet(cond, t, f) =>
         val newCond =
             cond match {
-              case c: BoolVar => addWritePolicy(c, writePolicy, iPolicy)
+              case c: BoolVar =>
+                addWritePolicy(
+                  c, inputWritePolicy, icOutputWritePolicy, outputWritePolicy)
               case _ => throw Impossible
             }
         FunctionFacet(newCond, addPolicy(t), addPolicy(f))
