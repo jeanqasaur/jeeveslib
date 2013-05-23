@@ -13,9 +13,9 @@ class DatabaseUnitSpec extends Specification with BeforeExample{
 
   sequential
 
-  val donor1 = new DonorRecord("donor1@donor.org", 100, 0, "x")
-  val donor2 = new DonorRecord("donor2@donor.org", 200, 0, "y")
-  val donor3 = new DonorRecord("donor3@donor.org", 300, 0, "x")
+  val donor1 = new DonorFullRecord("donor1@donor.org", 100, 0, "x")
+  val donor2 = new DonorFullRecord("donor2@donor.org", 200, 0, "y")
+  val donor3 = new DonorFullRecord("donor3@donor.org", 300, 0, "x")
 
   "Schema stored in database should" >> {
     "allow creation of new entries" >> {
@@ -51,6 +51,16 @@ class DatabaseUnitSpec extends Specification with BeforeExample{
         labels.length must_==2
         labels.exists(_ == "x") must_==true
         labels.exists(_ == "y") must_==true
+      }
+    }
+    "correctly get all possible label assignments" >> {
+      transaction {
+        Tables.writeDonor(donor1)
+        Tables.writeDonor(donor2)
+        Tables.writeDonor(donor3)
+        var labels = Tables.getDistinctLabels()
+        var labelAssignments = Tables.getLabelAssignments(labels)
+        labelAssignments.length must_==4
       }
     }
   }
